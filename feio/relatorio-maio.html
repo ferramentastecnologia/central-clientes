@@ -239,11 +239,27 @@
   .channel-card.proprio .channel-fat { color: var(--feio-amarelo); }
   .channel-card.ifood .channel-fat { color: #ff6b75; }
   .channel-sub { font-size: 11px; color: var(--feio-cinza); margin: 4px 0 14px; }
-  .channel-metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 14px; }
+  .channel-metrics { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px 8px; margin-bottom: 14px; }
   .channel-metric-label { font-size: 9px; letter-spacing: .12em; text-transform: uppercase; color: var(--feio-cinza-esc); margin-bottom: 3px; }
-  .channel-metric-value { font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .channel-metric-value { font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums; }
   .channel-breakdown { font-size: 11px; color: var(--feio-cinza); border-top: 1px dashed var(--feio-linha); padding-top: 10px; line-height: 1.8; }
   .channel-breakdown b { color: var(--feio-branco); font-weight: 700; }
+  /* modalidade entrega/retirada */
+  .modal-block { margin-bottom: 14px; }
+  .modal-label { font-size: 9px; letter-spacing: .12em; text-transform: uppercase; color: var(--feio-cinza-esc); margin-bottom: 6px; }
+  .modal-bar { display: flex; height: 22px; border-radius: 6px; overflow: hidden; background: rgba(0,0,0,.25); }
+  .modal-seg { display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 800; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .modal-seg.entrega { background: var(--feio-amarelo); color: #1A0F08; }
+  .modal-seg.retirada { background: var(--feio-cinza-esc); color: var(--feio-branco); }
+  .modal-legend { display: flex; gap: 16px; margin-top: 7px; font-size: 10px; color: var(--feio-cinza); font-variant-numeric: tabular-nums; }
+  .modal-legend b { color: var(--feio-branco); font-weight: 700; }
+  .modal-dot { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 5px; vertical-align: middle; }
+  /* faixa de insight comparativo */
+  .op-insight { display: flex; gap: 12px; align-items: flex-start; background: rgba(244,180,0,.06); border: 1px solid var(--feio-linha); border-left: 3px solid var(--feio-amarelo); border-radius: 12px; padding: 14px 16px; margin-bottom: 26px; }
+  .op-insight .ic { font-size: 18px; line-height: 1.3; }
+  .op-insight p { font-size: 12px; color: var(--feio-cinza); line-height: 1.65; }
+  .op-insight b { color: var(--feio-branco); font-weight: 700; }
+  .op-insight .hl { color: var(--feio-amarelo); font-weight: 800; }
   .op-subtitle { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: .04em; text-transform: uppercase; color: var(--feio-branco); margin-bottom: 12px; }
   .op-note { font-size: 11px; color: var(--feio-cinza-esc); margin-top: 12px; line-height: 1.5; }
 
@@ -311,15 +327,27 @@
           <span class="channel-badge">Canal Direto</span>
         </div>
         <div class="channel-fat mono">R$&nbsp;61.875,82</div>
-        <div class="channel-sub">662 pedidos · 62,5% do faturamento</div>
+        <div class="channel-sub">662 pedidos · 62,5% do faturamento · sem comissão de marketplace</div>
         <div class="channel-metrics">
           <div><div class="channel-metric-label">Pedidos</div><div class="channel-metric-value mono">662</div></div>
-          <div><div class="channel-metric-label">Ticket</div><div class="channel-metric-value mono">R$&nbsp;93,47</div></div>
-          <div><div class="channel-metric-label">% Fat.</div><div class="channel-metric-value mono">62,5%</div></div>
+          <div><div class="channel-metric-label">Ticket Médio</div><div class="channel-metric-value mono">R$&nbsp;93,47</div></div>
+          <div><div class="channel-metric-label">Pedidos / dia</div><div class="channel-metric-value mono">21,4</div></div>
+          <div><div class="channel-metric-label">Fat. / dia</div><div class="channel-metric-value mono">R$&nbsp;1.996</div></div>
+        </div>
+        <div class="modal-block">
+          <div class="modal-label">Modalidade de pedido</div>
+          <div class="modal-bar">
+            <div class="modal-seg entrega" style="flex: 0 0 72.5%;">72,5%</div>
+            <div class="modal-seg retirada" style="flex: 0 0 27.5%;">27,5%</div>
+          </div>
+          <div class="modal-legend">
+            <span><span class="modal-dot" style="background:var(--feio-amarelo);"></span>Entrega <b>480</b></span>
+            <span><span class="modal-dot" style="background:var(--feio-cinza-esc);"></span>Retirada <b>182</b></span>
+          </div>
         </div>
         <div class="channel-breakdown">
-          <b>Site</b> (cardápio digital) · 389 ped · R$&nbsp;38.776,82<br>
-          <b>Manual</b> (entrega + retirada) · 273 ped · R$&nbsp;23.099,00
+          <b>Site</b> (cardápio digital) · 389 ped · R$&nbsp;38.776,82 · ticket R$&nbsp;99,68<br>
+          <b>Manual</b> (entrega + retirada) · 273 ped · R$&nbsp;23.099,00 · ticket R$&nbsp;84,61
         </div>
       </div>
 
@@ -329,17 +357,37 @@
           <span class="channel-badge">Marketplace</span>
         </div>
         <div class="channel-fat mono">R$&nbsp;37.108,89</div>
-        <div class="channel-sub">381 pedidos · 37,5% do faturamento</div>
+        <div class="channel-sub">381 pedidos · 37,5% do faturamento · 80 novos clientes</div>
         <div class="channel-metrics">
           <div><div class="channel-metric-label">Pedidos</div><div class="channel-metric-value mono">381</div></div>
-          <div><div class="channel-metric-label">Ticket</div><div class="channel-metric-value mono">R$&nbsp;97,40</div></div>
-          <div><div class="channel-metric-label">% Fat.</div><div class="channel-metric-value mono">37,5%</div></div>
+          <div><div class="channel-metric-label">Ticket Médio</div><div class="channel-metric-value mono">R$&nbsp;97,40</div></div>
+          <div><div class="channel-metric-label">Pedidos / dia</div><div class="channel-metric-value mono">12,3</div></div>
+          <div><div class="channel-metric-label">Fat. / dia</div><div class="channel-metric-value mono">R$&nbsp;1.197</div></div>
+        </div>
+        <div class="modal-block">
+          <div class="modal-label">Modalidade de pedido</div>
+          <div class="modal-bar">
+            <div class="modal-seg entrega" style="flex: 0 0 95.8%;">95,8%</div>
+            <div class="modal-seg retirada" style="flex: 0 0 4.2%;"></div>
+          </div>
+          <div class="modal-legend">
+            <span><span class="modal-dot" style="background:var(--feio-amarelo);"></span>Entrega <b>365</b></span>
+            <span><span class="modal-dot" style="background:var(--feio-cinza-esc);"></span>Retirada <b>16</b></span>
+          </div>
         </div>
         <div class="channel-breakdown">
-          <b>Entrega</b> · 365 ped (95,8%) · R$&nbsp;36.045,35<br>
-          <b>Retirada</b> · 16 ped (4,2%) · R$&nbsp;1.063,54
+          <b>Entrega</b> · 365 ped · R$&nbsp;36.045,35<br>
+          <b>Retirada</b> · 16 ped · R$&nbsp;1.063,54
         </div>
       </div>
+    </div>
+
+    <div class="op-insight">
+      <span class="ic">💡</span>
+      <p>
+        O <b>canal próprio</b> gerou <span class="hl">R$ 61,9 mil</span> em Maio — <b>67% a mais</b> que o iFood — e <b>sem comissão de marketplace</b>, o que se traduz em margem maior por pedido.
+        No iFood o ticket médio é levemente superior (R$ 97,40 vs R$ 93,47), mas <b>72,5% dos pedidos próprios já saem em entrega</b> — sinal de uma operação de delivery madura fora das plataformas, enquanto o iFood é praticamente 100% delivery.
+      </p>
     </div>
 
     <!-- FUNIL DO CARDÁPIO DIGITAL (SITE) -->
