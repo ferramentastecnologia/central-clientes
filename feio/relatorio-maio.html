@@ -218,6 +218,35 @@
   .hamburger-section .section-title { color: var(--feio-vermelho); }
   .hamburger-section .section-desc { font-size: 12px; color: var(--feio-cinza); line-height: 1.6; margin-bottom: 16px; }
 
+  /* OPERAÇÃO POR CANAL (HUBZY) */
+  .op-intro { font-size: 12px; color: var(--feio-cinza); line-height: 1.6; margin: -6px 0 18px; }
+  .op-intro .src { color: var(--feio-cinza-esc); }
+  .split-bar { display: flex; height: 42px; border-radius: 10px; overflow: hidden; margin-bottom: 22px; border: 1px solid var(--feio-linha); }
+  .split-seg { display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; letter-spacing: .03em; white-space: nowrap; font-family: 'Inter', sans-serif; }
+  .split-seg.proprio { background: var(--feio-amarelo); color: #1A0F08; }
+  .split-seg.ifood { background: #EA1D2C; color: #fff; }
+  .channel-grid { display: grid; grid-template-columns: 1fr; gap: 12px; margin-bottom: 28px; }
+  @media (min-width: 640px) { .channel-grid { grid-template-columns: repeat(2, 1fr); } }
+  .channel-card { background: var(--feio-card); border: 1px solid var(--feio-linha); border-radius: 16px; padding: 18px; }
+  .channel-card.proprio { border-color: rgba(244,180,0,.4); box-shadow: 0 0 0 1px rgba(244,180,0,.10); }
+  .channel-card.ifood { border-color: rgba(234,29,44,.4); }
+  .channel-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid var(--feio-linha); }
+  .channel-name { font-weight: 800; font-size: 15px; letter-spacing: .02em; }
+  .channel-badge { font-size: 9px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+  .channel-card.proprio .channel-badge { background: rgba(244,180,0,.15); color: var(--feio-amarelo); }
+  .channel-card.ifood .channel-badge { background: rgba(234,29,44,.18); color: #ff6b75; }
+  .channel-fat { font-family: 'Bebas Neue', sans-serif; font-size: 36px; line-height: 1; letter-spacing: .02em; }
+  .channel-card.proprio .channel-fat { color: var(--feio-amarelo); }
+  .channel-card.ifood .channel-fat { color: #ff6b75; }
+  .channel-sub { font-size: 11px; color: var(--feio-cinza); margin: 4px 0 14px; }
+  .channel-metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 14px; }
+  .channel-metric-label { font-size: 9px; letter-spacing: .12em; text-transform: uppercase; color: var(--feio-cinza-esc); margin-bottom: 3px; }
+  .channel-metric-value { font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .channel-breakdown { font-size: 11px; color: var(--feio-cinza); border-top: 1px dashed var(--feio-linha); padding-top: 10px; line-height: 1.8; }
+  .channel-breakdown b { color: var(--feio-branco); font-weight: 700; }
+  .op-subtitle { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: .04em; text-transform: uppercase; color: var(--feio-branco); margin-bottom: 12px; }
+  .op-note { font-size: 11px; color: var(--feio-cinza-esc); margin-top: 12px; line-height: 1.5; }
+
   /* FOOTER */
   .footer { margin-top: 40px; padding-top: 28px; border-top: 2px solid var(--feio-amarelo); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
   .footer-tagline { font-size: 12px; color: var(--feio-cinza-esc); letter-spacing: .08em; line-height: 1.4; }
@@ -294,7 +323,7 @@
 
   <!-- FUNIL -->
   <section class="section">
-    <h2 class="section-title">Funil de Conversão</h2>
+    <h2 class="section-title">Funil de Conversão · Mídia Paga</h2>
     <div class="funnel-svg-wrap">
       <svg class="funnel-svg" viewBox="0 0 720 370" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Funil de Conversão Maio/2026">
         <defs>
@@ -352,6 +381,120 @@
         &nbsp;·&nbsp; Checkout→Compra: <b style="color:var(--feio-branco);">51,0%</b>
       </div>
     </div>
+  </section>
+
+  <!-- OPERAÇÃO POR CANAL (HUBZY) -->
+  <section class="section">
+    <h2 class="section-title">Operação do Mês · Por Canal</h2>
+    <p class="op-intro">
+      Resultado consolidado de vendas da loja em Maio, separado por canal de pedido.
+      <span class="src">Fonte: sistema de gestão (Hubzy) · pedidos presenciais de balcão não contabilizados.</span>
+    </p>
+
+    <div class="kpi-grid">
+      <div class="kpi"><div class="kpi-label">Pedidos</div><div class="kpi-value mono">1.043</div></div>
+      <div class="kpi"><div class="kpi-label">Faturamento</div><div class="kpi-value amarelo mono">R$&nbsp;98.984</div></div>
+      <div class="kpi"><div class="kpi-label">Ticket Médio</div><div class="kpi-value mono">R$&nbsp;94,90</div></div>
+      <div class="kpi"><div class="kpi-label">Novos Clientes*</div><div class="kpi-value mono">168</div></div>
+    </div>
+
+    <div class="split-bar" role="img" aria-label="Participação no faturamento: Cardápio Próprio 62,5%, iFood 37,5%">
+      <div class="split-seg proprio" style="flex: 0 0 62.5%;">Próprio · 62,5%</div>
+      <div class="split-seg ifood" style="flex: 0 0 37.5%;">iFood · 37,5%</div>
+    </div>
+
+    <div class="channel-grid">
+      <div class="channel-card proprio">
+        <div class="channel-head">
+          <span class="channel-name">Cardápio Próprio</span>
+          <span class="channel-badge">Canal Direto</span>
+        </div>
+        <div class="channel-fat mono">R$&nbsp;61.875,82</div>
+        <div class="channel-sub">662 pedidos · 62,5% do faturamento</div>
+        <div class="channel-metrics">
+          <div><div class="channel-metric-label">Pedidos</div><div class="channel-metric-value mono">662</div></div>
+          <div><div class="channel-metric-label">Ticket</div><div class="channel-metric-value mono">R$&nbsp;93,47</div></div>
+          <div><div class="channel-metric-label">% Fat.</div><div class="channel-metric-value mono">62,5%</div></div>
+        </div>
+        <div class="channel-breakdown">
+          <b>Site</b> (cardápio digital) · 389 ped · R$&nbsp;38.776,82<br>
+          <b>Manual</b> (entrega + retirada) · 273 ped · R$&nbsp;23.099,00
+        </div>
+      </div>
+
+      <div class="channel-card ifood">
+        <div class="channel-head">
+          <span class="channel-name">iFood</span>
+          <span class="channel-badge">Marketplace</span>
+        </div>
+        <div class="channel-fat mono">R$&nbsp;37.108,89</div>
+        <div class="channel-sub">381 pedidos · 37,5% do faturamento</div>
+        <div class="channel-metrics">
+          <div><div class="channel-metric-label">Pedidos</div><div class="channel-metric-value mono">381</div></div>
+          <div><div class="channel-metric-label">Ticket</div><div class="channel-metric-value mono">R$&nbsp;97,40</div></div>
+          <div><div class="channel-metric-label">% Fat.</div><div class="channel-metric-value mono">37,5%</div></div>
+        </div>
+        <div class="channel-breakdown">
+          <b>Entrega</b> · 365 ped (95,8%) · R$&nbsp;36.045,35<br>
+          <b>Retirada</b> · 16 ped (4,2%) · R$&nbsp;1.063,54
+        </div>
+      </div>
+    </div>
+
+    <!-- FUNIL DO CARDÁPIO DIGITAL (SITE) -->
+    <div class="op-subtitle">Funil do Cardápio Digital · Site</div>
+    <div class="funnel-svg-wrap">
+      <svg class="funnel-svg" viewBox="0 0 720 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Funil do Cardápio Digital Maio/2026">
+        <defs>
+          <linearGradient id="cardGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#3b2810"/>
+            <stop offset="60%" stop-color="#a67800"/>
+            <stop offset="100%" stop-color="#F4B400"/>
+          </linearGradient>
+          <linearGradient id="cardFinalGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#3ec569"/>
+            <stop offset="100%" stop-color="#15692f"/>
+          </linearGradient>
+          <filter id="cardGlow" x="-30%" y="-30%" width="160%" height="160%">
+            <feGaussianBlur stdDeviation="3" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+        <polygon class="stage-shape" points="60,10 660,10 620,50 100,50" fill="url(#cardGrad)" fill-opacity="0.35"/>
+        <text class="stage-label" x="50" y="30">Visitas</text>
+        <text class="stage-value" x="360" y="30">3.063</text>
+
+        <polygon class="stage-shape" points="100,55 620,55 580,95 140,95" fill="url(#cardGrad)" fill-opacity="0.48"/>
+        <text class="stage-label" x="90" y="75">Visualizações</text>
+        <text class="stage-value" x="360" y="75">2.140</text>
+        <text class="stage-drop ok" x="630" y="75">↓ 30,1%</text>
+
+        <polygon class="stage-shape" points="140,100 580,100 540,140 180,140" fill="url(#cardGrad)" fill-opacity="0.62"/>
+        <text class="stage-label" x="130" y="120">Sacola</text>
+        <text class="stage-value" x="360" y="120">594</text>
+        <text class="stage-drop" x="590" y="120">↓ 72,2%</text>
+
+        <polygon class="stage-shape" points="180,145 540,145 500,185 220,185" fill="url(#cardGrad)" fill-opacity="0.76"/>
+        <text class="stage-label" x="170" y="165">Revisão</text>
+        <text class="stage-value" x="360" y="165">527</text>
+        <text class="stage-drop ok" x="550" y="165">↓ 11,3%</text>
+
+        <polygon class="stage-shape" points="220,190 500,190 460,255 260,255" fill="url(#cardFinalGrad)" stroke="#3ec569" stroke-width="1.8" filter="url(#cardGlow)"/>
+        <text class="stage-final-label" x="215" y="223">Concluídos</text>
+        <text class="stage-final-value" x="360" y="223">384</text>
+        <text class="stage-drop ok" x="510" y="223">↓ 27,1%</text>
+      </svg>
+      <div style="text-align:center; margin-top:14px; font-size:11px; color: var(--feio-cinza); letter-spacing: .04em;">
+        Conversão do cardápio: <b style="color:var(--feio-amarelo);">12,54%</b> (visita → pedido)
+        &nbsp;·&nbsp; Sacola → Pedido: <b style="color:var(--feio-branco);">64,6%</b>
+        &nbsp;·&nbsp; melhor semana: <b style="color:var(--feio-branco);">23,0%</b> (01–03/05)
+      </div>
+    </div>
+
+    <p class="op-note">
+      * Novos clientes considera Site (88) + iFood (80). O funil do cardápio refere-se ao canal Site.
+      O funil de Mídia Paga (acima) mede a parcela atribuída diretamente aos anúncios e não se soma a este total.
+    </p>
   </section>
 
   <!-- PERMANENTES -->
