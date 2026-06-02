@@ -1,0 +1,16 @@
+{
+  "name": "starken-central-clientes",
+  "version": "1.0.0",
+  "description": "Central de Clientes Starken — dashboard ao vivo das campanhas Meta Ads dos clientes Starken Tecnologia",
+  "type": "module",
+  "scripts": {
+    "start": "node --env-file=.env server.mjs",
+    "dev": "node --env-file=.env server.mjs"
+  },
+  "author": "Starken Tecnologia",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ferramentastecnologia/central-clientes.git"
+  }
+}

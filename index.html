@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Central de Clientes · Starken Tecnologia</title>
+<meta name="description" content="Acesso central aos dashboards e relatórios dos clientes ativos da Starken Tecnologia.">
+<style>
+  :root {
+    --bg-0: #0a0e1a;
+    --bg-1: #131b2e;
+    --bg-2: #1a2440;
+    --bg-3: #243154;
+    --text-0: #f8fafc;
+    --text-1: #cbd5e1;
+    --text-2: #94a3b8;
+    --text-3: #64748b;
+    --accent: #fbbf24;
+    --accent-dim: rgba(251, 191, 36, 0.15);
+    --fenice: #fb7185;
+    --fenice-dim: rgba(251, 113, 133, 0.12);
+    --starken: #60a5fa;
+    --starken-dim: rgba(96, 165, 250, 0.12);
+    --ok: #4ade80;
+    --warn: #fbbf24;
+    --err: #f87171;
+    --border: rgba(255, 255, 255, 0.08);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { background: var(--bg-0); }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: radial-gradient(ellipse at top, var(--bg-1) 0%, var(--bg-0) 60%);
+    color: var(--text-0);
+    min-height: 100vh;
+    padding: 28px 32px 80px;
+  }
+  a { color: inherit; text-decoration: none; }
+
+  /* TOPNAV */
+  .topnav {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 22px;
+    background: rgba(19, 27, 46, 0.85);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    margin-bottom: 32px;
+    flex-wrap: wrap;
+    position: sticky;
+    top: 14px;
+    z-index: 100;
+  }
+  .brand {
+    font-weight: 800;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .brand-text {
+    background: linear-gradient(90deg, var(--starken), var(--accent));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .nav-links { display: flex; gap: 4px; flex-wrap: wrap; margin-left: 12px; }
+  .nav-links a {
+    padding: 7px 13px;
+    border-radius: 9px;
+    color: var(--text-1);
+    font-size: 13px;
+    font-weight: 600;
+    transition: all 0.15s;
+  }
+  .nav-links a:hover { background: rgba(255,255,255,0.05); color: var(--text-0); }
+  .nav-links a.external::after { content: ' ↗'; opacity: 0.55; }
+  .topnav-right { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+  .pill {
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-2);
+  }
+  .pill.ok { background: rgba(74,222,128,0.12); border-color: rgba(74,222,128,0.32); color: var(--ok); }
+
+  /* HERO */
+  .hero {
+    text-align: center;
+    margin-bottom: 44px;
+    padding: 30px 20px 10px;
+  }
+  .hero h1 {
+    font-size: clamp(28px, 4.5vw, 42px);
+    font-weight: 900;
+    line-height: 1.15;
+    background: linear-gradient(120deg, var(--starken), var(--accent));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 10px;
+  }
+  .hero p {
+    color: var(--text-2);
+    font-size: 15px;
+    max-width: 620px;
+    margin: 0 auto;
+    line-height: 1.55;
+  }
+
+  /* SUMMARY STRIP */
+  .summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    margin-bottom: 40px;
+  }
+  .summary-card {
+    background: var(--bg-1);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px 18px;
+  }
+  .summary-card .label { color: var(--text-2); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; }
+  .summary-card .value { font-size: 26px; font-weight: 800; margin-top: 4px; }
+  .summary-card.fenice .value { color: var(--fenice); }
+  .summary-card.starken .value { color: var(--starken); }
+
+  /* AGENCY SECTION */
+  .agency-section { margin-bottom: 48px; }
+  .agency-head {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 22px;
+    flex-wrap: wrap;
+  }
+  .agency-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    flex-shrink: 0;
+  }
+  .agency-icon.fenice { background: var(--fenice-dim); color: var(--fenice); }
+  .agency-icon.starken { background: var(--starken-dim); color: var(--starken); }
+  .agency-name { font-size: 20px; font-weight: 800; }
+  .agency-sub { color: var(--text-3); font-size: 13px; margin-top: 2px; }
+  .agency-count {
+    margin-left: auto;
+    padding: 6px 14px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--text-2);
+    font-weight: 600;
+  }
+
+  /* CLIENT GRID */
+  .clients-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+  }
+  .client-card {
+    background: var(--bg-1);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 22px;
+    transition: transform 0.18s, border-color 0.18s, box-shadow 0.18s;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-height: 200px;
+  }
+  .client-card.active {
+    cursor: pointer;
+  }
+  .client-card.active:hover {
+    transform: translateY(-3px);
+    border-color: var(--accent);
+    box-shadow: 0 12px 32px rgba(0,0,0,0.4);
+  }
+  .client-card.pending {
+    opacity: 0.6;
+    border-style: dashed;
+  }
+  .client-card.fenice::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--fenice), transparent);
+  }
+  .client-card.starken::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--starken), transparent);
+  }
+  .client-head {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .client-avatar {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    background: var(--bg-2);
+    overflow: hidden;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--text-2);
+    border: 1px solid var(--border);
+  }
+  .client-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .client-info { flex: 1; min-width: 0; }
+  .client-name { font-size: 17px; font-weight: 700; line-height: 1.2; }
+  .client-meta { color: var(--text-3); font-size: 12px; margin-top: 3px; }
+
+  .client-stats {
+    display: flex;
+    gap: 18px;
+    padding: 10px 0;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+  .stat { flex: 1; }
+  .stat-num { font-size: 18px; font-weight: 800; color: var(--text-0); }
+  .stat-lbl { color: var(--text-3); font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 2px; }
+
+  .client-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: auto; }
+  .action-btn {
+    flex: 1;
+    min-width: 100px;
+    padding: 9px 12px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    font-size: 12px;
+    font-weight: 600;
+    text-align: center;
+    color: var(--text-1);
+    transition: all 0.15s;
+    cursor: pointer;
+    text-decoration: none;
+  }
+  .action-btn:hover { background: rgba(255,255,255,0.1); color: var(--text-0); }
+  .action-btn.primary {
+    background: linear-gradient(135deg, var(--accent), #f59e0b);
+    border-color: transparent;
+    color: #1a1a1a;
+  }
+  .action-btn.primary:hover { transform: translateY(-1px); opacity: 0.92; }
+  .action-btn.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+
+  .client-pending-msg {
+    color: var(--warn);
+    font-size: 12px;
+    background: rgba(251,191,36,0.08);
+    padding: 8px 12px;
+    border-radius: 8px;
+    margin: auto 0;
+    text-align: center;
+    font-weight: 500;
+  }
+
+  /* LOADING / EMPTY */
+  .loading {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-2);
+  }
+  .loading::after {
+    content: '';
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--accent);
+    border-top-color: transparent;
+    border-radius: 999px;
+    margin-left: 10px;
+    vertical-align: middle;
+    animation: spin 0.6s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* FOOTER */
+  .foot {
+    margin-top: 60px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    text-align: center;
+    color: var(--text-3);
+    font-size: 12px;
+    line-height: 1.8;
+  }
+  .foot a { color: var(--text-2); text-decoration: underline; }
+  .foot a:hover { color: var(--text-0); }
+
+  @media (max-width: 640px) {
+    body { padding: 16px 14px 60px; }
+    .topnav { padding: 12px 16px; }
+    .hero { padding: 16px 0 0; margin-bottom: 32px; }
+    .agency-icon { width: 40px; height: 40px; font-size: 20px; }
+    .agency-name { font-size: 17px; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="brand">⚡ <span class="brand-text">Starken Tecnologia</span></div>
+  <div class="nav-links">
+    <a href="/dashboard/" style="color:var(--accent);">🎯 Central</a>
+    <a href="/agendamentos.html">📅 Agendamentos</a>
+    <a href="/renovacao.html">🔄 Renovação</a>
+    <a href="/eventos/hamburger-day-madrugao-28-05.html">🍔 Hamburger Day</a>
+    <a href="/admin/">🛡️ Admin</a>
+  </div>
+  <div class="topnav-right">
+    <span class="pill" id="pill-updated">⏳ Carregando…</span>
+  </div>
+</nav>
+
+<header class="hero">
+  <h1>Central de Clientes Starken</h1>
+  <p>Acesso rápido aos painéis, hubs e relatórios de cada cliente ativo da Starken Tecnologia.</p>
+</header>
+
+<div class="summary" id="summary"></div>
+
+<main id="root">
+  <div class="loading">Carregando clientes…</div>
+</main>
+
+<footer class="foot">
+  <div><b>⚡ Starken Tecnologia</b> · Marketing Digital &amp; Performance</div>
+  <div style="margin-top:8px;">
+    <a href="/eventos/hamburger-day-madrugao-28-05.html">📅 Hamburger Day Madrugão 28/05</a> ·
+    <a href="/agendamentos.html">Agendamentos</a> ·
+    <a href="/renovacao.html">Renovação Mensal</a> ·
+    <a href="/admin/">Admin (interno)</a>
+  </div>
+</footer>
+
+<script>
+const $ = (sel, root=document) => root.querySelector(sel);
+
+const HUBS_DISPONIVEIS = new Set(['feio']);
+const REPORTS_DISPONIVEIS = new Set(['feio']);
+const RELATORIOS_MENSAIS = new Set(['feio', 'centro', 'garcia']);
+
+const AGENCIES = [
+  { key: 'Starken', icon: '⚡', cls: 'starken', desc: 'Operação tática · performance + escala em delivery e gastronomia' },
+];
+
+function fmtFollowers(n) {
+  if (!n && n !== 0) return '—';
+  if (n >= 1_000_000) return (n/1_000_000).toFixed(1).replace('.0','') + 'M';
+  if (n >= 1_000) return (n/1_000).toFixed(1).replace('.0','') + 'k';
+  return n.toLocaleString('pt-BR');
+}
+
+function clientCard(c, agency) {
+  const initial = (c.name || '?').trim().charAt(0).toUpperCase();
+  const ig = c.instagram;
+  const hasHub = HUBS_DISPONIVEIS.has(c.slug);
+  const hasReport = REPORTS_DISPONIVEIS.has(c.slug);
+  const isPending = c.pending_status;
+
+  const avatar = ig?.avatar
+    ? `<img src="${ig.avatar}" alt="" onerror="this.style.display='none'">`
+    : initial;
+
+  if (isPending) {
+    return `
+      <div class="client-card ${agency.cls} pending">
+        <div class="client-head">
+          <div class="client-avatar">${initial}</div>
+          <div class="client-info">
+            <div class="client-name">${c.name}</div>
+            <div class="client-meta">${ig?.username ? '@' + ig.username : 'Em setup'}</div>
+          </div>
+        </div>
+        <div class="client-pending-msg">⏳ ${c.pending_status}</div>
+        <div class="client-actions">
+          <span class="action-btn disabled">Hub em breve</span>
+        </div>
+      </div>
+    `;
+  }
+
+  const followers = ig?.followers != null
+    ? `<div class="stat"><div class="stat-num">${fmtFollowers(ig.followers)}</div><div class="stat-lbl">Seguidores</div></div>`
+    : '';
+  const posts = ig?.media_count != null
+    ? `<div class="stat"><div class="stat-num">${fmtFollowers(ig.media_count)}</div><div class="stat-lbl">Posts</div></div>`
+    : '';
+  const stats = (followers || posts)
+    ? `<div class="client-stats">${followers}${posts}</div>`
+    : '';
+
+  const hasMonthly = RELATORIOS_MENSAIS.has(c.slug);
+  const primaryHref = hasHub ? '/' + c.slug + '/' : (hasMonthly ? '/' + c.slug + '/relatorio-maio.html' : null);
+
+  return `
+    <div class="client-card ${agency.cls} active" onclick="goTo('${primaryHref}')">
+      <div class="client-head">
+        <div class="client-avatar">${avatar}</div>
+        <div class="client-info">
+          <div class="client-name">${c.name}</div>
+          <div class="client-meta">${ig?.username ? '@' + ig.username : '—'}</div>
+        </div>
+      </div>
+      ${stats}
+      <div class="client-actions" onclick="event.stopPropagation()">
+        ${hasHub ? `<a class="action-btn primary" href="/${c.slug}/">Hub do cliente →</a>` : ''}
+        ${hasMonthly ? `<a class="action-btn ${hasHub ? '' : 'primary'}" href="/${c.slug}/relatorio-maio.html">Relatório Maio</a>` : ''}
+        ${ig?.username ? `<a class="action-btn" href="https://instagram.com/${ig.username}" target="_blank" rel="noopener">Instagram ↗</a>` : ''}
+        ${!hasHub && !hasMonthly ? `<span class="action-btn disabled">Em breve</span>` : ''}
+      </div>
+    </div>
+  `;
+}
+
+function goTo(href) {
+  if (href) location.href = href;
+}
+
+function render(data) {
+  $('#pill-updated').innerHTML = '✓ Atualizado ' + new Date(data.updated_at).toLocaleTimeString('pt-BR');
+  $('#pill-updated').className = 'pill ok';
+
+  const all = data.clients || [];
+  const starken = data.by_agencia?.['Starken'] || [];
+  const totalIgFollowers = all.reduce((sum, c) => sum + (c.instagram?.followers || 0), 0);
+  const relatoriosCount = all.filter(c => RELATORIOS_MENSAIS.has(c.slug)).length;
+
+  $('#summary').innerHTML = `
+    <div class="summary-card starken">
+      <div class="label">⚡ Clientes Starken</div>
+      <div class="value">${starken.length}</div>
+      <div class="label" style="margin-top:6px;">ativos</div>
+    </div>
+    <div class="summary-card">
+      <div class="label">📊 Relatórios Mensais</div>
+      <div class="value">${relatoriosCount}</div>
+      <div class="label" style="margin-top:6px;">de ${all.length} clientes</div>
+    </div>
+    <div class="summary-card">
+      <div class="label">📱 Instagram</div>
+      <div class="value">${fmtFollowers(totalIgFollowers)}</div>
+      <div class="label" style="margin-top:6px;">seguidores totais</div>
+    </div>
+    <div class="summary-card">
+      <div class="label">🚀 Hubs ativos</div>
+      <div class="value">${all.filter(c => HUBS_DISPONIVEIS.has(c.slug)).length}</div>
+      <div class="label" style="margin-top:6px;">de ${all.length} clientes</div>
+    </div>
+  `;
+
+  const sections = AGENCIES.map(ag => {
+    const list = data.by_agencia?.[ag.key] || [];
+    if (!list.length) return '';
+    // Ordena: validated/ativos primeiro, pendentes por último
+    list.sort((a, b) => (a.pending_status ? 1 : 0) - (b.pending_status ? 1 : 0));
+    return `
+      <section class="agency-section">
+        <div class="agency-head">
+          <div class="agency-icon ${ag.cls}">${ag.icon}</div>
+          <div>
+            <div class="agency-name">${ag.key}</div>
+            <div class="agency-sub">${ag.desc}</div>
+          </div>
+          <div class="agency-count">${list.length} clientes</div>
+        </div>
+        <div class="clients-grid">
+          ${list.map(c => clientCard(c, ag)).join('')}
+        </div>
+      </section>
+    `;
+  }).join('');
+
+  $('#root').innerHTML = sections || '<div class="loading">Nenhum cliente cadastrado.</div>';
+}
+
+async function load() {
+  try {
+    const r = await fetch('/api/clients');
+    if (!r.ok) {
+      $('#root').innerHTML = `<div class="loading">Erro HTTP ${r.status}</div>`;
+      return;
+    }
+    const data = await r.json();
+    render(data);
+  } catch (e) {
+    $('#root').innerHTML = `<div class="loading">Erro: ${e.message}</div>`;
+  }
+}
+load();
+// Refresh a cada 10min
+setInterval(load, 10 * 60_000);
+</script>
+
+</body>
+</html>
