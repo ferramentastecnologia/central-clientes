@@ -260,6 +260,13 @@
   .op-insight p { font-size: 12px; color: var(--feio-cinza); line-height: 1.65; }
   .op-insight b { color: var(--feio-branco); font-weight: 700; }
   .op-insight .hl { color: var(--feio-amarelo); font-weight: 800; }
+  /* badges de variação MoM */
+  .delta { display: inline-flex; align-items: center; gap: 2px; font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 999px; font-variant-numeric: tabular-nums; vertical-align: middle; letter-spacing: .02em; font-family: 'Inter', sans-serif; }
+  .delta.up { background: rgba(74,222,128,.15); color: var(--feio-ok); }
+  .delta.down { background: rgba(248,113,113,.15); color: #f87171; }
+  .mdelta { font-size: 10px; font-weight: 800; margin-left: 5px; vertical-align: middle; font-variant-numeric: tabular-nums; }
+  .mdelta.up { color: var(--feio-ok); }
+  .mdelta.down { color: #f87171; }
   .op-subtitle { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: .04em; text-transform: uppercase; color: var(--feio-branco); margin-bottom: 12px; }
   .op-note { font-size: 11px; color: var(--feio-cinza-esc); margin-top: 12px; line-height: 1.5; }
 
@@ -326,11 +333,11 @@
           <span class="channel-name">Cardápio Próprio</span>
           <span class="channel-badge">Canal Direto</span>
         </div>
-        <div class="channel-fat mono">R$&nbsp;61.875,82</div>
-        <div class="channel-sub">662 pedidos · 62,5% do faturamento · sem comissão de marketplace</div>
+        <div class="channel-fat mono">R$&nbsp;61.875,82 <span class="delta up">▲&nbsp;18,6%</span></div>
+        <div class="channel-sub">662 pedidos · 62,5% do faturamento · <b style="color:var(--feio-ok);">+R$ 9,7 mil vs Abril</b></div>
         <div class="channel-metrics">
-          <div><div class="channel-metric-label">Pedidos</div><div class="channel-metric-value mono">662</div></div>
-          <div><div class="channel-metric-label">Ticket Médio</div><div class="channel-metric-value mono">R$&nbsp;93,47</div></div>
+          <div><div class="channel-metric-label">Pedidos</div><div class="channel-metric-value mono">662<span class="mdelta up">▲&nbsp;14,1%</span></div></div>
+          <div><div class="channel-metric-label">Ticket Médio</div><div class="channel-metric-value mono">R$&nbsp;93,47<span class="mdelta up">▲&nbsp;3,9%</span></div></div>
           <div><div class="channel-metric-label">Pedidos / dia</div><div class="channel-metric-value mono">21,4</div></div>
           <div><div class="channel-metric-label">Fat. / dia</div><div class="channel-metric-value mono">R$&nbsp;1.996</div></div>
         </div>
@@ -442,6 +449,7 @@
 
     <p class="op-note">
       * Novos clientes considera Site (88) + iFood (80). O funil do cardápio refere-se ao canal Site.
+      Os selos ▲ no card Cardápio Próprio comparam com Abril/2026 (mesmo canal): 580 ped · R$ 52.158,34 · ticket R$ 89,93.
       O funil de Mídia Paga (na sequência) mede a parcela atribuída diretamente aos anúncios e não se soma a este total.
     </p>
   </section>

@@ -122,6 +122,35 @@
 - **Site** tem mais Retirada (13,88%) que o **iFood** (4,20%) — iFood é quase 100% entrega. Ticket do Site (R$ 99,68) ligeiramente acima do iFood (R$ 97,40).
 - O **funil Meta Ads** do relatório atual termina em **99 compras atribuídas** — parcela atribuída diretamente ao anúncio, não o total da operação.
 
+## 5. Baseline Abril/2026 — Canal Próprio (p/ comparação MoM)
+> Origem Manual + Site · presencial excluído · coletado p/ comparar com Maio.
+
+### Abril · Manual
+| Tipo | Pedidos | Faturamento |
+|---|---|---|
+| Entrega | 123 | R$ 10.540,40 |
+| Retirada | 107 | R$ 8.599,10 |
+| **Total** | **230** | **R$ 19.139,50** |
+
+### Abril · Site
+| Tipo | Pedidos | % | Faturamento |
+|---|---|---|---|
+| Entrega | 295 | 84,29% | R$ 29.420,14 |
+| Retirada | 55 | 15,71% | R$ 3.598,70 |
+| **Total** | **350** | 100% | **R$ 33.018,84** |
+
+### Abril · Canal Próprio (Site + Manual)
+| Métrica | Abril | Maio | Variação |
+|---|---|---|---|
+| Pedidos | 580 | 662 | +82 · **+14,1%** |
+| Faturamento | R$ 52.158,34 | R$ 61.875,82 | +R$ 9.717,48 · **+18,6%** |
+| Ticket médio | R$ 89,93 | R$ 93,47 | +R$ 3,54 · **+3,9%** |
+
+> Conferências: 123+107=230 ✓ · 295+55=350 ✓ · 230+350=580 ✓ · 19.139,50+33.018,84=52.158,34 ✓ · 52.158,34÷580=89,93 ✓
+> Comparação limita-se ao canal próprio (não há baseline de iFood de Abril coletado).
+
+---
+
 ## Pendente de coleta (Hubzy)
 - [x] ~~Pedidos manuais — Entrega/Retirada~~ (coletado · Presencial excluído por decisão do cliente)
 - [ ] Print 3 — (qual seção?)
