@@ -73,7 +73,7 @@ let cache = { data: null, ts: 0 };
 let renovacaoCache = { data: null, ts: 0 };
 let adminCache = { data: null, ts: 0 };
 let clientsCache = { data: null, ts: 0 };
-let monitorCache = { data: null, ts: 0 };
+const monitorCache = new Map(); // periodKey -> { data, ts }
 const MONITOR_TTL_MS = 1_800_000; // 30 min — alivia o rate limit do app
 let galeriaCache = { data: null, ts: 0 };
 const GALERIA_TTL_MS = 600_000; // 10 min — posts mudam pouco; protege contra rate limit
@@ -534,20 +534,48 @@ function parseInsightRow(row) {
   };
 }
 
-async function fetchMonitor() {
-  const now = Date.now();
-  if (monitorCache.data && (now - monitorCache.ts) < MONITOR_TTL_MS) return monitorCache.data;
+const MONITOR_PERIODS = {
+  today:      { preset: 'today',      label: 'Hoje' },
+  last_7d:    { preset: 'last_7d',    label: 'Últimos 7 dias' },
+  this_month: { preset: 'this_month', label: 'Mês atual' },
+};
 
+function buildPeriodClauses(period, since, until) {
+  const isDate = (s) => /^\d{4}-\d{2}-\d{2}$/.test(s || '');
+  if (period === 'custom' && isDate(since) && isDate(until)) {
+    return {
+      key: `custom:${since}:${until}`,
+      label: `${since.split('-').reverse().join('/')} a ${until.split('-').reverse().join('/')}`,
+      acct: `time_range=${encodeURIComponent(JSON.stringify({ since, until }))}`,
+      camp: `time_range(%7B'since':'${since}','until':'${until}'%7D)`,
+      since, until, selected: 'custom',
+    };
+  }
+  const p = MONITOR_PERIODS[period] || MONITOR_PERIODS.today;
+  return {
+    key: p.preset, label: p.label,
+    acct: `date_preset=${p.preset}`, camp: `date_preset(${p.preset})`,
+    since: null, until: null, selected: MONITOR_PERIODS[period] ? period : 'today',
+  };
+}
+
+async function fetchMonitor(period = 'today', since = null, until = null) {
+  const pc = buildPeriodClauses(period, since, until);
+  const now = Date.now();
+  const cached = monitorCache.get(pc.key);
+  if (cached && (now - cached.ts) < MONITOR_TTL_MS) return cached.data;
+
+  const periodMeta = { key: pc.key, label: pc.label, since: pc.since, until: pc.until, selected: pc.selected };
   const token = await readToken();
   if (!token) {
-    return { updated_at: new Date().toISOString(), error: 'token_not_found', message: 'Token não encontrado. Configure META_GRAPH_TOKEN.', clients: [], pending: [] };
+    return { updated_at: new Date().toISOString(), error: 'token_not_found', message: 'Token não encontrado. Configure META_GRAPH_TOKEN.', period: periodMeta, clients: [], pending: [] };
   }
 
   let mapping = { clients: [] };
   try {
     mapping = JSON.parse(await fs.readFile(path.join(__dirname, 'data', 'clients-mapping.json'), 'utf-8'));
   } catch {
-    return { updated_at: new Date().toISOString(), error: 'mapping_missing', clients: [], pending: [] };
+    return { updated_at: new Date().toISOString(), error: 'mapping_missing', period: periodMeta, clients: [], pending: [] };
   }
 
   const withAcct = mapping.clients.filter(c => c.ad_account_id);
@@ -556,13 +584,12 @@ async function fetchMonitor() {
   const clients = await Promise.all(withAcct.map(async (c) => {
     const act = `act_${c.ad_account_id}`;
     try {
-      const [todayR, weekR, campR, acctR] = await Promise.all([
-        fetch(`https://graph.facebook.com/v23.0/${act}/insights?fields=${F}&date_preset=today&access_token=${token}`),
-        fetch(`https://graph.facebook.com/v23.0/${act}/insights?fields=${F}&date_preset=last_7d&access_token=${token}`),
-        fetch(`https://graph.facebook.com/v23.0/${act}/campaigns?fields=name,status,effective_status,daily_budget,lifetime_budget,insights.date_preset(today){spend,impressions,clicks,ctr,actions,purchase_roas}&limit=80&access_token=${token}`),
-        fetch(`https://graph.facebook.com/v23.0/${act}?fields=name,account_status,balance,currency,amount_spent&access_token=${token}`),
+      const [insR, campR, acctR] = await Promise.all([
+        fetch(`https://graph.facebook.com/v23.0/${act}/insights?fields=${F}&${pc.acct}&access_token=${token}`),
+        fetch(`https://graph.facebook.com/v23.0/${act}/campaigns?fields=name,status,effective_status,daily_budget,lifetime_budget,insights.${pc.camp}{spend,impressions,clicks,ctr,actions,purchase_roas}&limit=80&access_token=${token}`),
+        fetch(`https://graph.facebook.com/v23.0/${act}?fields=name,account_status,balance,currency&access_token=${token}`),
       ]);
-      const [today, week, camp, acct] = await Promise.all([todayR.json(), weekR.json(), campR.json(), acctR.json()]);
+      const [ins, camp, acct] = await Promise.all([insR.json(), campR.json(), acctR.json()]);
 
       const campaigns = (camp.data || []).map(cp => ({
         id: cp.id,
@@ -571,14 +598,13 @@ async function fetchMonitor() {
         effective_status: cp.effective_status,
         daily_budget_cents: cp.daily_budget ? parseInt(cp.daily_budget) : null,
         lifetime_budget_cents: cp.lifetime_budget ? parseInt(cp.lifetime_budget) : null,
-        today: parseInsightRow(cp.insights?.data?.[0]),
+        period: parseInsightRow(cp.insights?.data?.[0]),
       }));
-      // ativos primeiro, depois por gasto do dia desc
       campaigns.sort((a, b) => {
         const aa = a.effective_status === 'ACTIVE' ? 1 : 0;
         const bb = b.effective_status === 'ACTIVE' ? 1 : 0;
         if (aa !== bb) return bb - aa;
-        return (b.today?.spend || 0) - (a.today?.spend || 0);
+        return (b.period?.spend || 0) - (a.period?.spend || 0);
       });
       const activeCount = campaigns.filter(cp => cp.effective_status === 'ACTIVE').length;
 
@@ -594,13 +620,12 @@ async function fetchMonitor() {
           currency: acct.currency || 'BRL',
           balance_cents: acct.balance != null ? parseInt(acct.balance) : null,
         },
-        today: parseInsightRow(today.data?.[0]),
-        last_7d: parseInsightRow(week.data?.[0]),
+        metrics: parseInsightRow(ins.data?.[0]),
         campaigns,
         campaigns_total: campaigns.length,
         active_count: activeCount,
         paused_count: campaigns.length - activeCount,
-        error: today.error?.message || camp.error?.message || acct.error?.message || null,
+        error: ins.error?.message || camp.error?.message || acct.error?.message || null,
       };
     } catch (e) {
       return { slug: c.slug, name: c.name, ad_account_id: c.ad_account_id, error: e.message };
@@ -612,7 +637,7 @@ async function fetchMonitor() {
     .map(c => ({ slug: c.slug, name: c.name, pending: true }));
 
   const totals = clients.reduce((a, c) => {
-    if (c.today) { a.spend += c.today.spend; a.revenue += c.today.revenue; a.purchases += c.today.purchases; a.impressions += c.today.impressions; }
+    if (c.metrics) { a.spend += c.metrics.spend; a.revenue += c.metrics.revenue; a.purchases += c.metrics.purchases; a.impressions += c.metrics.impressions; }
     a.active += c.active_count || 0;
     return a;
   }, { spend: 0, revenue: 0, purchases: 0, impressions: 0, active: 0 });
@@ -622,12 +647,13 @@ async function fetchMonitor() {
 
   const result = {
     updated_at: new Date().toISOString(),
-    totals_today: totals,
+    period: periodMeta,
+    totals,
     clients_count: clients.length,
     clients,
     pending,
   };
-  monitorCache = { data: result, ts: now };
+  monitorCache.set(pc.key, { data: result, ts: now });
   return result;
 }
 
@@ -858,9 +884,12 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (req.url === '/api/admin/monitor' || req.url.startsWith('/api/admin/monitor?')) {
-      const force = req.url.includes('force=1');
-      if (force) monitorCache = { data: null, ts: 0 };
-      const data = await fetchMonitor();
+      const qs = new URLSearchParams((req.url.split('?')[1] || ''));
+      const period = qs.get('period') || 'today';
+      const since = qs.get('since');
+      const until = qs.get('until');
+      if (qs.get('force') === '1') monitorCache.clear();
+      const data = await fetchMonitor(period, since, until);
       res.writeHead(200, {
         'Content-Type': 'application/json; charset=utf-8',
         'Cache-Control': 'no-cache',

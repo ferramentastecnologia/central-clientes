@@ -72,6 +72,16 @@
   .btn:hover { opacity: 0.85; }
   .btn-ghost { background: rgba(255,255,255,0.06); border: 1px solid var(--border); }
 
+  /* PERÍODO */
+  .period-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; padding: 12px 16px; background: var(--bg-1); border: 1px solid var(--border); border-radius: 14px; }
+  .period-bar-label { font-size: 11px; color: var(--text-3); font-weight: 700; text-transform: uppercase; letter-spacing: .1em; margin-right: 4px; }
+  .pbtn { padding: 8px 15px; border: 1px solid var(--border); background: var(--bg-2); color: var(--text-2); font-size: 13px; font-weight: 600; border-radius: 999px; cursor: pointer; transition: all .15s; }
+  .pbtn:hover { color: var(--text-0); border-color: rgba(251,191,36,.3); }
+  .pbtn.active { background: var(--accent); color: #1a0f08; border-color: var(--accent); }
+  .custom-range { display: inline-flex; align-items: center; gap: 8px; }
+  .dinput { background: var(--bg-0); border: 1px solid var(--border); color: var(--text-0); border-radius: 8px; padding: 7px 10px; font-size: 13px; font-family: inherit; color-scheme: dark; }
+  .period-active { margin-left: auto; font-size: 12px; color: var(--accent); font-weight: 700; }
+
   /* TOTAIS HERO */
   .totals { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 24px; }
   @media (min-width: 760px) { .totals { grid-template-columns: repeat(5, 1fr); } }
@@ -151,13 +161,30 @@
   </div>
 </nav>
 
+<div class="period-bar">
+  <span class="period-bar-label">Período</span>
+  <button class="pbtn active" data-p="today">📅 Diário</button>
+  <button class="pbtn" data-p="last_7d">🗓️ Semanal</button>
+  <button class="pbtn" data-p="this_month">📆 Mensal</button>
+  <button class="pbtn" data-p="custom">⚙️ Personalizado</button>
+  <span class="custom-range" id="custom-range" style="display:none;">
+    <input type="date" id="since" class="dinput">
+    <span style="color:var(--text-3);font-size:12px;">até</span>
+    <input type="date" id="until" class="dinput">
+    <button class="btn" id="apply-custom" style="background:var(--accent);color:#1a0f08;">Aplicar</button>
+  </span>
+  <span class="period-active" id="period-active"></span>
+</div>
+
 <div id="root">
-  <div class="loading">Buscando campanhas ativas de todos os clientes…</div>
+  <div class="loading">Buscando campanhas dos clientes…</div>
 </div>
 
 <script>
 const $ = (s, r=document) => r.querySelector(s);
 const REFRESH_MS = 1_800_000; // 30 min
+let PERIOD = 'today', SINCE = null, UNTIL = null, SHORT = 'hoje';
+const SHORT_MAP = { today: 'hoje', last_7d: '7 dias', this_month: 'mês', custom: 'período' };
 
 const brl = (n) => (n == null ? '—' : new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(n));
 const num = (n) => (n == null ? '—' : new Intl.NumberFormat('pt-BR').format(n));
@@ -176,13 +203,13 @@ function roasTag(roas) {
 }
 
 function clientCard(c) {
-  if (c.error && !c.today) {
+  if (c.error && !c.metrics) {
     return `<div class="card acct-down">
       <div class="card-head"><div><div class="card-name">${esc(c.name)}</div>
       <div class="card-acct">act_${esc(c.ad_account_id || '—')}</div></div></div>
       <div class="card-err">⚠ ${esc(c.error)}</div></div>`;
   }
-  const t = c.today || {};
+  const t = c.metrics || {};
   const spending = (t.spend || 0) > 0;
   const acctDown = c.account && !c.account.is_active;
   const acctPill = c.account
@@ -193,12 +220,12 @@ function clientCard(c) {
   const shown = active.length ? active.slice(0, 5) : (c.campaigns || []).slice(0, 3);
   const campRows = shown.length ? shown.map(cp => {
     const isActive = cp.effective_status === 'ACTIVE';
-    const sp = cp.today?.spend || 0;
+    const sp = cp.period?.spend || 0;
     return `<div class="camp">
       <span class="camp-dot ${isActive ? 'active' : 'paused'}"></span>
       <span class="camp-name" title="${esc(cp.name)}">${esc(cp.name)}</span>
       <span class="camp-spend">${sp > 0 ? brl(sp) : '<span style=\"color:var(--text-3)\">R$ 0</span>'}</span>
-      ${roasTag(cp.today?.roas)}
+      ${roasTag(cp.period?.roas)}
     </div>`;
   }).join('') : `<div class="camp-empty">Nenhuma campanha ${active.length === 0 ? 'ativa' : ''} no momento.</div>`;
 
@@ -211,21 +238,21 @@ function clientCard(c) {
       ${acctPill}
     </div>
     <div class="metrics">
-      <div class="metric"><div class="metric-label">Gasto hoje</div>
+      <div class="metric"><div class="metric-label">Gasto · ${SHORT}</div>
         <div class="metric-value ${spending ? 'amber' : 'muted'}">${brl(t.spend)}</div>
         <div class="metric-sub">${num(t.impressions)} impr. · CTR ${t.ctr ? t.ctr.toFixed(2).replace('.',',')+'%' : '—'}</div></div>
-      <div class="metric"><div class="metric-label">ROAS hoje</div>
+      <div class="metric"><div class="metric-label">ROAS · ${SHORT}</div>
         <div class="metric-value ${t.roas >= 2 ? 'green' : ''}">${t.roas ? t.roas.toFixed(2).replace('.',',')+'×' : '—'}</div>
-        <div class="metric-sub">${num(t.purchases)} compras · ${brl(t.revenue)}</div></div>
-      <div class="metric"><div class="metric-label">Gasto 7 dias</div>
-        <div class="metric-value muted">${brl(c.last_7d?.spend)}</div>
-        <div class="metric-sub">ROAS ${c.last_7d?.roas ? c.last_7d.roas.toFixed(2).replace('.',',')+'×' : '—'}</div></div>
+        <div class="metric-sub">retorno ${brl(t.revenue)}</div></div>
+      <div class="metric"><div class="metric-label">Compras · ${SHORT}</div>
+        <div class="metric-value">${num(t.purchases || 0)}</div>
+        <div class="metric-sub">${t.purchases > 0 ? 'CPA ' + brl(t.spend / t.purchases) : '—'}</div></div>
       <div class="metric"><div class="metric-label">Campanhas</div>
         <div class="metric-value">${c.active_count || 0}<span style="font-size:12px;color:var(--text-3);font-weight:600"> ativas</span></div>
         <div class="metric-sub">${c.paused_count || 0} pausadas · ${c.campaigns_total || 0} total</div></div>
     </div>
     <div class="camps">
-      <div class="camps-head"><span>${active.length ? 'Campanhas ativas' : 'Campanhas'}</span><span>gasto hoje · roas</span></div>
+      <div class="camps-head"><span>${active.length ? 'Campanhas ativas' : 'Campanhas'}</span><span>gasto · roas</span></div>
       ${campRows}
       ${hiddenActive > 0 ? `<div class="more">+ ${hiddenActive} outra(s) ativa(s)</div>` : ''}
     </div>
@@ -238,20 +265,23 @@ function render(data) {
     $('#root').innerHTML = `<div class="err-banner">⚠ ${esc(data.message || data.error)}</div>`;
     return;
   }
-  const t = data.totals_today || {};
-  const clientsSorted = (data.clients || []).slice().sort((a, b) => (b.today?.spend || 0) - (a.today?.spend || 0));
+  SHORT = SHORT_MAP[data.period?.selected] || 'período';
+  const plabel = data.period?.label || 'Hoje';
+  $('#period-active').textContent = '📊 ' + plabel;
+  const t = data.totals || {};
+  const clientsSorted = (data.clients || []).slice().sort((a, b) => (b.metrics?.spend || 0) - (a.metrics?.spend || 0));
 
   const totals = `<div class="totals">
-    <div class="total-card hero"><div class="total-label">Gasto hoje · total</div>
+    <div class="total-card hero"><div class="total-label">Gasto · ${esc(plabel)}</div>
       <div class="total-value amber mono">${brl(t.spend)}</div>
       <div class="total-sub">${data.clients_count || 0} contas monitoradas</div></div>
-    <div class="total-card"><div class="total-label">Retorno hoje</div>
+    <div class="total-card"><div class="total-label">Retorno · ${SHORT}</div>
       <div class="total-value green mono">${brl(t.revenue)}</div>
       <div class="total-sub">${num(t.purchases)} compras</div></div>
-    <div class="total-card"><div class="total-label">ROAS médio hoje</div>
+    <div class="total-card"><div class="total-label">ROAS médio · ${SHORT}</div>
       <div class="total-value mono ${t.roas >= 2 ? 'green' : ''}">${t.roas ? t.roas.toFixed(2).replace('.',',')+'×' : '—'}</div>
       <div class="total-sub">retorno ÷ gasto</div></div>
-    <div class="total-card"><div class="total-label">Impressões hoje</div>
+    <div class="total-card"><div class="total-label">Impressões · ${SHORT}</div>
       <div class="total-value mono">${num(t.impressions)}</div>
       <div class="total-sub">alcance pago</div></div>
     <div class="total-card"><div class="total-label">Campanhas ativas</div>
@@ -290,7 +320,10 @@ async function reload(force = false) {
   pu.textContent = '⏳ Atualizando…';
   pu.className = 'pill warn';
   try {
-    const r = await fetch(location.origin + '/api/admin/monitor' + (force ? '?force=1' : ''));
+    let url = location.origin + '/api/admin/monitor?period=' + PERIOD;
+    if (PERIOD === 'custom' && SINCE && UNTIL) url += `&since=${SINCE}&until=${UNTIL}`;
+    if (force) url += '&force=1';
+    const r = await fetch(url);
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const data = await r.json();
     render(data);
@@ -303,6 +336,29 @@ async function reload(force = false) {
   }
   startCountdown();
 }
+
+// Seletor de período
+function setPeriod(p) {
+  PERIOD = p;
+  document.querySelectorAll('.pbtn').forEach(b => b.classList.toggle('active', b.dataset.p === p));
+  $('#custom-range').style.display = p === 'custom' ? 'inline-flex' : 'none';
+  if (p !== 'custom') reload();
+}
+document.querySelectorAll('.pbtn').forEach(b => b.onclick = () => setPeriod(b.dataset.p));
+$('#apply-custom').onclick = () => {
+  const s = $('#since').value, u = $('#until').value;
+  if (!s || !u) { $('#pill-updated').textContent = '⚠ escolha as 2 datas'; $('#pill-updated').className = 'pill warn'; return; }
+  if (s > u) { $('#pill-updated').textContent = '⚠ data inicial > final'; $('#pill-updated').className = 'pill warn'; return; }
+  SINCE = s; UNTIL = u; reload();
+};
+// prefill datas custom (últimos 7 dias)
+(function () {
+  const p = n => String(n).padStart(2, '0');
+  const fmt = x => `${x.getFullYear()}-${p(x.getMonth() + 1)}-${p(x.getDate())}`;
+  const now = new Date();
+  $('#until').value = fmt(now);
+  $('#since').value = fmt(new Date(now.getTime() - 6 * 86400000));
+})();
 
 reload();
 setInterval(() => reload(false), REFRESH_MS);
