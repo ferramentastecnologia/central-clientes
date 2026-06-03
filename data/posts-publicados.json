@@ -1,0 +1,21 @@
+{
+  "_doc": "Posts publicados manualmente pela agência (registro/portfólio). Aparecem na seção 'Posts Publicados' de /agendamentos.html. Adicione no topo do array (mais recente primeiro).",
+  "updated_at": "2026-06-03T13:40:12Z",
+  "posts": [
+    {
+      "id": "academia-aniversario-13anos",
+      "client": "Academia São Pedro",
+      "client_slug": "academia",
+      "agencia": "Starken",
+      "ig_username": "academiasaopedro",
+      "title": "🏆 13 Anos de História",
+      "published_iso": "2026-06-03T13:40:12Z",
+      "image_url": "https://central.starkentecnologia.com.br/academia/assets/aniv-13anos-v2.jpg",
+      "caption": "🏆 13 ANOS DE HISTÓRIA. 13 ANOS MAIS FORTE.\n\nEm 2013, nasceu mais do que uma academia. Nasceu um lugar de transformação, de superação, de fé e de muita dedicação.\nAo longo desses 13 anos, vimos corpos se transformarem, limites serem quebrados e vidas mudarem dentro e fora das quatro paredes da São Pedro.\nCada repetição, cada gota de suor, cada conquista tem um nome: você, nosso aluno, nossa família.\n\nEsse aniversário não é nosso, é de todos que escolheram treinar aqui, confiar no processo e fazer parte dessa jornada.\nObrigado a cada aluno, parceiro e amigo que caminhou com a gente até aqui. Vocês são o motivo de tudo isso.\n\n13 anos provando o que sempre soubemos:\nNosso santo é mais forte. 💛🖤\nE ainda tem muito mais por vir. Sigamos juntos! 💪\n\n#NossoSantoÉMaisForte #13AnosSãoPedro #AcademiaSãoPedro #Aniversário #Academia #Musculação #Gratidão",
+      "channels": {
+        "instagram": "https://www.instagram.com/p/DZIDc8bFXqq/",
+        "facebook": "https://www.facebook.com/1475659327905324/posts/1527642719373651"
+      }
+    }
+  ]
+}

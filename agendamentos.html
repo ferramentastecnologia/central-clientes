@@ -621,6 +621,40 @@ function renderEmptyClientCard(client) {
   `;
 }
 
+function renderPublishedCard(p) {
+  const ig = p.channels && p.channels.instagram;
+  const fb = p.channels && p.channels.facebook;
+  return `
+    <div class="card">
+      <div class="card-top">
+        <div>
+          <div class="card-client">${escape(p.client)}</div>
+          <div class="card-handle">${p.ig_username ? '@' + p.ig_username : ''}</div>
+        </div>
+        ${agencyBadge(p.agencia)}
+      </div>
+      ${p.image_url ? `<img class="card-image" src="${escape(p.image_url)}" alt="post" loading="lazy">` : ''}
+      <div class="card-body">
+        <div class="countdown-box published">
+          <div class="countdown-label">Publicado em</div>
+          <div class="countdown-time" style="font-size:15px">${fmtBRT(p.published_iso)} BRT</div>
+        </div>
+        ${p.title ? `<div style="font-weight:700;margin:2px 0 6px;font-size:14px">${escape(p.title)}</div>` : ''}
+        <div class="caption collapsed" id="cap-${p.id}">${escape(p.caption)}</div>
+        <button class="caption-toggle" onclick="toggleCaption('${p.id}', this)">Ver copy completa ↓</button>
+        <div class="card-actions">
+          ${ig ? `<a class="btn btn-ghost" style="font-size:12px;padding:7px 12px;" href="${escape(ig)}" target="_blank">Ver no Instagram ↗</a>` : ''}
+          ${fb ? `<a class="btn btn-ghost" style="font-size:12px;padding:7px 12px;" href="${escape(fb)}" target="_blank">Ver no Facebook ↗</a>` : ''}
+        </div>
+        <div class="card-actions" style="margin-top:8px">
+          ${ig ? '<span class="channel-tag ig-tag">📸 Instagram</span>' : ''}
+          ${fb ? '<span class="channel-tag fb-tag">📘 Facebook</span>' : ''}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
 function renderCron(cron) {
   const isCompleted = cron.status === 'completed';
   let countdownHtml = '';
@@ -733,6 +767,20 @@ function render() {
     html += '<div class="empty-state">Nenhum post agendado no momento</div>';
   }
   html += '</div>';
+
+  // Seção: Posts Publicados (curados — data/posts-publicados.json)
+  const publicados = (data.posts_publicados || []).filter(p => currentFilter === 'all' || p.agencia === currentFilter);
+  if (publicados.length > 0) {
+    html += '<div class="section">';
+    html += `<div class="section-header">
+      <div class="section-title">🚀 Posts Publicados</div>
+      <div class="section-count">${publicados.length} post${publicados.length!==1?'s':''}</div>
+    </div>`;
+    html += '<div class="grid">';
+    publicados.forEach(p => { html += renderPublishedCard(p); });
+    html += '</div>';
+    html += '</div>';
+  }
 
   // Seção: Posts antigos (se toggle ativo)
   if (showOld && pastPosts.length > 0) {
