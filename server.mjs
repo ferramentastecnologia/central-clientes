@@ -78,6 +78,24 @@ const MONITOR_TTL_MS = 60_000;
 let galeriaCache = { data: null, ts: 0 };
 const GALERIA_TTL_MS = 600_000; // 10 min — posts mudam pouco; protege contra rate limit
 
+// Page tokens são estáveis — cachear evita refazer essa chamada a cada request
+// (reduz muito a pressão no rate limit do app: galeria + agendamentos).
+const pageTokenCache = new Map(); // pageId -> { token, ts }
+const PAGE_TOKEN_TTL_MS = 3_600_000; // 1h
+async function getPageToken(pageId, userToken) {
+  const cached = pageTokenCache.get(pageId);
+  if (cached && (Date.now() - cached.ts) < PAGE_TOKEN_TTL_MS) return cached.token;
+  try {
+    const r = await fetch(`https://graph.facebook.com/v23.0/${pageId}?fields=access_token&access_token=${userToken}`);
+    const j = await r.json();
+    if (j.access_token) {
+      pageTokenCache.set(pageId, { token: j.access_token, ts: Date.now() });
+      return j.access_token;
+    }
+    return { error: j.error || { message: 'sem access_token' } };
+  } catch (e) { return { error: { message: e.message } }; }
+}
+
 // ──────────────────────────────────────────────────────────────────────────────
 // BASIC AUTH (área admin)
 // ──────────────────────────────────────────────────────────────────────────────
@@ -358,12 +376,9 @@ async function fetchAgendamentos() {
 
   const clientPromises = mapping.clients.map(async (client) => {
     try {
-      const tokenUrl = `https://graph.facebook.com/v23.0/${client.page_id}?fields=access_token&access_token=${token}`;
-      const tokenRes = await fetch(tokenUrl);
-      const tokenData = await tokenRes.json();
-      const pageToken = tokenData.access_token;
-      if (!pageToken) {
-        return { ...client, fb_scheduled_posts: [], error: tokenData.error?.message || 'Page access token não disponível' };
+      const pageToken = await getPageToken(client.page_id, token);
+      if (typeof pageToken !== 'string') {
+        return { ...client, fb_scheduled_posts: [], error: pageToken?.error?.message || 'Page access token não disponível' };
       }
 
       const url = `https://graph.facebook.com/v23.0/${client.page_id}/scheduled_posts?fields=id,scheduled_publish_time,is_published,attachments,created_time,full_picture,permalink_url&access_token=${pageToken}`;
@@ -657,15 +672,17 @@ async function fetchPostsGaleria() {
       } catch (e) { error = 'IG: ' + e.message; }
     }
 
-    // Facebook — posts publicados (best-effort; tolera rate limit)
+    // Facebook — posts publicados (best-effort; usa page token cacheado)
+    let fb_note = null;
+    const rateLimited = (err) => err && (err.code === 4 || /request limit/i.test(err.message || ''));
     if (c.page_id) {
-      try {
-        const ptR = await fetch(`https://graph.facebook.com/v23.0/${c.page_id}?fields=access_token&access_token=${token}`);
-        const pt = await ptR.json();
-        if (pt.access_token) {
-          const r = await fetch(`https://graph.facebook.com/v23.0/${c.page_id}/published_posts?fields=id,message,created_time,permalink_url,full_picture&limit=8&access_token=${pt.access_token}`);
+      const pToken = await getPageToken(c.page_id, token);
+      if (typeof pToken === 'string') {
+        try {
+          const r = await fetch(`https://graph.facebook.com/v23.0/${c.page_id}/published_posts?fields=id,message,created_time,permalink_url,full_picture&limit=8&access_token=${pToken}`);
           const j = await r.json();
-          if (!j.error) (j.data || []).forEach(p => posts.push({
+          if (j.error) fb_note = rateLimited(j.error) ? 'Facebook no limite de chamadas — volta sozinho em ~1h' : 'FB: ' + j.error.message;
+          else (j.data || []).forEach(p => posts.push({
             source: 'facebook',
             id: p.id,
             type: p.full_picture ? 'IMAGE' : 'STATUS',
@@ -676,8 +693,10 @@ async function fetchPostsGaleria() {
             likes: null,
             comments: null,
           }));
-        }
-      } catch { /* FB best-effort */ }
+        } catch (e) { fb_note = 'FB: ' + e.message; }
+      } else if (pToken && pToken.error) {
+        fb_note = rateLimited(pToken.error) ? 'Facebook no limite de chamadas — volta sozinho em ~1h' : 'FB: ' + pToken.error.message;
+      }
     }
 
     posts.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
@@ -689,6 +708,7 @@ async function fetchPostsGaleria() {
       posts,
       total: posts.length,
       error,
+      fb_note,
     };
   }));
 

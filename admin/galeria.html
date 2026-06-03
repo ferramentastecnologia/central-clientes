@@ -74,6 +74,8 @@
   .loading { text-align: center; color: var(--text-2); padding: 70px 20px; font-size: 14px; }
   .err-banner { background: rgba(248,113,113,.10); border: 1px solid rgba(248,113,113,.3); color: var(--err); padding: 14px 18px; border-radius: 12px; margin-bottom: 20px; font-size: 13px; }
   .client-err { font-size: 11px; color: var(--warn); margin-top: 8px; }
+  .fb-note { font-size: 11px; color: var(--text-3); margin-top: 10px; display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; background: rgba(24,119,242,.08); border: 1px solid rgba(24,119,242,.2); border-radius: 8px; }
+  .info-banner { background: rgba(96,165,250,.08); border: 1px solid rgba(96,165,250,.25); color: var(--text-1); padding: 11px 16px; border-radius: 10px; margin-bottom: 18px; font-size: 12.5px; }
   .empty { color: var(--text-3); font-size: 13px; padding: 20px; }
 </style>
 </head>
@@ -139,6 +141,7 @@ function clientBlock(c) {
     </div>
     ${c.posts.length ? `<div class="grid">${c.posts.map(postCard).join('')}</div>` : '<div class="empty">Nenhum post retornado.</div>'}
     ${c.error ? `<div class="client-err">⚠ ${esc(c.error)}</div>` : ''}
+    ${c.fb_note ? `<div class="fb-note">📘 ${esc(c.fb_note)}</div>` : ''}
   </div>`;
 }
 
@@ -154,8 +157,12 @@ function render() {
   if (!DATA) return;
   if (DATA.error) { $('#root').innerHTML = `<div class="err-banner">⚠ ${esc(DATA.error)}</div>`; return; }
   renderTabs();
-  const cs = (DATA.clients || []).filter(c => (filter === 'all' || c.slug === filter) && (c.posts.length || c.error));
-  $('#root').innerHTML = cs.length ? cs.map(clientBlock).join('') : '<div class="empty">Sem posts.</div>';
+  const cs = (DATA.clients || []).filter(c => (filter === 'all' || c.slug === filter) && (c.posts.length || c.error || c.fb_note));
+  const anyFbLimit = (DATA.clients || []).some(c => /limite de chamadas/i.test(c.fb_note || ''));
+  const banner = anyFbLimit
+    ? '<div class="info-banner">📘 O <b>Facebook</b> está temporariamente no <b>limite de chamadas da Meta</b> (muitas requisições recentes). Os posts do FB voltam sozinhos em ~1h. O <b>Instagram</b> está normal.</div>'
+    : '';
+  $('#root').innerHTML = banner + (cs.length ? cs.map(clientBlock).join('') : '<div class="empty">Sem posts.</div>');
 }
 
 async function reload(force = false) {
