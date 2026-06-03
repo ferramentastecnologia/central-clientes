@@ -82,11 +82,14 @@ const GALERIA_TTL_MS = 600_000; // 10 min — posts mudam pouco; protege contra 
 // (reduz muito a pressão no rate limit do app: galeria + agendamentos).
 const pageTokenCache = new Map(); // pageId -> { token, ts }
 const PAGE_TOKEN_TTL_MS = 3_600_000; // 1h
+let lastAppUsage = null; // X-App-Usage mais recente (% de uso do limite do app)
 async function getPageToken(pageId, userToken) {
   const cached = pageTokenCache.get(pageId);
   if (cached && (Date.now() - cached.ts) < PAGE_TOKEN_TTL_MS) return cached.token;
   try {
     const r = await fetch(`https://graph.facebook.com/v23.0/${pageId}?fields=access_token&access_token=${userToken}`);
+    const usage = r.headers.get('x-app-usage');
+    if (usage) { try { lastAppUsage = { ...JSON.parse(usage), at: new Date().toISOString() }; } catch {} }
     const j = await r.json();
     if (j.access_token) {
       pageTokenCache.set(pageId, { token: j.access_token, ts: Date.now() });
@@ -707,7 +710,7 @@ async function fetchPostsGaleria() {
         try {
           const r = await fetch(`https://graph.facebook.com/v23.0/${c.page_id}/published_posts?fields=id,message,created_time,permalink_url,full_picture&limit=8&access_token=${pToken}`);
           const j = await r.json();
-          if (j.error) fb_note = rateLimited(j.error) ? 'Facebook no limite de chamadas — volta sozinho em ~1h' : 'FB: ' + j.error.message;
+          if (j.error) fb_note = rateLimited(j.error) ? 'Facebook no limite de chamadas da Meta' : 'FB: ' + j.error.message;
           else (j.data || []).forEach(p => posts.push({
             source: 'facebook',
             id: p.id,
@@ -721,7 +724,7 @@ async function fetchPostsGaleria() {
           }));
         } catch (e) { fb_note = 'FB: ' + e.message; }
       } else if (pToken && pToken.error) {
-        fb_note = rateLimited(pToken.error) ? 'Facebook no limite de chamadas — volta sozinho em ~1h' : 'FB: ' + pToken.error.message;
+        fb_note = rateLimited(pToken.error) ? 'Facebook no limite de chamadas da Meta' : 'FB: ' + pToken.error.message;
       }
     }
 
@@ -738,7 +741,12 @@ async function fetchPostsGaleria() {
     };
   }));
 
-  const result = { updated_at: new Date().toISOString(), clients };
+  const result = {
+    updated_at: new Date().toISOString(),
+    app_usage: lastAppUsage,
+    galeria_ttl_min: Math.round(GALERIA_TTL_MS / 60000),
+    clients,
+  };
   galeriaCache = { data: result, ts: now };
   return result;
 }

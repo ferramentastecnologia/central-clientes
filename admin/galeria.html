@@ -159,9 +159,19 @@ function render() {
   renderTabs();
   const cs = (DATA.clients || []).filter(c => (filter === 'all' || c.slug === filter) && (c.posts.length || c.error || c.fb_note));
   const anyFbLimit = (DATA.clients || []).some(c => /limite de chamadas/i.test(c.fb_note || ''));
-  const banner = anyFbLimit
-    ? '<div class="info-banner">📘 O <b>Facebook</b> está temporariamente no <b>limite de chamadas da Meta</b> (muitas requisições recentes). Os posts do FB voltam sozinhos em ~1h. O <b>Instagram</b> está normal.</div>'
-    : '';
+  let banner = '';
+  if (anyFbLimit) {
+    const u = DATA.app_usage || {};
+    const cc = u.call_count != null ? u.call_count : null;
+    const tt = u.total_time != null ? u.total_time : null;
+    const over = cc != null && cc >= 100;
+    const usageTxt = cc != null
+      ? `Uso do app: <b style="color:${over ? 'var(--err)' : 'var(--ok)'}">chamadas ${cc}%</b>${tt != null ? ` · tempo ${tt}%` : ''} — o FB libera quando cair <b>abaixo de 100%</b>.`
+      : '';
+    const fetched = DATA.updated_at ? new Date(DATA.updated_at).toLocaleTimeString('pt-BR') : '';
+    banner = `<div class="info-banner">📘 <b>Facebook no limite de chamadas da Meta.</b> ${usageTxt}<br>
+      <span style="color:var(--text-3)">A Meta não informa horário exato de reset (janela móvel de ~1h) — acompanhe a % acima. Instagram segue normal · dados de ${fetched} · clique <b>↻ Atualizar</b> pra tentar de novo.</span></div>`;
+  }
   $('#root').innerHTML = banner + (cs.length ? cs.map(clientBlock).join('') : '<div class="empty">Sem posts.</div>');
 }
 
