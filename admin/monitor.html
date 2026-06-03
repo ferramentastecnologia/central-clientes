@@ -157,7 +157,7 @@
 
 <script>
 const $ = (s, r=document) => r.querySelector(s);
-const REFRESH_MS = 60_000;
+const REFRESH_MS = 1_800_000; // 30 min
 
 const brl = (n) => (n == null ? '—' : new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(n));
 const num = (n) => (n == null ? '—' : new Intl.NumberFormat('pt-BR').format(n));
@@ -269,15 +269,19 @@ function render(data) {
   $('#root').innerHTML = totals + cards + pending;
 }
 
-let countdownTimer = null, secs = 60;
+let countdownTimer = null, secs = 0;
+function fmtSecs(s) {
+  const m = Math.floor(s / 60), r = s % 60;
+  return m > 0 ? `${m}m ${String(r).padStart(2, '0')}s` : `${r}s`;
+}
 function startCountdown() {
   clearInterval(countdownTimer);
   secs = REFRESH_MS / 1000;
-  $('#pill-countdown').textContent = `↻ ${secs}s`;
+  $('#pill-countdown').textContent = `↻ ${fmtSecs(secs)}`;
   countdownTimer = setInterval(() => {
     secs--;
     if (secs <= 0) secs = REFRESH_MS / 1000;
-    $('#pill-countdown').textContent = `↻ ${secs}s`;
+    $('#pill-countdown').textContent = `↻ ${fmtSecs(secs)}`;
   }, 1000);
 }
 

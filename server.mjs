@@ -74,7 +74,7 @@ let renovacaoCache = { data: null, ts: 0 };
 let adminCache = { data: null, ts: 0 };
 let clientsCache = { data: null, ts: 0 };
 let monitorCache = { data: null, ts: 0 };
-const MONITOR_TTL_MS = 60_000;
+const MONITOR_TTL_MS = 1_800_000; // 30 min — alivia o rate limit do app
 let galeriaCache = { data: null, ts: 0 };
 const GALERIA_TTL_MS = 600_000; // 10 min — posts mudam pouco; protege contra rate limit
 
