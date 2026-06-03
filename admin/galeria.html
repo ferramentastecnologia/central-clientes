@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Galeria de Posts · Clientes · Starken</title>
+<style>
+  :root {
+    --bg-0: #0a0e1a; --bg-1: #131b2e; --bg-2: #1a2440; --bg-3: #243154;
+    --text-0: #f8fafc; --text-1: #cbd5e1; --text-2: #94a3b8; --text-3: #64748b;
+    --accent: #fbbf24; --ok: #4ade80; --warn: #fbbf24; --err: #f87171; --info: #60a5fa;
+    --border: rgba(255, 255, 255, 0.08);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { background: var(--bg-0); }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: linear-gradient(180deg, var(--bg-0) 0%, var(--bg-1) 100%);
+    color: var(--text-0); min-height: 100vh; padding: 24px 32px 60px;
+  }
+  a { color: var(--info); text-decoration: none; }
+
+  .topnav {
+    display: flex; align-items: center; gap: 18px; padding: 14px 22px;
+    background: rgba(19, 27, 46, 0.85); backdrop-filter: blur(8px);
+    border: 1px solid var(--border); border-radius: 16px; margin-bottom: 22px;
+    flex-wrap: wrap; position: sticky; top: 12px; z-index: 100;
+  }
+  .brand { font-weight: 800; font-size: 18px; background: linear-gradient(90deg, var(--accent), #f59e0b); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; white-space: nowrap; }
+  .brand-sub { color: var(--text-3); font-size: 12px; font-weight: 500; margin-left: -8px; }
+  .nav-links { display: flex; gap: 6px; flex-wrap: wrap; margin-left: 6px; }
+  .nav-links a { padding: 6px 12px; border-radius: 8px; color: var(--text-1); font-size: 13px; font-weight: 500; }
+  .nav-links a:hover { background: rgba(255,255,255,0.05); color: var(--text-0); text-decoration: none; }
+  .topnav-right { margin-left: auto; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .pill { padding: 6px 12px; border-radius: 999px; background: rgba(255,255,255,0.05); border: 1px solid var(--border); font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+  .pill.ok { background: rgba(74, 222, 128, 0.12); border-color: rgba(74, 222, 128, 0.35); color: var(--ok); }
+  .pill.warn { background: rgba(251, 191, 36, 0.12); border-color: rgba(251, 191, 36, 0.35); color: var(--warn); }
+  .pill.err { background: rgba(248, 113, 113, 0.12); border-color: rgba(248, 113, 113, 0.35); color: var(--err); }
+  .btn { padding: 8px 16px; border-radius: 10px; background: rgba(255,255,255,0.06); border: 1px solid var(--border); color: white; cursor: pointer; font-weight: 600; font-size: 12px; }
+  .btn:hover { opacity: 0.85; }
+
+  .tabs { display: flex; gap: 6px; margin-bottom: 22px; flex-wrap: wrap; }
+  .tab { padding: 8px 14px; border: 1px solid var(--border); background: var(--bg-1); color: var(--text-2); font-size: 13px; font-weight: 600; border-radius: 999px; cursor: pointer; }
+  .tab.active { background: var(--accent); color: #1a0f08; border-color: var(--accent); }
+  .tab .n { opacity: .7; margin-left: 5px; font-size: 11px; }
+
+  .client-block { margin-bottom: 34px; }
+  .client-head { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+  .client-name { font-weight: 800; font-size: 17px; }
+  .client-handle { font-size: 12px; color: var(--text-3); }
+  .badge { font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 999px; }
+  .badge-starken { background: rgba(248, 113, 113, 0.15); color: var(--err); }
+  .badge-other { background: rgba(148, 163, 184, 0.15); color: var(--text-2); }
+  .client-count { margin-left: auto; font-size: 12px; color: var(--text-3); }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
+  .post { position: relative; aspect-ratio: 1/1; border-radius: 10px; overflow: hidden; background: var(--bg-2); display: block; border: 1px solid var(--border); }
+  .post img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .2s; }
+  .post:hover img { transform: scale(1.06); }
+  .post-noimg { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: var(--text-3); font-size: 11px; text-align: center; padding: 8px; }
+  .post-type { position: absolute; top: 6px; right: 6px; font-size: 13px; filter: drop-shadow(0 1px 2px rgba(0,0,0,.7)); }
+  .post-src { position: absolute; top: 6px; left: 6px; font-size: 11px; padding: 2px 6px; border-radius: 6px; font-weight: 700; }
+  .post-src.ig { background: linear-gradient(45deg, #fdc832, #ee2a7b, #6228d7); color: #fff; }
+  .post-src.fb { background: #1877f2; color: #fff; }
+  .post-overlay {
+    position: absolute; inset: 0; background: linear-gradient(180deg, transparent 45%, rgba(0,0,0,.82) 100%);
+    opacity: 0; transition: opacity .15s; display: flex; flex-direction: column; justify-content: flex-end; padding: 8px 9px; gap: 3px;
+  }
+  .post:hover .post-overlay { opacity: 1; }
+  .post-date { font-size: 11px; color: #fff; font-weight: 600; }
+  .post-stats { font-size: 11px; color: var(--text-1); }
+  .post-cap { font-size: 10px; color: var(--text-2); line-height: 1.3; max-height: 39px; overflow: hidden; }
+
+  .loading { text-align: center; color: var(--text-2); padding: 70px 20px; font-size: 14px; }
+  .err-banner { background: rgba(248,113,113,.10); border: 1px solid rgba(248,113,113,.3); color: var(--err); padding: 14px 18px; border-radius: 12px; margin-bottom: 20px; font-size: 13px; }
+  .client-err { font-size: 11px; color: var(--warn); margin-top: 8px; }
+  .empty { color: var(--text-3); font-size: 13px; padding: 20px; }
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div>
+    <span class="brand">🖼️ Galeria de Posts</span>
+    <span class="brand-sub"> · publicados por cliente</span>
+  </div>
+  <div class="nav-links">
+    <a href="/admin/">🛡️ Admin</a>
+    <a href="/admin/monitor.html">📡 Monitor</a>
+    <a href="/agendamentos.html">📅 Agendamentos</a>
+  </div>
+  <div class="topnav-right">
+    <span class="pill" id="pill-updated">⏳ Carregando…</span>
+    <button class="btn" onclick="reload(true)">↻ Atualizar</button>
+  </div>
+</nav>
+
+<div class="tabs" id="tabs"></div>
+<div id="root"><div class="loading">Buscando posts publicados de todos os clientes…</div></div>
+
+<script>
+const $ = (s, r=document) => r.querySelector(s);
+let DATA = null, filter = 'all';
+
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
+const fmtDate = (iso) => new Date(iso).toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit' });
+const num = (n) => (n == null ? null : new Intl.NumberFormat('pt-BR').format(n));
+function typeIcon(t) { return t === 'VIDEO' ? '🎬' : t === 'CAROUSEL_ALBUM' ? '🖼️' : ''; }
+function agencyBadge(a) { return a === 'Starken' ? '<span class="badge badge-starken">⚡ Starken</span>' : `<span class="badge badge-other">${esc(a||'—')}</span>`; }
+
+function postCard(p) {
+  const stats = (p.likes != null || p.comments != null)
+    ? `<div class="post-stats">${p.likes != null ? '❤️ ' + num(p.likes) : ''}${p.comments != null ? ' · 💬 ' + num(p.comments) : ''}</div>` : '';
+  const media = p.thumb
+    ? `<img src="${esc(p.thumb)}" alt="post" loading="lazy" onerror="this.parentNode.classList.add('broken');this.remove();">`
+    : `<div class="post-noimg">sem prévia</div>`;
+  return `<a class="post" href="${esc(p.permalink || '#')}" target="_blank" title="${esc(p.caption || '')}">
+    ${media}
+    <span class="post-src ${p.source === 'instagram' ? 'ig' : 'fb'}">${p.source === 'instagram' ? 'IG' : 'FB'}</span>
+    ${typeIcon(p.type) ? `<span class="post-type">${typeIcon(p.type)}</span>` : ''}
+    <div class="post-overlay">
+      <div class="post-cap">${esc((p.caption || '').slice(0, 90))}</div>
+      <div class="post-date">${fmtDate(p.timestamp)}</div>
+      ${stats}
+    </div>
+  </a>`;
+}
+
+function clientBlock(c) {
+  if (!c.posts.length && !c.error) return '';
+  return `<div class="client-block" data-slug="${c.slug}">
+    <div class="client-head">
+      <div>
+        <div class="client-name">${esc(c.name)}</div>
+        <div class="client-handle">${c.ig_username ? '@' + esc(c.ig_username) : ''}</div>
+      </div>
+      ${agencyBadge(c.agencia)}
+      <span class="client-count">${c.total} post${c.total !== 1 ? 's' : ''}</span>
+    </div>
+    ${c.posts.length ? `<div class="grid">${c.posts.map(postCard).join('')}</div>` : '<div class="empty">Nenhum post retornado.</div>'}
+    ${c.error ? `<div class="client-err">⚠ ${esc(c.error)}</div>` : ''}
+  </div>`;
+}
+
+function renderTabs() {
+  const cs = (DATA.clients || []).filter(c => c.posts.length || c.error);
+  let html = `<button class="tab ${filter==='all'?'active':''}" data-f="all">Todos<span class="n">${cs.reduce((s,c)=>s+c.total,0)}</span></button>`;
+  html += cs.map(c => `<button class="tab ${filter===c.slug?'active':''}" data-f="${c.slug}">${esc(c.name)}<span class="n">${c.total}</span></button>`).join('');
+  $('#tabs').innerHTML = html;
+  document.querySelectorAll('.tab').forEach(t => t.onclick = () => { filter = t.dataset.f; render(); });
+}
+
+function render() {
+  if (!DATA) return;
+  if (DATA.error) { $('#root').innerHTML = `<div class="err-banner">⚠ ${esc(DATA.error)}</div>`; return; }
+  renderTabs();
+  const cs = (DATA.clients || []).filter(c => (filter === 'all' || c.slug === filter) && (c.posts.length || c.error));
+  $('#root').innerHTML = cs.length ? cs.map(clientBlock).join('') : '<div class="empty">Sem posts.</div>';
+}
+
+async function reload(force = false) {
+  const pu = $('#pill-updated'); pu.textContent = '⏳ Atualizando…'; pu.className = 'pill warn';
+  try {
+    const r = await fetch(location.origin + '/api/admin/posts' + (force ? '?force=1' : ''));
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    DATA = await r.json();
+    render();
+    pu.textContent = '✓ ' + new Date(DATA.updated_at).toLocaleTimeString('pt-BR'); pu.className = 'pill ok';
+  } catch (e) { pu.textContent = '✗ ' + e.message; pu.className = 'pill err'; }
+}
+
+reload();
+</script>
+</body>
+</html>

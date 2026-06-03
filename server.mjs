@@ -75,6 +75,8 @@ let adminCache = { data: null, ts: 0 };
 let clientsCache = { data: null, ts: 0 };
 let monitorCache = { data: null, ts: 0 };
 const MONITOR_TTL_MS = 60_000;
+let galeriaCache = { data: null, ts: 0 };
+const GALERIA_TTL_MS = 600_000; // 10 min — posts mudam pouco; protege contra rate limit
 
 // ──────────────────────────────────────────────────────────────────────────────
 // BASIC AUTH (área admin)
@@ -615,6 +617,87 @@ async function fetchMonitor() {
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
+// GALERIA — posts publicados (IG + FB) por cliente (admin only)
+// ──────────────────────────────────────────────────────────────────────────────
+async function fetchPostsGaleria() {
+  const now = Date.now();
+  if (galeriaCache.data && (now - galeriaCache.ts) < GALERIA_TTL_MS) return galeriaCache.data;
+
+  const token = await readToken();
+  if (!token) return { updated_at: new Date().toISOString(), error: 'token_not_found', clients: [] };
+
+  let mapping = { clients: [] };
+  try {
+    mapping = JSON.parse(await fs.readFile(path.join(__dirname, 'data', 'clients-mapping.json'), 'utf-8'));
+  } catch {
+    return { updated_at: new Date().toISOString(), error: 'mapping_missing', clients: [] };
+  }
+
+  const clients = await Promise.all(mapping.clients.map(async (c) => {
+    const posts = [];
+    let error = null;
+
+    // Instagram — posts publicados (feed)
+    if (c.ig_business_id) {
+      try {
+        const r = await fetch(`https://graph.facebook.com/v23.0/${c.ig_business_id}/media?fields=id,caption,media_type,media_url,thumbnail_url,permalink,timestamp,like_count,comments_count&limit=12&access_token=${token}`);
+        const j = await r.json();
+        if (j.error) error = 'IG: ' + j.error.message;
+        else (j.data || []).forEach(m => posts.push({
+          source: 'instagram',
+          id: m.id,
+          type: m.media_type,
+          thumb: m.media_type === 'VIDEO' ? (m.thumbnail_url || m.media_url || null) : (m.media_url || null),
+          permalink: m.permalink || null,
+          timestamp: m.timestamp,
+          caption: (m.caption || '').slice(0, 280),
+          likes: m.like_count ?? null,
+          comments: m.comments_count ?? null,
+        }));
+      } catch (e) { error = 'IG: ' + e.message; }
+    }
+
+    // Facebook — posts publicados (best-effort; tolera rate limit)
+    if (c.page_id) {
+      try {
+        const ptR = await fetch(`https://graph.facebook.com/v23.0/${c.page_id}?fields=access_token&access_token=${token}`);
+        const pt = await ptR.json();
+        if (pt.access_token) {
+          const r = await fetch(`https://graph.facebook.com/v23.0/${c.page_id}/published_posts?fields=id,message,created_time,permalink_url,full_picture&limit=8&access_token=${pt.access_token}`);
+          const j = await r.json();
+          if (!j.error) (j.data || []).forEach(p => posts.push({
+            source: 'facebook',
+            id: p.id,
+            type: p.full_picture ? 'IMAGE' : 'STATUS',
+            thumb: p.full_picture || null,
+            permalink: p.permalink_url || null,
+            timestamp: p.created_time,
+            caption: (p.message || '').slice(0, 280),
+            likes: null,
+            comments: null,
+          }));
+        }
+      } catch { /* FB best-effort */ }
+    }
+
+    posts.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    return {
+      slug: c.slug,
+      name: c.name,
+      agencia: c.agencia || null,
+      ig_username: c.ig_username || null,
+      posts,
+      total: posts.length,
+      error,
+    };
+  }));
+
+  const result = { updated_at: new Date().toISOString(), clients };
+  galeriaCache = { data: result, ts: now };
+  return result;
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
 // PÚBLICO — lista de clientes ativos sem dados financeiros (pra central pública)
 // ──────────────────────────────────────────────────────────────────────────────
 async function fetchPublicClients() {
@@ -758,6 +841,18 @@ const server = http.createServer(async (req, res) => {
       const force = req.url.includes('force=1');
       if (force) monitorCache = { data: null, ts: 0 };
       const data = await fetchMonitor();
+      res.writeHead(200, {
+        'Content-Type': 'application/json; charset=utf-8',
+        'Cache-Control': 'no-cache',
+      });
+      res.end(JSON.stringify(data, null, 2));
+      return;
+    }
+
+    if (req.url === '/api/admin/posts' || req.url.startsWith('/api/admin/posts?')) {
+      const force = req.url.includes('force=1');
+      if (force) galeriaCache = { data: null, ts: 0 };
+      const data = await fetchPostsGaleria();
       res.writeHead(200, {
         'Content-Type': 'application/json; charset=utf-8',
         'Cache-Control': 'no-cache',
