@@ -13,6 +13,7 @@ data/clients-mapping.json
 data/renovacao-mes.json
 data/client-aliases.json
 data/crons.json
+data/stories-publicados.json
 data/snapshot.json
 data/suprema.json
 data/*.local.json
