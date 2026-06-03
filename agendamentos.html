@@ -397,7 +397,7 @@
   /* CRON LIST */
   .cron-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
     gap: 14px;
   }
   .cron-card {
@@ -434,6 +434,30 @@
     color: var(--text-3);
     font-family: monospace;
   }
+  /* cron card com preview de imagem */
+  .cron-inner { display: flex; gap: 14px; align-items: stretch; }
+  .cron-thumb {
+    width: 104px; flex-shrink: 0; aspect-ratio: 9/16;
+    border-radius: 10px; overflow: hidden; background: var(--bg-0);
+    border: 1px solid var(--border); display: block; position: relative;
+    transition: transform .15s, border-color .15s;
+  }
+  .cron-thumb:hover { transform: scale(1.03); border-color: var(--accent); }
+  .cron-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .cron-thumb::after {
+    content: '🔍'; position: absolute; bottom: 5px; right: 5px;
+    font-size: 11px; background: rgba(0,0,0,.55); border-radius: 6px;
+    padding: 2px 5px; opacity: 0; transition: opacity .15s;
+  }
+  .cron-thumb:hover::after { opacity: 1; }
+  .cron-content { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 9px; }
+  .cron-when { font-size: 11px; color: var(--text-2); display: flex; align-items: center; gap: 5px; }
+  .cron-foot { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: auto; }
+  .cron-id { font-size: 10px; color: var(--text-3); font-family: monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .cron-status { font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 999px; white-space: nowrap; letter-spacing: .02em; }
+  .cron-status.pending { background: var(--accent-dim); color: var(--accent); }
+  .cron-status.soon { background: rgba(248,113,113,.15); color: var(--err); }
+  .cron-status.done { background: rgba(74,222,128,.12); color: var(--ok); }
 
   /* FOOTER */
   .footer {
@@ -670,23 +694,45 @@ function renderCron(cron) {
     countdownHtml = `<div class="cron-countdown" style="background:transparent;font-size:13px;color:var(--text-2);font-weight:500;">${cron.expression}</div>`;
   }
 
+  if (isCompleted) {
+    countdownHtml = `<div class="cron-countdown completed">✓ Publicado</div>`;
+  }
+
   const channelTag = cron.type === 'ig_publish' ? '<span class="channel-tag ig-tag">📸 Instagram</span>'
     : cron.type === 'campaign_monitor' ? '<span class="channel-tag monitor-tag">📊 Monitor</span>'
     : '<span class="channel-tag postmortem-tag">📋 Postmortem</span>';
 
+  const statusChip = isCompleted ? '<span class="cron-status done">✓ Publicado</span>'
+    : imminent ? '<span class="cron-status soon">🔴 Em instantes</span>'
+    : '<span class="cron-status pending">⏰ Agendado</span>';
+
+  const whenLabel = cron.next_fire_iso
+    ? `📅 ${fmtBRT(cron.next_fire_iso)} BRT`
+    : (cron.recurring ? `↻ ${cron.expression} (${cron.tz})` : '');
+
+  const thumb = cron.image_url
+    ? `<a class="cron-thumb" href="${escape(cron.image_url)}" target="_blank" title="Abrir criativo"><img src="${escape(cron.image_url)}" alt="preview" loading="lazy"></a>`
+    : '';
+
   return `
     <div class="cron-card ${isCompleted?'completed':''} ${imminent?'imminent':''}">
-      <div class="cron-top">
-        <div>
-          <div class="cron-client">${escape(cron.client)}</div>
-          <div class="cron-desc">${escape(cron.description)}</div>
+      <div class="cron-inner">
+        ${thumb}
+        <div class="cron-content">
+          <div class="cron-top">
+            <div>
+              <div class="cron-client">${escape(cron.client)}</div>
+              <div class="cron-desc">${escape(cron.description)}</div>
+            </div>
+            ${channelTag}
+          </div>
+          ${countdownHtml}
+          ${whenLabel ? `<div class="cron-when">${whenLabel}</div>` : ''}
+          <div class="cron-foot">
+            ${statusChip}
+            <span class="cron-id">${escape(cron.id)}${cron.session_dependent ? ' · Claude' : ' · VPS'}</span>
+          </div>
         </div>
-        ${channelTag}
-      </div>
-      ${countdownHtml}
-      <div class="cron-meta">
-        <span>${cron.id}</span>
-        <span>${cron.tz} ${cron.recurring ? '↻ Recorrente' : 'One-shot'}${cron.session_dependent?' · Claude': ''}</span>
       </div>
     </div>
   `;
