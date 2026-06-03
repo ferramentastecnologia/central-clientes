@@ -348,6 +348,12 @@ async function fetchAgendamentos() {
     publishedData = JSON.parse(pubRaw);
   } catch {}
 
+  let storiesData = { stories: [] };
+  try {
+    const stRaw = await fs.readFile(path.join(__dirname, 'data', 'stories-publicados.json'), 'utf-8');
+    storiesData = JSON.parse(stRaw);
+  } catch {}
+
   const clientPromises = mapping.clients.map(async (client) => {
     try {
       const tokenUrl = `https://graph.facebook.com/v23.0/${client.page_id}?fields=access_token&access_token=${token}`;
@@ -402,6 +408,7 @@ async function fetchAgendamentos() {
     clients,
     crons: cronsData.crons,
     posts_publicados: publishedData.posts || [],
+    stories_publicados: storiesData.stories || [],
   };
 
   cache = { data: result, ts: now };

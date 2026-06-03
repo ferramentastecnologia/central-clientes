@@ -459,6 +459,36 @@
   .cron-status.soon { background: rgba(248,113,113,.15); color: var(--err); }
   .cron-status.done { background: rgba(74,222,128,.12); color: var(--ok); }
 
+  /* STORIES PUBLICADOS */
+  .stories-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 16px;
+  }
+  .story-card { background: var(--bg-1); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; }
+  .story-card.live { border-color: rgba(74,222,128,.4); box-shadow: 0 0 0 1px rgba(74,222,128,.08); }
+  .story-media { position: relative; aspect-ratio: 9/16; background: var(--bg-0); display: block; }
+  .story-media img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .story-media::before {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(0,0,0,.35) 0%, transparent 22%, transparent 70%, rgba(0,0,0,.55) 100%);
+    pointer-events: none;
+  }
+  .story-badge {
+    position: absolute; top: 9px; left: 9px; z-index: 2;
+    font-size: 10px; font-weight: 800; padding: 4px 9px; border-radius: 999px;
+    display: inline-flex; align-items: center; gap: 5px; letter-spacing: .02em;
+  }
+  .story-badge.live { background: var(--ok); color: #06210f; }
+  .story-badge.live .pulse { width: 6px; height: 6px; border-radius: 999px; background: #06210f; animation: pulse 1.2s ease-in-out infinite; }
+  .story-badge.expired { background: rgba(15,23,42,.78); color: var(--text-2); border: 1px solid var(--border); }
+  .story-ch { position: absolute; top: 9px; right: 9px; z-index: 2; font-size: 13px; filter: drop-shadow(0 1px 2px rgba(0,0,0,.6)); }
+  .story-info { padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; }
+  .story-client { font-weight: 700; font-size: 13px; }
+  .story-title { font-size: 11px; color: var(--text-2); line-height: 1.35; }
+  .story-meta { font-size: 10.5px; color: var(--text-3); display: flex; align-items: center; gap: 4px; }
+  .story-meta.live-text { color: var(--ok); font-weight: 600; }
+
   /* FOOTER */
   .footer {
     text-align: center;
@@ -679,6 +709,39 @@ function renderPublishedCard(p) {
   `;
 }
 
+function renderStoryCard(s) {
+  const pub = new Date(s.published_iso).getTime();
+  const exp = pub + 24 * 3600 * 1000;
+  const now = Date.now();
+  const active = now < exp;
+  const remMs = exp - now;
+  const remH = Math.floor(remMs / 3600000);
+  const remM = Math.floor((remMs % 3600000) / 60000);
+  const badge = active
+    ? '<span class="story-badge live"><span class="pulse"></span>NO AR</span>'
+    : '<span class="story-badge expired">Expirado</span>';
+  const statusLine = active
+    ? `<div class="story-meta live-text">⏳ expira em ${remH}h ${remM}m</div>`
+    : `<div class="story-meta">⚪ expirou ${fmtBRT(new Date(exp).toISOString())}</div>`;
+  const media = s.image_url
+    ? `<a class="story-media" href="${escape(s.image_url)}" target="_blank" title="Abrir criativo">
+         <img src="${escape(s.image_url)}" alt="story" loading="lazy">
+         ${badge}<span class="story-ch">📸</span>
+       </a>`
+    : `<div class="story-media">${badge}</div>`;
+  return `
+    <div class="story-card ${active ? 'live' : ''}">
+      ${media}
+      <div class="story-info">
+        <div class="story-client">${escape(s.client)}</div>
+        ${s.title ? `<div class="story-title">${escape(s.title)}</div>` : ''}
+        <div class="story-meta">📅 ${fmtBRT(s.published_iso)} BRT</div>
+        ${statusLine}
+      </div>
+    </div>
+  `;
+}
+
 function renderCron(cron) {
   const isCompleted = cron.status === 'completed';
   let countdownHtml = '';
@@ -824,6 +887,24 @@ function render() {
     </div>`;
     html += '<div class="grid">';
     publicados.forEach(p => { html += renderPublishedCard(p); });
+    html += '</div>';
+    html += '</div>';
+  }
+
+  // Seção: Stories Publicados (curados — data/stories-publicados.json)
+  const stories = (data.stories_publicados || [])
+    .filter(s => currentFilter === 'all' || s.agencia === currentFilter)
+    .slice()
+    .sort((a, b) => new Date(b.published_iso) - new Date(a.published_iso));
+  if (stories.length > 0) {
+    const noAr = stories.filter(s => Date.now() < new Date(s.published_iso).getTime() + 24*3600*1000).length;
+    html += '<div class="section">';
+    html += `<div class="section-header">
+      <div class="section-title">📱 Stories Publicados</div>
+      <div class="section-count">${noAr} no ar · ${stories.length} total</div>
+    </div>`;
+    html += '<div class="stories-grid">';
+    stories.forEach(s => { html += renderStoryCard(s); });
     html += '</div>';
     html += '</div>';
   }
