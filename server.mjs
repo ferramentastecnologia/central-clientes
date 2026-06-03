@@ -73,6 +73,8 @@ let cache = { data: null, ts: 0 };
 let renovacaoCache = { data: null, ts: 0 };
 let adminCache = { data: null, ts: 0 };
 let clientsCache = { data: null, ts: 0 };
+let monitorCache = { data: null, ts: 0 };
+const MONITOR_TTL_MS = 60_000;
 
 // ──────────────────────────────────────────────────────────────────────────────
 // BASIC AUTH (área admin)
@@ -472,6 +474,133 @@ async function fetchRenovacao() {
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
+// MONITOR — campanhas ativas em tempo real (admin only)
+// ──────────────────────────────────────────────────────────────────────────────
+const AD_ACCOUNT_STATUS = {
+  1: 'ATIVA', 2: 'DESATIVADA', 3: 'NÃO LIQUIDADA', 7: 'EM REVISÃO DE RISCO',
+  8: 'PENDENTE', 9: 'PERÍODO DE GRAÇA', 100: 'PENDENTE FECHAMENTO', 101: 'FECHADA',
+  201: 'ATIVÁVEL', 202: 'FECHÁVEL',
+};
+
+function parseInsightRow(row) {
+  if (!row) return null;
+  const actions = row.actions || [];
+  const omni = actions.find(a => a.action_type === 'omni_purchase')
+            || actions.find(a => a.action_type === 'purchase');
+  const roasArr = row.purchase_roas || [];
+  const roasObj = roasArr.find(r => r.action_type === 'omni_purchase') || roasArr[0];
+  const spend = parseFloat(row.spend || 0);
+  const roas = parseFloat(roasObj?.value || 0);
+  return {
+    spend,
+    impressions: parseInt(row.impressions || 0),
+    clicks: parseInt(row.clicks || 0),
+    ctr: parseFloat(row.ctr || 0),
+    cpm: parseFloat(row.cpm || 0),
+    purchases: parseInt(omni?.value || 0),
+    roas,
+    revenue: +(spend * roas).toFixed(2),
+  };
+}
+
+async function fetchMonitor() {
+  const now = Date.now();
+  if (monitorCache.data && (now - monitorCache.ts) < MONITOR_TTL_MS) return monitorCache.data;
+
+  const token = await readToken();
+  if (!token) {
+    return { updated_at: new Date().toISOString(), error: 'token_not_found', message: 'Token não encontrado. Configure META_GRAPH_TOKEN.', clients: [], pending: [] };
+  }
+
+  let mapping = { clients: [] };
+  try {
+    mapping = JSON.parse(await fs.readFile(path.join(__dirname, 'data', 'clients-mapping.json'), 'utf-8'));
+  } catch {
+    return { updated_at: new Date().toISOString(), error: 'mapping_missing', clients: [], pending: [] };
+  }
+
+  const withAcct = mapping.clients.filter(c => c.ad_account_id);
+  const F = 'spend,impressions,clicks,ctr,cpm,actions,purchase_roas';
+
+  const clients = await Promise.all(withAcct.map(async (c) => {
+    const act = `act_${c.ad_account_id}`;
+    try {
+      const [todayR, weekR, campR, acctR] = await Promise.all([
+        fetch(`https://graph.facebook.com/v23.0/${act}/insights?fields=${F}&date_preset=today&access_token=${token}`),
+        fetch(`https://graph.facebook.com/v23.0/${act}/insights?fields=${F}&date_preset=last_7d&access_token=${token}`),
+        fetch(`https://graph.facebook.com/v23.0/${act}/campaigns?fields=name,status,effective_status,daily_budget,lifetime_budget,insights.date_preset(today){spend,impressions,clicks,ctr,actions,purchase_roas}&limit=80&access_token=${token}`),
+        fetch(`https://graph.facebook.com/v23.0/${act}?fields=name,account_status,balance,currency,amount_spent&access_token=${token}`),
+      ]);
+      const [today, week, camp, acct] = await Promise.all([todayR.json(), weekR.json(), campR.json(), acctR.json()]);
+
+      const campaigns = (camp.data || []).map(cp => ({
+        id: cp.id,
+        name: cp.name,
+        status: cp.status,
+        effective_status: cp.effective_status,
+        daily_budget_cents: cp.daily_budget ? parseInt(cp.daily_budget) : null,
+        lifetime_budget_cents: cp.lifetime_budget ? parseInt(cp.lifetime_budget) : null,
+        today: parseInsightRow(cp.insights?.data?.[0]),
+      }));
+      // ativos primeiro, depois por gasto do dia desc
+      campaigns.sort((a, b) => {
+        const aa = a.effective_status === 'ACTIVE' ? 1 : 0;
+        const bb = b.effective_status === 'ACTIVE' ? 1 : 0;
+        if (aa !== bb) return bb - aa;
+        return (b.today?.spend || 0) - (a.today?.spend || 0);
+      });
+      const activeCount = campaigns.filter(cp => cp.effective_status === 'ACTIVE').length;
+
+      return {
+        slug: c.slug,
+        name: c.name,
+        agencia: c.agencia || null,
+        ad_account_id: c.ad_account_id,
+        account: {
+          status_code: acct.account_status ?? null,
+          status_label: AD_ACCOUNT_STATUS[acct.account_status] || (acct.account_status != null ? `COD ${acct.account_status}` : '—'),
+          is_active: acct.account_status === 1,
+          currency: acct.currency || 'BRL',
+          balance_cents: acct.balance != null ? parseInt(acct.balance) : null,
+        },
+        today: parseInsightRow(today.data?.[0]),
+        last_7d: parseInsightRow(week.data?.[0]),
+        campaigns,
+        campaigns_total: campaigns.length,
+        active_count: activeCount,
+        paused_count: campaigns.length - activeCount,
+        error: today.error?.message || camp.error?.message || acct.error?.message || null,
+      };
+    } catch (e) {
+      return { slug: c.slug, name: c.name, ad_account_id: c.ad_account_id, error: e.message };
+    }
+  }));
+
+  const pending = mapping.clients
+    .filter(c => !c.ad_account_id)
+    .map(c => ({ slug: c.slug, name: c.name, pending: true }));
+
+  const totals = clients.reduce((a, c) => {
+    if (c.today) { a.spend += c.today.spend; a.revenue += c.today.revenue; a.purchases += c.today.purchases; a.impressions += c.today.impressions; }
+    a.active += c.active_count || 0;
+    return a;
+  }, { spend: 0, revenue: 0, purchases: 0, impressions: 0, active: 0 });
+  totals.spend = +totals.spend.toFixed(2);
+  totals.revenue = +totals.revenue.toFixed(2);
+  totals.roas = totals.spend > 0 ? +(totals.revenue / totals.spend).toFixed(2) : 0;
+
+  const result = {
+    updated_at: new Date().toISOString(),
+    totals_today: totals,
+    clients_count: clients.length,
+    clients,
+    pending,
+  };
+  monitorCache = { data: result, ts: now };
+  return result;
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
 // PÚBLICO — lista de clientes ativos sem dados financeiros (pra central pública)
 // ──────────────────────────────────────────────────────────────────────────────
 async function fetchPublicClients() {
@@ -611,6 +740,18 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
+    if (req.url === '/api/admin/monitor' || req.url.startsWith('/api/admin/monitor?')) {
+      const force = req.url.includes('force=1');
+      if (force) monitorCache = { data: null, ts: 0 };
+      const data = await fetchMonitor();
+      res.writeHead(200, {
+        'Content-Type': 'application/json; charset=utf-8',
+        'Cache-Control': 'no-cache',
+      });
+      res.end(JSON.stringify(data, null, 2));
+      return;
+    }
+
     const resolved = resolveFilePath(req.url);
     if (!resolved) {
       res.writeHead(403).end('Forbidden');
@@ -643,6 +784,7 @@ server.listen(PORT, () => {
   console.log(`   📅  http://localhost:${PORT}/agendamentos.html`);
   console.log(`   🔄  http://localhost:${PORT}/renovacao.html`);
   console.log(`   🛡️   http://localhost:${PORT}/admin/  ${ADMIN_USER ? '(Basic Auth ativo)' : '⚠ DESATIVADO — defina ADMIN_USER/ADMIN_PASS'}`);
+  console.log(`   📡  http://localhost:${PORT}/admin/monitor.html  (monitor de campanhas ao vivo)`);
   console.log(`   🔌  http://localhost:${PORT}/api/clients (público)`);
   console.log(`   🔌  http://localhost:${PORT}/api/agendamentos`);
   console.log(`   🔌  http://localhost:${PORT}/api/renovacao`);

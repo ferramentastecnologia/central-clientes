@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Monitor ao Vivo · Campanhas · Starken</title>
+<style>
+  :root {
+    --bg-0: #0a0e1a;
+    --bg-1: #131b2e;
+    --bg-2: #1a2440;
+    --bg-3: #243154;
+    --text-0: #f8fafc;
+    --text-1: #cbd5e1;
+    --text-2: #94a3b8;
+    --text-3: #64748b;
+    --accent: #fbbf24;
+    --ok: #4ade80;
+    --warn: #fbbf24;
+    --err: #f87171;
+    --info: #60a5fa;
+    --purple: #a78bfa;
+    --border: rgba(255, 255, 255, 0.08);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { background: var(--bg-0); }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: linear-gradient(180deg, var(--bg-0) 0%, var(--bg-1) 100%);
+    color: var(--text-0);
+    min-height: 100vh;
+    padding: 24px 32px 60px;
+  }
+  a { color: var(--info); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .mono { font-variant-numeric: tabular-nums; font-feature-settings: 'tnum'; }
+
+  /* TOPNAV */
+  .topnav {
+    display: flex; align-items: center; gap: 18px;
+    padding: 14px 22px; background: rgba(19, 27, 46, 0.85);
+    backdrop-filter: blur(8px); border: 1px solid var(--border);
+    border-radius: 16px; margin-bottom: 22px; flex-wrap: wrap;
+    position: sticky; top: 12px; z-index: 100;
+  }
+  .brand {
+    font-weight: 800; font-size: 18px;
+    background: linear-gradient(90deg, var(--accent), #f59e0b);
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent; white-space: nowrap;
+  }
+  .brand-sub { color: var(--text-3); font-size: 12px; font-weight: 500; margin-left: -8px; }
+  .nav-links { display: flex; gap: 6px; flex-wrap: wrap; margin-left: 6px; }
+  .nav-links a { padding: 6px 12px; border-radius: 8px; color: var(--text-1); font-size: 13px; font-weight: 500; transition: all 0.15s; }
+  .nav-links a:hover { background: rgba(255,255,255,0.05); color: var(--text-0); text-decoration: none; }
+  .topnav-right { margin-left: auto; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+  .pill {
+    padding: 6px 12px; border-radius: 999px; background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border); font-size: 12px; font-weight: 600;
+    display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
+  }
+  .pill.ok { background: rgba(74, 222, 128, 0.12); border-color: rgba(74, 222, 128, 0.35); color: var(--ok); }
+  .pill.warn { background: rgba(251, 191, 36, 0.12); border-color: rgba(251, 191, 36, 0.35); color: var(--warn); }
+  .pill.err { background: rgba(248, 113, 113, 0.12); border-color: rgba(248, 113, 113, 0.35); color: var(--err); }
+  .pill.info { background: rgba(96, 165, 250, 0.12); border-color: rgba(96, 165, 250, 0.35); color: var(--info); }
+  .pill .dot { width: 7px; height: 7px; border-radius: 999px; background: currentColor; box-shadow: 0 0 8px currentColor; }
+  .pill.live .dot { animation: pulse 1.4s ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: .35; transform: scale(.7); } }
+
+  .btn { padding: 8px 16px; border-radius: 10px; background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; border: none; cursor: pointer; font-weight: 600; font-size: 12px; transition: opacity 0.15s; }
+  .btn:hover { opacity: 0.85; }
+  .btn-ghost { background: rgba(255,255,255,0.06); border: 1px solid var(--border); }
+
+  /* TOTAIS HERO */
+  .totals { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 24px; }
+  @media (min-width: 760px) { .totals { grid-template-columns: repeat(5, 1fr); } }
+  .total-card { background: var(--bg-1); border: 1px solid var(--border); border-radius: 14px; padding: 16px 18px; }
+  .total-card.hero { background: linear-gradient(135deg, rgba(251,191,36,.10), rgba(245,158,11,.04)); border-color: rgba(251,191,36,.25); }
+  .total-label { font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--text-3); font-weight: 700; margin-bottom: 8px; }
+  .total-value { font-size: 26px; font-weight: 800; letter-spacing: -.01em; }
+  .total-value.amber { color: var(--accent); }
+  .total-value.green { color: var(--ok); }
+  .total-sub { font-size: 11px; color: var(--text-3); margin-top: 4px; }
+
+  /* GRID DE CLIENTES */
+  .grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+  @media (min-width: 720px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (min-width: 1240px) { .grid { grid-template-columns: repeat(3, 1fr); } }
+
+  .card { background: var(--bg-1); border: 1px solid var(--border); border-radius: 16px; padding: 18px; display: flex; flex-direction: column; }
+  .card.spending { border-color: rgba(74,222,128,.3); box-shadow: 0 0 0 1px rgba(74,222,128,.08); }
+  .card.acct-down { border-color: rgba(248,113,113,.35); }
+  .card-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 14px; }
+  .card-name { font-weight: 800; font-size: 16px; }
+  .card-acct { font-size: 11px; color: var(--text-3); font-variant-numeric: tabular-nums; margin-top: 2px; }
+
+  .metrics { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 14px; }
+  .metric { background: rgba(255,255,255,.025); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; }
+  .metric-label { font-size: 9px; letter-spacing: .12em; text-transform: uppercase; color: var(--text-3); font-weight: 700; margin-bottom: 4px; }
+  .metric-value { font-size: 18px; font-weight: 800; font-variant-numeric: tabular-nums; }
+  .metric-value.amber { color: var(--accent); }
+  .metric-value.green { color: var(--ok); }
+  .metric-value.muted { color: var(--text-2); }
+  .metric-sub { font-size: 10px; color: var(--text-3); margin-top: 2px; }
+
+  .roas-tag { font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 999px; font-variant-numeric: tabular-nums; }
+  .roas-tag.good { background: rgba(74,222,128,.15); color: var(--ok); }
+  .roas-tag.mid { background: rgba(251,191,36,.15); color: var(--warn); }
+  .roas-tag.bad { background: rgba(248,113,113,.15); color: var(--err); }
+  .roas-tag.none { background: rgba(255,255,255,.05); color: var(--text-3); }
+
+  .camps { margin-top: auto; border-top: 1px dashed var(--border); padding-top: 12px; }
+  .camps-head { font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--text-3); font-weight: 700; margin-bottom: 8px; display: flex; justify-content: space-between; }
+  .camp { display: grid; grid-template-columns: auto 1fr auto auto; gap: 8px; align-items: center; padding: 7px 0; border-bottom: 1px solid rgba(255,255,255,.04); }
+  .camp:last-child { border-bottom: none; }
+  .camp-dot { width: 8px; height: 8px; border-radius: 999px; }
+  .camp-dot.active { background: var(--ok); box-shadow: 0 0 7px var(--ok); }
+  .camp-dot.paused { background: var(--text-3); }
+  .camp-name { font-size: 12px; color: var(--text-1); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .camp-spend { font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--text-0); white-space: nowrap; }
+  .camp-empty { font-size: 12px; color: var(--text-3); padding: 6px 0; }
+  .more { font-size: 11px; color: var(--text-3); margin-top: 8px; text-align: center; }
+
+  .pending-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  .pending-chip { font-size: 11px; color: var(--text-3); padding: 5px 10px; border: 1px dashed var(--border); border-radius: 999px; }
+
+  .loading { text-align: center; color: var(--text-2); padding: 60px 20px; font-size: 14px; }
+  .err-banner { background: rgba(248,113,113,.10); border: 1px solid rgba(248,113,113,.3); color: var(--err); padding: 14px 18px; border-radius: 12px; margin-bottom: 20px; font-size: 13px; }
+  .section-h { font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--text-3); font-weight: 700; margin: 4px 0 14px; }
+  .card-err { font-size: 11px; color: var(--err); margin-top: 8px; }
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div>
+    <span class="brand">📡 Monitor ao Vivo</span>
+    <span class="brand-sub"> · Campanhas Meta</span>
+  </div>
+  <div class="nav-links">
+    <a href="/admin/">🛡️ Admin</a>
+    <a href="/dashboard/">🎯 Central</a>
+  </div>
+  <div class="topnav-right">
+    <span class="pill live" id="pill-live"><span class="dot"></span>AO VIVO</span>
+    <span class="pill" id="pill-updated">⏳ Carregando…</span>
+    <span class="pill info" id="pill-countdown">↻ 60s</span>
+    <button class="btn btn-ghost" onclick="reload(true)">↻ Atualizar agora</button>
+  </div>
+</nav>
+
+<div id="root">
+  <div class="loading">Buscando campanhas ativas de todos os clientes…</div>
+</div>
+
+<script>
+const $ = (s, r=document) => r.querySelector(s);
+const REFRESH_MS = 60_000;
+
+const brl = (n) => (n == null ? '—' : new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(n));
+const num = (n) => (n == null ? '—' : new Intl.NumberFormat('pt-BR').format(n));
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
+
+function roasClass(roas) {
+  if (!roas || roas <= 0) return 'none';
+  if (roas >= 2) return 'good';
+  if (roas >= 1) return 'mid';
+  return 'bad';
+}
+function roasTag(roas) {
+  const cls = roasClass(roas);
+  const txt = (!roas || roas <= 0) ? '—' : roas.toFixed(2).replace('.', ',') + '×';
+  return `<span class="roas-tag ${cls}">${txt}</span>`;
+}
+
+function clientCard(c) {
+  if (c.error && !c.today) {
+    return `<div class="card acct-down">
+      <div class="card-head"><div><div class="card-name">${esc(c.name)}</div>
+      <div class="card-acct">act_${esc(c.ad_account_id || '—')}</div></div></div>
+      <div class="card-err">⚠ ${esc(c.error)}</div></div>`;
+  }
+  const t = c.today || {};
+  const spending = (t.spend || 0) > 0;
+  const acctDown = c.account && !c.account.is_active;
+  const acctPill = c.account
+    ? `<span class="pill ${c.account.is_active ? 'ok' : 'err'}" style="font-size:10px;padding:4px 9px;"><span class="dot"></span>${esc(c.account.status_label)}</span>`
+    : '';
+
+  const active = (c.campaigns || []).filter(cp => cp.effective_status === 'ACTIVE');
+  const shown = active.length ? active.slice(0, 5) : (c.campaigns || []).slice(0, 3);
+  const campRows = shown.length ? shown.map(cp => {
+    const isActive = cp.effective_status === 'ACTIVE';
+    const sp = cp.today?.spend || 0;
+    return `<div class="camp">
+      <span class="camp-dot ${isActive ? 'active' : 'paused'}"></span>
+      <span class="camp-name" title="${esc(cp.name)}">${esc(cp.name)}</span>
+      <span class="camp-spend">${sp > 0 ? brl(sp) : '<span style=\"color:var(--text-3)\">R$ 0</span>'}</span>
+      ${roasTag(cp.today?.roas)}
+    </div>`;
+  }).join('') : `<div class="camp-empty">Nenhuma campanha ${active.length === 0 ? 'ativa' : ''} no momento.</div>`;
+
+  const hiddenActive = Math.max(0, active.length - shown.length);
+
+  return `<div class="card ${spending ? 'spending' : ''} ${acctDown ? 'acct-down' : ''}">
+    <div class="card-head">
+      <div><div class="card-name">${esc(c.name)}</div>
+      <div class="card-acct">act_${esc(c.ad_account_id)}</div></div>
+      ${acctPill}
+    </div>
+    <div class="metrics">
+      <div class="metric"><div class="metric-label">Gasto hoje</div>
+        <div class="metric-value ${spending ? 'amber' : 'muted'}">${brl(t.spend)}</div>
+        <div class="metric-sub">${num(t.impressions)} impr. · CTR ${t.ctr ? t.ctr.toFixed(2).replace('.',',')+'%' : '—'}</div></div>
+      <div class="metric"><div class="metric-label">ROAS hoje</div>
+        <div class="metric-value ${t.roas >= 2 ? 'green' : ''}">${t.roas ? t.roas.toFixed(2).replace('.',',')+'×' : '—'}</div>
+        <div class="metric-sub">${num(t.purchases)} compras · ${brl(t.revenue)}</div></div>
+      <div class="metric"><div class="metric-label">Gasto 7 dias</div>
+        <div class="metric-value muted">${brl(c.last_7d?.spend)}</div>
+        <div class="metric-sub">ROAS ${c.last_7d?.roas ? c.last_7d.roas.toFixed(2).replace('.',',')+'×' : '—'}</div></div>
+      <div class="metric"><div class="metric-label">Campanhas</div>
+        <div class="metric-value">${c.active_count || 0}<span style="font-size:12px;color:var(--text-3);font-weight:600"> ativas</span></div>
+        <div class="metric-sub">${c.paused_count || 0} pausadas · ${c.campaigns_total || 0} total</div></div>
+    </div>
+    <div class="camps">
+      <div class="camps-head"><span>${active.length ? 'Campanhas ativas' : 'Campanhas'}</span><span>gasto hoje · roas</span></div>
+      ${campRows}
+      ${hiddenActive > 0 ? `<div class="more">+ ${hiddenActive} outra(s) ativa(s)</div>` : ''}
+    </div>
+    ${c.error ? `<div class="card-err">⚠ ${esc(c.error)}</div>` : ''}
+  </div>`;
+}
+
+function render(data) {
+  if (data.error) {
+    $('#root').innerHTML = `<div class="err-banner">⚠ ${esc(data.message || data.error)}</div>`;
+    return;
+  }
+  const t = data.totals_today || {};
+  const clientsSorted = (data.clients || []).slice().sort((a, b) => (b.today?.spend || 0) - (a.today?.spend || 0));
+
+  const totals = `<div class="totals">
+    <div class="total-card hero"><div class="total-label">Gasto hoje · total</div>
+      <div class="total-value amber mono">${brl(t.spend)}</div>
+      <div class="total-sub">${data.clients_count || 0} contas monitoradas</div></div>
+    <div class="total-card"><div class="total-label">Retorno hoje</div>
+      <div class="total-value green mono">${brl(t.revenue)}</div>
+      <div class="total-sub">${num(t.purchases)} compras</div></div>
+    <div class="total-card"><div class="total-label">ROAS médio hoje</div>
+      <div class="total-value mono ${t.roas >= 2 ? 'green' : ''}">${t.roas ? t.roas.toFixed(2).replace('.',',')+'×' : '—'}</div>
+      <div class="total-sub">retorno ÷ gasto</div></div>
+    <div class="total-card"><div class="total-label">Impressões hoje</div>
+      <div class="total-value mono">${num(t.impressions)}</div>
+      <div class="total-sub">alcance pago</div></div>
+    <div class="total-card"><div class="total-label">Campanhas ativas</div>
+      <div class="total-value mono">${num(t.active)}</div>
+      <div class="total-sub">rodando agora</div></div>
+  </div>`;
+
+  const cards = `<div class="grid">${clientsSorted.map(clientCard).join('')}</div>`;
+
+  const pending = (data.pending && data.pending.length)
+    ? `<div class="section-h" style="margin-top:26px">Sem conta de anúncios mapeada</div>
+       <div class="pending-row">${data.pending.map(p => `<span class="pending-chip">${esc(p.name)}</span>`).join('')}</div>`
+    : '';
+
+  $('#root').innerHTML = totals + cards + pending;
+}
+
+let countdownTimer = null, secs = 60;
+function startCountdown() {
+  clearInterval(countdownTimer);
+  secs = REFRESH_MS / 1000;
+  $('#pill-countdown').textContent = `↻ ${secs}s`;
+  countdownTimer = setInterval(() => {
+    secs--;
+    if (secs <= 0) secs = REFRESH_MS / 1000;
+    $('#pill-countdown').textContent = `↻ ${secs}s`;
+  }, 1000);
+}
+
+async function reload(force = false) {
+  const pu = $('#pill-updated');
+  pu.textContent = '⏳ Atualizando…';
+  pu.className = 'pill warn';
+  try {
+    const r = await fetch(location.origin + '/api/admin/monitor' + (force ? '?force=1' : ''));
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const data = await r.json();
+    render(data);
+    const time = new Date(data.updated_at).toLocaleTimeString('pt-BR');
+    pu.textContent = '✓ ' + time;
+    pu.className = 'pill ok';
+  } catch (e) {
+    pu.textContent = '✗ ' + e.message;
+    pu.className = 'pill err';
+  }
+  startCountdown();
+}
+
+reload();
+setInterval(() => reload(false), REFRESH_MS);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) reload(false); });
+</script>
+</body>
+</html>
