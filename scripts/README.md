@@ -43,9 +43,16 @@ parametrizado por **dia** e **slot**:
 node --env-file=.env scripts/publish-story-feio.mjs --day=sexta --slot=almoco
 node --env-file=.env scripts/publish-story-feio.mjs --day=sexta --slot=jantar
 node --env-file=.env scripts/publish-story-feio.mjs --day=sexta --slot=jantar --with-promo
-# dias:  segunda, terca, quarta, quinta, sexta, sabado   (domingo fechado)
-# slots: almoco (11h), jantar (18h)
+node --env-file=.env scripts/publish-story-feio.mjs --day=sexta --slot=almoco --channels=ig
+# dias:   segunda, terca, quarta, quinta, sexta, sabado   (domingo fechado)
+# slots:  almoco (11h), jantar (18h)
+# canais: --channels=ig,fb (padrão) | ig | fb   — best-effort por canal
 ```
+
+**Dois canais:** publica em **Instagram Stories** (`media_type=STORIES`) E em
+**Facebook Page Stories** (`POST {page}/photos?published=false` → `POST {page}/photo_stories`),
+usando o page token derivado do user token. Falha em um canal não impede o outro.
+Página FB do Feio: `101076538404413`. Registro guarda `channels`, `ig_media_id` e `fb_story_id`.
 
 Cada dia aberto tem uma variante de criativo "estamos abertos" (A = Seg/Qua/Sex,
 B = Ter/Qui/Sáb) + a promo do dia. O que cada slot publica:
