@@ -604,6 +604,9 @@ const postChannels  = p => {
 };
 const inClient  = slug => currentClient === 'all' || slug === currentClient;
 const inChannel = chans => currentChannel === 'all' || (chans || []).includes(currentChannel);
+// Um cron "concluído" = marcado completed OU (one-shot) já passou da hora de disparar.
+// Quando publicado, os criativos aparecem em "Stories Publicados" — então sai dos agendados.
+const cronDone = c => c.status === 'completed' || (!c.recurring && c.next_fire_iso && new Date(c.next_fire_iso).getTime() <= Date.now());
 
 // Badges de canal (📸/📘) a partir do array de canais.
 function channelBadges(chans) {
@@ -795,7 +798,7 @@ function renderStoryCard(s) {
 }
 
 function renderCron(cron) {
-  const isCompleted = cron.status === 'completed';
+  const isCompleted = cronDone(cron);
   let countdownHtml = '';
   let imminent = false;
   if (cron.next_fire_iso && !isCompleted) {
@@ -976,8 +979,9 @@ function render() {
   // Seção: Cron Jobs
   html += '<div class="section">';
   let crons = (data.crons || []).filter(c => inClient(c.client_slug) && inChannel(cronChannels(c)));
-  // Filtra crons completos quando showOld for false
-  const activeCrons = showOld ? crons : crons.filter(c => c.status !== 'completed');
+  // Cron Jobs mostra só os agendados (ainda não disparados). Os já publicados saem
+  // daqui e aparecem em "Stories Publicados". "Mostrar antigos" revela os concluídos.
+  const activeCrons = showOld ? crons : crons.filter(c => !cronDone(c));
   html += `<div class="section-header">
     <div class="section-title">🤖 Cron Jobs Claude</div>
     <div class="section-count">${activeCrons.length} ${showOld?'total':'ativo'}${activeCrons.length!==1?'s':''}</div>

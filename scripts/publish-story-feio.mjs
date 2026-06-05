@@ -53,25 +53,34 @@ const log = (m) => console.log(`[${new Date().toISOString()}] ${m}`);
 const dayKey = arg('day');
 const slot = arg('slot');
 const withPromo = has('with-promo');
-const day = DAYS[dayKey];
+const imageArg = arg('image');   // modo adhoc: publica 1 story arbitrário
+const titleArg = arg('title');
 const channelsArg = (arg('channels') || 'ig,fb').split(',').map(s => s.trim()).filter(Boolean);
 const wantIG = channelsArg.includes('ig');
 const wantFB = channelsArg.includes('fb');
 
 if (!token) { log('FALHOU: META_GRAPH_TOKEN ausente'); process.exit(1); }
-if (!day) { log(`FALHOU: --day inválido (${dayKey}). Use: ${Object.keys(DAYS).join(', ')}`); process.exit(1); }
-if (slot !== 'almoco' && slot !== 'jantar') { log(`FALHOU: --slot inválido (${slot}). Use: almoco, jantar`); process.exit(1); }
 if (!wantIG && !wantFB) { log(`FALHOU: --channels inválido (${channelsArg.join(',')}). Use: ig, fb ou ig,fb`); process.exit(1); }
 
-// Monta a lista de stories do slot (ordem = ordem de publicação).
-const ab = ABERTURA[day.variant];
+// Monta a lista de stories: modo adhoc (--image) OU dia/slot.
 const items = [];
-if (slot === 'almoco') {
-  items.push({ img: ab.almoco, title: 'Estamos abertos · almoço (11h)' });
-  items.push({ img: day.promo, title: `Promo de ${dayKey}` });
+let regKey;   // prefixo do id de registro
+if (imageArg) {
+  items.push({ img: imageArg, title: titleArg || 'Story' });
+  regKey = 'extra';
 } else {
-  items.push({ img: ab.jantar, title: 'Estamos abertos · jantar (18h)' });
-  if (withPromo) items.push({ img: day.promo, title: `Promo de ${dayKey}` });
+  const day = DAYS[dayKey];
+  if (!day) { log(`FALHOU: --day inválido (${dayKey}). Use: ${Object.keys(DAYS).join(', ')} (ou --image=<arquivo>)`); process.exit(1); }
+  if (slot !== 'almoco' && slot !== 'jantar') { log(`FALHOU: --slot inválido (${slot}). Use: almoco, jantar`); process.exit(1); }
+  regKey = dayKey;
+  const ab = ABERTURA[day.variant];
+  if (slot === 'almoco') {
+    items.push({ img: ab.almoco, title: 'Estamos abertos · almoço (11h)' });
+    items.push({ img: day.promo, title: `Promo de ${dayKey}` });
+  } else {
+    items.push({ img: ab.jantar, title: 'Estamos abertos · jantar (18h)' });
+    if (withPromo) items.push({ img: day.promo, title: `Promo de ${dayKey}` });
+  }
 }
 
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
@@ -136,7 +145,7 @@ async function register({ img, url, title, channels, ig_media_id, fb_story_id })
     const now = new Date();
     const dd = String(now.getUTCDate()).padStart(2, '0');
     const mm = String(now.getUTCMonth() + 1).padStart(2, '0');
-    const id = `story-feio-${dayKey}-${img.replace(/\.png$/, '')}-${mm}${dd}`;
+    const id = `story-feio-${regKey}-${img.replace(/\.png$/, '')}-${mm}${dd}`;
 
     let data = { stories: [] };
     try { data = JSON.parse(await fs.readFile(STORE, 'utf-8')); } catch {}
@@ -150,7 +159,7 @@ async function register({ img, url, title, channels, ig_media_id, fb_story_id })
       agencia: 'Starken',
       ig_username: 'hamburgueria.feio',
       title,
-      slot,
+      slot: slot || 'extra',
       channels,                 // ['ig'], ['fb'] ou ['ig','fb']
       published_iso: now.toISOString(),
       image_url: url,
@@ -166,7 +175,7 @@ async function register({ img, url, title, channels, ig_media_id, fb_story_id })
   }
 }
 
-log(`Feio · ${dayKey} · slot=${slot}${withPromo ? ' (+promo)' : ''} · canais=${channelsArg.join('+')} · ${items.length} story(s)`);
+log(`Feio · ${imageArg ? 'adhoc:' + imageArg : dayKey + ' slot=' + slot + (withPromo ? ' (+promo)' : '')} · canais=${channelsArg.join('+')} · ${items.length} story(s)`);
 let failures = 0;
 for (const it of items) {
   const url = `${BASE}/${it.img}`;
