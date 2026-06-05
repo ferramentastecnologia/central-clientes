@@ -1,0 +1,56 @@
+{
+  "$schema": "https://schemas.style-dictionary.dev/tokens.json",
+  "starken": {
+    "color": {
+      "emerald": {
+        "50":  { "value": "#ecfdf5" }, "100": { "value": "#d1fae5" },
+        "200": { "value": "#a7f3d0" }, "300": { "value": "#6ee7b7" },
+        "400": { "value": "#34d399" }, "500": { "value": "#10b981" },
+        "600": { "value": "#059669" }, "700": { "value": "#047857" },
+        "800": { "value": "#065f46" }, "900": { "value": "#064e3b" },
+        "950": { "value": "#022c22" }
+      },
+      "teal": {
+        "50":  { "value": "#f0fdfa" }, "100": { "value": "#ccfbf1" },
+        "200": { "value": "#99f6e4" }, "300": { "value": "#5eead4" },
+        "400": { "value": "#2dd4bf" }, "500": { "value": "#14b8a6" },
+        "600": { "value": "#0d9488" }, "700": { "value": "#0f766e" },
+        "800": { "value": "#115e59" }, "900": { "value": "#134e4a" },
+        "950": { "value": "#042f2e" }
+      },
+      "slate": {
+        "50":  { "value": "#f8fafc" }, "100": { "value": "#f1f5f9" },
+        "200": { "value": "#e2e8f0" }, "300": { "value": "#cbd5e1" },
+        "400": { "value": "#94a3b8" }, "500": { "value": "#64748b" },
+        "600": { "value": "#475569" }, "700": { "value": "#334155" },
+        "800": { "value": "#1e293b" }, "900": { "value": "#0f172a" },
+        "950": { "value": "#020617" }
+      },
+      "semantic": {
+        "success": { "value": "#10b981" },
+        "warning": { "value": "#f59e0b" },
+        "danger":  { "value": "#ef4444" },
+        "info":    { "value": "#3b82f6" }
+      }
+    },
+    "gradient": {
+      "brand":   { "value": "linear-gradient(135deg, #10b981 0%, #0d9488 100%)" },
+      "brand-v": { "value": "linear-gradient(180deg, #34d399 0%, #10b981 50%, #0d9488 100%)" }
+    },
+    "font": {
+      "sans":    { "value": "Inter, system-ui, sans-serif" },
+      "display": { "value": "Sora, Inter, sans-serif" },
+      "mono":    { "value": "Fira Code, monospace" }
+    },
+    "radius": {
+      "sm": { "value": "6px" }, "md": { "value": "10px" },
+      "lg": { "value": "16px" }, "xl": { "value": "24px" }, "full": { "value": "9999px" }
+    },
+    "shadow": {
+      "sm":    { "value": "0 1px 2px rgba(0,0,0,0.3)" },
+      "md":    { "value": "0 4px 12px rgba(0,0,0,0.4)" },
+      "lg":    { "value": "0 8px 32px rgba(0,0,0,0.5)" },
+      "brand": { "value": "0 4px 20px rgba(16,185,129,0.25)" }
+    }
+  }
+}

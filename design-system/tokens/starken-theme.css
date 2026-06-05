@@ -1,0 +1,61 @@
+/* ============================================================
+   Starkën Design System — Tailwind v4 (CSS-first)
+   Cole/importe no globals.css. Tema dark/tech · destaque Esmeralda.
+   ============================================================ */
+@import 'tailwindcss';
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;300;400;500;600;700;800;900&family=Sora:wght@400;600;700;800&family=Fira+Code:wght@400;500;600&display=swap');
+
+@theme {
+  /* Primária — Esmeralda */
+  --color-emerald-50:  #ecfdf5;
+  --color-emerald-100: #d1fae5;
+  --color-emerald-200: #a7f3d0;
+  --color-emerald-300: #6ee7b7;
+  --color-emerald-400: #34d399;
+  --color-emerald-500: #10b981;
+  --color-emerald-600: #059669;
+  --color-emerald-700: #047857;
+  --color-emerald-800: #065f46;
+  --color-emerald-900: #064e3b;
+  --color-emerald-950: #022c22;
+
+  /* Secundária — Teal */
+  --color-teal-50:  #f0fdfa;
+  --color-teal-100: #ccfbf1;
+  --color-teal-200: #99f6e4;
+  --color-teal-300: #5eead4;
+  --color-teal-400: #2dd4bf;
+  --color-teal-500: #14b8a6;
+  --color-teal-600: #0d9488;
+  --color-teal-700: #0f766e;
+  --color-teal-800: #115e59;
+  --color-teal-900: #134e4a;
+  --color-teal-950: #042f2e;
+
+  /* Neutros — Slate */
+  --color-slate-50:  #f8fafc;
+  --color-slate-100: #f1f5f9;
+  --color-slate-200: #e2e8f0;
+  --color-slate-300: #cbd5e1;
+  --color-slate-400: #94a3b8;
+  --color-slate-500: #64748b;
+  --color-slate-600: #475569;
+  --color-slate-700: #334155;
+  --color-slate-800: #1e293b;
+  --color-slate-900: #0f172a;
+  --color-slate-950: #020617;
+
+  /* Tipografia */
+  --font-sans:    'Inter', system-ui, sans-serif;
+  --font-display: 'Sora', 'Inter', sans-serif;
+  --font-mono:    'Fira Code', monospace;
+}
+
+/* Gradiente assinatura */
+.bg-brand    { background-image: linear-gradient(135deg, #10b981 0%, #0d9488 100%); }
+.bg-brand-v  { background-image: linear-gradient(180deg, #34d399 0%, #10b981 50%, #0d9488 100%); }
+.text-brand  {
+  background: linear-gradient(135deg, #10b981 0%, #0d9488 100%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.shadow-brand { box-shadow: 0 4px 20px rgba(16,185,129,0.25); }

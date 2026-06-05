@@ -1,0 +1,74 @@
+/* ============================================================
+   Starkën Design System — Tokens em CSS puro
+   Tema: dark/tech · destaque único: Esmeralda + neutros slate
+   Use em qualquer projeto sem framework via var(--token).
+   ============================================================ */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;300;400;500;600;700;800;900&family=Sora:wght@400;600;700;800&family=Fira+Code:wght@400;500;600&display=swap');
+
+:root {
+  /* --- Cores de marca --- */
+  --starken-emerald: #10b981; /* Esmeralda — primária */
+  --starken-teal:    #0d9488; /* Teal — secundária/acento */
+
+  /* Escala Esmeralda (primária) */
+  --emerald-50:#ecfdf5; --emerald-100:#d1fae5; --emerald-200:#a7f3d0; --emerald-300:#6ee7b7;
+  --emerald-400:#34d399; --emerald-500:#10b981; --emerald-600:#059669; --emerald-700:#047857;
+  --emerald-800:#065f46; --emerald-900:#064e3b; --emerald-950:#022c22;
+
+  /* Escala Teal (secundária) */
+  --teal-50:#f0fdfa; --teal-100:#ccfbf1; --teal-200:#99f6e4; --teal-300:#5eead4;
+  --teal-400:#2dd4bf; --teal-500:#14b8a6; --teal-600:#0d9488; --teal-700:#0f766e;
+  --teal-800:#115e59; --teal-900:#134e4a; --teal-950:#042f2e;
+
+  /* Neutros (slate — base do tema escuro) */
+  --slate-50:#f8fafc; --slate-100:#f1f5f9; --slate-200:#e2e8f0; --slate-300:#cbd5e1;
+  --slate-400:#94a3b8; --slate-500:#64748b; --slate-600:#475569; --slate-700:#334155;
+  --slate-800:#1e293b; --slate-900:#0f172a; --slate-950:#020617;
+
+  /* --- Semânticos (apontam pras escalas) --- */
+  /* Marca */
+  --brand-primary:   var(--emerald-500);
+  --brand-secondary: var(--teal-600);
+  --brand-light:     var(--emerald-300);
+  --brand-dark:      var(--emerald-600);
+
+  /* Backgrounds (escuro) */
+  --bg-dark:     var(--slate-950);
+  --bg-surface:  var(--slate-900);
+  --bg-elevated: var(--slate-800);
+  --bg-hover:    var(--slate-700);
+
+  /* Texto */
+  --text-primary:   #ffffff;
+  --text-secondary: var(--slate-400);
+  --text-muted:     var(--slate-500);
+  --text-disabled:  var(--slate-600);
+
+  /* Estados semânticos */
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger:  #ef4444;
+  --info:    #3b82f6;
+
+  /* Tipografia */
+  --font-body:    'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-display: 'Sora', 'Inter', sans-serif;
+  --font-mono:    'Fira Code', 'Courier New', monospace;
+
+  /* Espaçamentos (múltiplos de 4px) */
+  --space-1:4px; --space-2:8px; --space-3:12px; --space-4:16px; --space-5:20px;
+  --space-6:24px; --space-8:32px; --space-10:40px; --space-12:48px; --space-16:64px;
+
+  /* Border radius */
+  --radius-sm:6px; --radius-md:10px; --radius-lg:16px; --radius-xl:24px; --radius-full:9999px;
+
+  /* Sombras */
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.5);
+  --shadow-brand: 0 4px 20px rgba(16,185,129,0.25);
+
+  /* Gradiente assinatura */
+  --gradient-brand: linear-gradient(135deg, #10b981 0%, #0d9488 100%);
+  --gradient-brand-v: linear-gradient(180deg, #34d399 0%, #10b981 50%, #0d9488 100%);
+}
