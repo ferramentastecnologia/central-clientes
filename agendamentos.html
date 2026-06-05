@@ -379,6 +379,19 @@
   }
   .caption-toggle:hover { color: var(--accent); border-color: var(--accent); }
   .card-actions { display: flex; gap: 8px; }
+
+  /* POSTS PUBLICADOS — card compacto */
+  .grid-pub { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+  .card-pub .card-top { padding: 12px 14px 10px; }
+  .card-pub .card-client { font-size: 14px; }
+  .card-pub .card-image { aspect-ratio: 1 / 1; }
+  .card-pub .card-body { padding: 12px 14px; gap: 8px; }
+  .card-pub .caption { font-size: 12px; padding: 10px; }
+  .card-pub .caption.collapsed { max-height: 60px; }
+  .pub-date { font-size: 12px; font-weight: 600; color: var(--ok); }
+  .pub-title { font-weight: 700; font-size: 13px; }
+  .pub-links { display: flex; gap: 6px; flex-wrap: wrap; }
+  .btn-xs { font-size: 11px; padding: 5px 10px; }
   .channel-tag {
     display: inline-block;
     padding: 4px 9px;
@@ -579,7 +592,16 @@ let clientFiltersBuilt = false;
 // Canais de cada item (fallback p/ entradas antigas sem o campo).
 const cronChannels  = c => c.channels || (c.type === 'ig_publish' ? ['ig'] : c.type === 'campaign_monitor' ? ['monitor'] : []);
 const storyChannels = s => s.channels || ['ig'];
-const postChannels  = p => p.channels || ['fb'];
+const postChannels  = p => {
+  if (Array.isArray(p.channels)) return p.channels;
+  if (p.channels && typeof p.channels === 'object') {
+    const a = [];
+    if (p.channels.instagram) a.push('ig');
+    if (p.channels.facebook) a.push('fb');
+    return a.length ? a : ['fb'];
+  }
+  return ['fb'];
+};
 const inClient  = slug => currentClient === 'all' || slug === currentClient;
 const inChannel = chans => currentChannel === 'all' || (chans || []).includes(currentChannel);
 
@@ -713,34 +735,27 @@ function renderEmptyClientCard(client) {
 }
 
 function renderPublishedCard(p) {
-  const ig = p.channels && p.channels.instagram;
-  const fb = p.channels && p.channels.facebook;
+  const igUrl = p.channels && p.channels.instagram;
+  const fbUrl = p.channels && p.channels.facebook;
   return `
-    <div class="card">
+    <div class="card card-pub">
       <div class="card-top">
         <div>
           <div class="card-client">${escape(p.client)}</div>
           <div class="card-handle">${p.ig_username ? '@' + p.ig_username : ''}</div>
         </div>
-        ${agencyBadge(p.agencia)}
+        ${channelBadges(postChannels(p))}
       </div>
       ${p.image_url ? `<img class="card-image" src="${escape(p.image_url)}" alt="post" loading="lazy">` : ''}
       <div class="card-body">
-        <div class="countdown-box published">
-          <div class="countdown-label">Publicado em</div>
-          <div class="countdown-time" style="font-size:15px">${fmtBRT(p.published_iso)} BRT</div>
-        </div>
-        ${p.title ? `<div style="font-weight:700;margin:2px 0 6px;font-size:14px">${escape(p.title)}</div>` : ''}
+        <div class="pub-date">✓ Publicado · ${fmtBRT(p.published_iso)} BRT</div>
+        ${p.title ? `<div class="pub-title">${escape(p.title)}</div>` : ''}
         <div class="caption collapsed" id="cap-${p.id}">${escape(p.caption)}</div>
         <button class="caption-toggle" onclick="toggleCaption('${p.id}', this)">Ver copy completa ↓</button>
-        <div class="card-actions">
-          ${ig ? `<a class="btn btn-ghost" style="font-size:12px;padding:7px 12px;" href="${escape(ig)}" target="_blank">Ver no Instagram ↗</a>` : ''}
-          ${fb ? `<a class="btn btn-ghost" style="font-size:12px;padding:7px 12px;" href="${escape(fb)}" target="_blank">Ver no Facebook ↗</a>` : ''}
-        </div>
-        <div class="card-actions" style="margin-top:8px">
-          ${ig ? '<span class="channel-tag ig-tag">📸 Instagram</span>' : ''}
-          ${fb ? '<span class="channel-tag fb-tag">📘 Facebook</span>' : ''}
-        </div>
+        ${(igUrl || fbUrl) ? `<div class="pub-links">
+          ${igUrl ? `<a class="btn btn-ghost btn-xs" href="${escape(igUrl)}" target="_blank">Instagram ↗</a>` : ''}
+          ${fbUrl ? `<a class="btn btn-ghost btn-xs" href="${escape(fbUrl)}" target="_blank">Facebook ↗</a>` : ''}
+        </div>` : ''}
       </div>
     </div>
   `;
@@ -919,7 +934,7 @@ function render() {
       <div class="section-title">🚀 Posts Publicados</div>
       <div class="section-count">${publicados.length} post${publicados.length!==1?'s':''}</div>
     </div>`;
-    html += '<div class="grid">';
+    html += '<div class="grid grid-pub">';
     publicados.forEach(p => { html += renderPublishedCard(p); });
     html += '</div>';
     html += '</div>';
