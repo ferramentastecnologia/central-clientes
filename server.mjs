@@ -885,7 +885,7 @@ async function fetchEstruturas(slug) {
 
   const INS = 'insights.date_preset(maximum){spend,impressions,reach,frequency,clicks,ctr,cpm,cpc,actions,action_values,purchase_roas}';
   const F = `name,objective,effective_status,daily_budget,lifetime_budget,stop_time,start_time,${INS},`
-    + 'adsets.limit(25){name,effective_status,optimization_goal,billing_event,lifetime_budget,daily_budget,'
+    + `adsets.limit(25){name,effective_status,optimization_goal,billing_event,lifetime_budget,daily_budget,${INS},`
     + 'pacing_type,adset_schedule,promoted_object,destination_type,frequency_control_specs,'
     + 'targeting{device_platforms,publisher_platforms,facebook_positions,instagram_positions,age_min,age_max,genders,flexible_spec,'
     + 'geo_locations{cities,regions,countries,custom_locations,location_types}},'
@@ -911,6 +911,7 @@ async function fetchEstruturas(slug) {
         pixel: s.promoted_object?.pixel_id ? { id: s.promoted_object.pixel_id, event: s.promoted_object.custom_event_type || null } : null,
         dayparting: (s.adset_schedule || []).map(w => ({ days: w.days, start_minute: w.start_minute, end_minute: w.end_minute, tz: w.timezone_type })),
         frequency: (s.frequency_control_specs || [])[0] || null,
+        insights: parseInsightsFull(s.insights?.data?.[0]),
         targeting: parseTargeting(s.targeting),
         flags: computeAdsetFlags(c.objective, s),
         ads: (s.ads?.data || []).map(a => ({

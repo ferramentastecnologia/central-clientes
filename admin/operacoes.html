@@ -60,9 +60,17 @@
   .camp.open .chev{transform:rotate(90deg);}
 
   /* KPI row */
-  .kpi-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:0 18px 14px;}
-  @media(min-width:680px){.kpi-row{grid-template-columns:repeat(9,1fr);}}
+  .kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(72px,1fr));gap:8px;padding:0 18px 14px;}
   .kpi-row.muted{display:block;color:var(--text-3);font-size:12px;}
+  .kpi-row.mini{padding:8px 0 2px;grid-template-columns:repeat(auto-fit,minmax(62px,1fr));gap:6px;}
+  .kpi-row.mini .kpi{padding:5px 6px;}
+  .kpi-row.mini .kpi-v{font-size:12px;}
+  .kpi-row.mini.muted{padding:6px 0 0;}
+  /* grid de campanhas (2 colunas; expandida ocupa a linha toda) */
+  .camps-grid{display:grid;grid-template-columns:1fr;gap:14px;}
+  @media(min-width:1080px){.camps-grid{grid-template-columns:repeat(2,1fr);align-items:start;}}
+  .camps-grid .camp{margin-bottom:0;}
+  .camp.open{grid-column:1/-1;}
   .kpi{background:rgba(0,0,0,.18);border:1px solid var(--border);border-radius:8px;padding:7px 9px;text-align:center;}
   .kpi-l{font-size:8.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3);font-weight:700;}
   .kpi-v{font-size:14px;font-weight:800;font-variant-numeric:tabular-nums;margin-top:2px;}
@@ -87,12 +95,12 @@
   .adcard{display:flex;gap:12px;background:var(--bg-2);border:1px solid var(--border);border-radius:10px;padding:10px;}
   .adcard.paused{opacity:.55;}
   .adcard-imgs{display:flex;flex-direction:column;gap:6px;flex-shrink:0;}
-  .cimg{position:relative;width:80px;height:80px;border-radius:8px;overflow:hidden;background:var(--bg-0);border:1px solid var(--border);display:block;}
+  .cimg{position:relative;width:124px;height:124px;border-radius:9px;overflow:hidden;background:var(--bg-0);border:1px solid var(--border);display:block;}
   .cimg:hover{border-color:var(--accent);}
   .cimg img{width:100%;height:100%;object-fit:cover;display:block;}
   .cimg.broken{display:none;}
-  .ilab{position:absolute;bottom:0;left:0;right:0;font-size:8px;font-weight:700;text-align:center;background:rgba(0,0,0,.65);color:#fff;padding:1px 0;letter-spacing:.02em;}
-  .noimg{width:80px;height:80px;display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--text-3);text-align:center;border:1px solid var(--border);border-radius:8px;}
+  .ilab{position:absolute;bottom:0;left:0;right:0;font-size:9px;font-weight:700;text-align:center;background:rgba(0,0,0,.65);color:#fff;padding:2px 0;letter-spacing:.02em;}
+  .noimg{width:124px;height:124px;display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--text-3);text-align:center;border:1px solid var(--border);border-radius:9px;}
   .adcard-body{flex:1;min-width:0;}
   .adcard-head{display:flex;align-items:center;gap:6px;font-size:12px;flex-wrap:wrap;margin-bottom:4px;}
   .adcard-head b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:160px;}
@@ -138,12 +146,12 @@ const dayp=dp=>(!dp||!dp.length)?null:dp.map(w=>w.days.map(d=>DIAS[d]).join('+')
 const flagIcon=l=>l==='ok'?'✅':l==='warn'?'⚠️':'ℹ️';
 const kpi=(l,v,c='')=>`<div class="kpi"><div class="kpi-l">${l}</div><div class="kpi-v ${c}">${v}</div></div>`;
 
-function kpiRow(i){
-  if(!i)return '<div class="kpi-row muted">— sem dados de performance —</div>';
-  return `<div class="kpi-row">
+function kpiRow(i,cls=''){
+  if(!i)return `<div class="kpi-row ${cls} muted">— sem dados de performance —</div>`;
+  return `<div class="kpi-row ${cls}">
     ${kpi('Gasto',brl(i.spend),'amber')}${kpi('Compras',num(i.purchases))}${kpi('ROAS',xx(i.roas),i.roas>=2?'green':'')}
     ${kpi('CPA',i.cpa!=null?brl(i.cpa):'—')}${kpi('Retorno',brl(i.revenue),'green')}${kpi('CPM',brl(i.cpm))}
-    ${kpi('CTR',pct(i.ctr))}${kpi('Alcance',num(i.reach))}${kpi('Freq',i.frequency?i.frequency.toFixed(1).replace('.',','):'—')}</div>`;
+    ${kpi('CTR',pct(i.ctr))}${kpi('CPC',brl(i.cpc))}${kpi('Cliques',num(i.clicks))}${kpi('Impr',num(i.impressions))}${kpi('Alcance',num(i.reach))}${kpi('Freq',i.frequency?i.frequency.toFixed(1).replace('.',','):'—')}</div>`;
 }
 function targBlock(t){
   if(!t)return '';
@@ -170,7 +178,7 @@ function adCard(a){
       ${cr.title?`<div class="ad-title">${esc(cr.title)}</div>`:''}
       ${cr.body?`<div class="ad-copy" onclick="this.classList.toggle('open')">${esc(cr.body)}</div>`:''}
       <div class="ad-meta">${cr.cta?`<span class="cta">${esc(cr.cta)}</span>`:''}${cr.link?`<a class="ad-link" href="${esc(cr.link)}" target="_blank">destino ↗</a>`:''}</div>
-      ${i?`<div class="ad-kpis">💰 ${brl(i.spend)} · 🛒 ${num(i.purchases)} compras · ${xx(i.roas)} · CTR ${pct(i.ctr)}</div>`:''}
+      ${i?`<div class="ad-kpis">💰 ${brl(i.spend)} · 🛒 ${num(i.purchases)} · ${xx(i.roas)} · CPA ${i.cpa!=null?brl(i.cpa):'—'} · CTR ${pct(i.ctr)} · CPM ${brl(i.cpm)} · ${num(i.impressions)} impr · ${num(i.reach)} alc</div>`:''}
     </div></div>`;
 }
 function adsetBlock(s){
@@ -179,6 +187,7 @@ function adsetBlock(s){
   const extra=[dp?'⏰ '+dp+' ('+s.dayparting[0].tz+')':'',s.pixel?'📊 pixel '+s.pixel.id+(s.pixel.event?'·'+s.pixel.event:''):'',s.frequency?'🔁 '+s.frequency.max_frequency+'/'+s.frequency.interval_days+'d':'','💰 '+budget,s.destination_type?'➡️ '+s.destination_type:''].filter(Boolean).join(' · ');
   return `<div class="adset">
     <div class="adset-name">🎯 ${esc(s.name)} <span class="st ${esc(s.effective_status)}">${esc(s.effective_status)}</span> · <span class="muted">${esc(s.optimization_goal)}</span></div>
+    ${kpiRow(s.insights,'mini')}
     <div class="flags">${(s.flags||[]).map(f=>`<span class="flag ${f.l}">${flagIcon(f.l)} ${esc(f.t)}</span>`).join('')}</div>
     ${targBlock(s.targeting)}
     <div class="adset-extra">${esc(extra)}</div>
@@ -224,8 +233,7 @@ async function loadClient(slug,force){
       <div class="tcard"><div class="tl">Alertas regra</div><div class="tv ${tw?'warn':''}">${tw?'⚠️ '+tw:'✅ 0'}</div></div>
     </div>
     <div class="periodo">${d.campaigns_count} campanha(s) ativa(s) · conta act_${esc(d.ad_account_id)} · período: ${esc(d.periodo||'vida útil')} · atualizado ${new Date(d.updated_at).toLocaleTimeString('pt-BR')}</div>`;
-    $('#root').innerHTML=head+(d.campaigns.length?d.campaigns.map(campBlock).join(''):'<div class="empty">Nenhuma campanha ativa.</div>');
-    document.querySelector('.camp')?.classList.add('open'); // abre a 1ª por padrão
+    $('#root').innerHTML=head+(d.campaigns.length?'<div class="camps-grid">'+d.campaigns.map(campBlock).join('')+'</div>':'<div class="empty">Nenhuma campanha ativa.</div>');
     $('#pill-updated').textContent='✓ '+new Date(d.updated_at).toLocaleTimeString('pt-BR');$('#pill-updated').className='pill ok';
   }catch(e){$('#root').innerHTML=`<div class="err-banner">Erro: ${esc(e.message)}</div>`;$('#pill-updated').textContent='✗';}
 }
