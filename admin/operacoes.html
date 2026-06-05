@@ -31,6 +31,16 @@
   .tab{padding:8px 15px;border:1px solid var(--border);background:var(--bg-1);color:var(--text-2);font-size:13px;font-weight:600;border-radius:999px;cursor:pointer;}
   .tab.active{background:var(--accent);color:#1a0f08;border-color:var(--accent);}
 
+  /* seletor de período (igual ao monitor) */
+  .period-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:16px;padding:11px 16px;background:var(--bg-1);border:1px solid var(--border);border-radius:14px;}
+  .period-bar-label{font-size:11px;color:var(--text-3);font-weight:700;text-transform:uppercase;letter-spacing:.1em;margin-right:4px;}
+  .pbtn{padding:7px 14px;border:1px solid var(--border);background:var(--bg-2);color:var(--text-2);font-size:13px;font-weight:600;border-radius:999px;cursor:pointer;transition:all .15s;}
+  .pbtn:hover{color:var(--text-0);border-color:rgba(251,191,36,.3);}
+  .pbtn.active{background:var(--accent);color:#1a0f08;border-color:var(--accent);}
+  .custom-range{display:inline-flex;align-items:center;gap:8px;}
+  .dinput{background:var(--bg-0);border:1px solid var(--border);color:var(--text-0);border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;color-scheme:dark;}
+  .period-active{margin-left:auto;font-size:12px;color:var(--accent);font-weight:700;}
+
   /* ===== PAINEL DA CARTEIRA (portfolio) ===== */
   .pf{display:grid;grid-template-columns:1.3fr 1fr;gap:14px;margin-bottom:8px;}
   @media(max-width:900px){.pf{grid-template-columns:1fr;}}
@@ -196,9 +206,28 @@
   .akp{font-size:10px;color:var(--text-1);background:rgba(255,255,255,.03);border-radius:5px;padding:2px 7px;font-variant-numeric:tabular-nums;}
   .akp b{color:var(--text-0);}
   .multi-note{font-size:10.5px;color:var(--warn);margin-top:12px;background:rgba(251,191,36,.06);border:1px solid rgba(251,191,36,.18);border-radius:8px;padding:8px 11px;}
+  .inactive-wrap{margin-top:28px;border-top:1px dashed var(--border);padding-top:20px;}
+  .inactive-head{font-size:13px;font-weight:800;color:var(--text-1);margin-bottom:14px;display:flex;gap:9px;align-items:center;flex-wrap:wrap;}
+  .inactive-head .muted{font-size:11px;font-weight:600;}
+  .inactive-head .badge-n{font-size:11px;font-weight:800;background:rgba(148,163,184,.15);color:var(--text-2);padding:2px 9px;border-radius:999px;}
+  .inactive-wrap .camp{opacity:.9;}
+  .inactive-wrap .camp:hover{opacity:1;}
   .loading{text-align:center;color:var(--text-2);padding:60px 20px;}
   .empty{color:var(--text-3);padding:30px;text-align:center;}
   .err-banner{background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:var(--err);padding:14px 18px;border-radius:12px;}
+</style>
+<link rel="icon" href="/design-system/assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/design-system/tokens/starken-tokens.css">
+<style>
+  /* Identidade Starken (Design System) — /design-system/ */
+  :root{
+    --bg-0:#020617; --bg-1:#0f172a; --bg-2:#1e293b; --bg-3:#334155;
+    --accent:#10b981; --accent-dim:rgba(16,185,129,.15); --border-hover:rgba(16,185,129,.35);
+    --starken:#0d9488; --starken-dim:rgba(13,148,136,.12);
+    --ok:#10b981; --warn:#f59e0b; --err:#ef4444; --info:#3b82f6;
+  }
+  body{ font-family:var(--font-body,'Inter',-apple-system,sans-serif); }
+  h1,h2,h3{ font-family:var(--font-display,'Sora',sans-serif); }
 </style>
 </head>
 <body>
@@ -213,6 +242,21 @@
   </div>
 </nav>
 <div class="tabs" id="tabs"></div>
+<div class="period-bar">
+  <span class="period-bar-label">Período</span>
+  <button class="pbtn active" data-p="maximum">♾️ Vida útil</button>
+  <button class="pbtn" data-p="today">📅 Diário</button>
+  <button class="pbtn" data-p="last_7d">🗓️ Semanal</button>
+  <button class="pbtn" data-p="this_month">📆 Mensal</button>
+  <button class="pbtn" data-p="custom">⚙️ Personalizado</button>
+  <span class="custom-range" id="custom-range" style="display:none;">
+    <input type="date" id="since" class="dinput">
+    <span style="color:var(--text-3);font-size:12px;">até</span>
+    <input type="date" id="until" class="dinput">
+    <button class="btn" id="apply-custom" style="background:var(--accent);color:#1a0f08;">Aplicar</button>
+  </span>
+  <span class="period-active" id="period-active"></span>
+</div>
 <div id="root"><div class="loading">Carregando clientes…</div></div>
 
 <div class="vmodal" id="vmodal" onclick="if(event.target===this)closeVideo()">
@@ -225,7 +269,7 @@
 
 <script>
 const $=(s,r=document)=>r.querySelector(s);
-let CURRENT=null;
+let CURRENT=null,PERIOD='maximum',SINCE=null,UNTIL=null;
 // lightbox de vídeo — abre centralizado, sem sair da página
 function openVideo(src,poster){
   const m=$('#vmodal'),v=$('#vmodal-video');
@@ -489,15 +533,18 @@ function adsetBlock(s,obj){
       <div class="ads-off">${adsOff.map(a=>adCard(a,obj,null)).join('')}</div>`:''}
   </div>`;
 }
-function campBlock(c){
+const statusLabel=s=>/PAUSED/.test(s||'')?'Pausada':/(COMPLETED|ARCHIVED|DELETED)/.test(s||'')?'Encerrada':(s||'Inativa');
+function campBlock(c,open=true){
   const i=campIns(c);
   const fs=nextDelivery(c),scheduled=fs&&(!i||!i.spend)&&c.effective_status==='ACTIVE';
-  const v=scheduled?{k:'sched',t:'PROGRAMADA',ic:'📅'}:verdict(c.objective,i);
+  const v=!c.is_active
+    ?{k:'wait',t:statusLabel(c.effective_status),ic:'🏁'}
+    :(scheduled?{k:'sched',t:'PROGRAMADA',ic:'📅'}:verdict(c.objective,i));
   const objClass=['OUTCOME_SALES','OUTCOME_AWARENESS','OUTCOME_TRAFFIC'].includes(c.objective)?c.objective:'other';
   const score=scheduled
     ?`<div class="ns-sched">📅 Programada — inicia <b>${relWhen(fs)}</b>. Aprovada e aguardando o horário de veiculação.</div>`
     :`${nsBlock(c.objective,i)}${supportGrid(c.objective,i)}`;
-  return `<div class="camp v-${v.k} open" id="c-${c.id}">
+  return `<div class="camp v-${v.k}${open?' open':''}" id="c-${c.id}">
     <div class="camp-head" onclick="document.getElementById('c-${c.id}').classList.toggle('open')">
       <span class="obj ${objClass}">${esc((c.objective_label||'').toUpperCase())}</span>
       <span class="camp-name" title="${esc(c.name)}">${esc(c.name)}</span>
@@ -536,25 +583,58 @@ function portfolio(d){
     <div class="periodo">📊 ${d.campaigns_count} campanha(s) ativa(s) · conta act_${esc(d.ad_account_id)} · ${esc(d.periodo||'vida útil')} · atualizado ${new Date(d.updated_at).toLocaleTimeString('pt-BR')}</div>`;
 }
 
+function inactiveSection(d){
+  const inc=d.inactive_campaigns||[];
+  if(!inc.length)return '';
+  const more=(d.inactive_total>inc.length)?` · mostrando top ${inc.length} de ${d.inactive_total} (por gasto)`:'';
+  return `<div class="inactive-wrap">
+    <div class="inactive-head">🏁 Concluídas / desativadas com gasto no período <span class="badge-n">${inc.length}</span><span class="muted">${more} · já somadas nos totais acima</span></div>
+    <div class="camps-grid">${inc.map(c=>campBlock(c,false)).join('')}</div></div>`;
+}
 async function loadClient(slug,force){
   CURRENT=slug;
   document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.slug===slug));
   $('#root').innerHTML='<div class="loading">Carregando estrutura + performance…</div>';
   $('#pill-updated').textContent='⏳';$('#pill-updated').className='pill warn';
   try{
-    const r=await fetch(location.origin+'/api/admin/estruturas?slug='+slug+(force?'&force=1':''));
+    let url=location.origin+'/api/admin/estruturas?slug='+slug+'&period='+PERIOD;
+    if(PERIOD==='custom'&&SINCE&&UNTIL)url+=`&since=${SINCE}&until=${UNTIL}`;
+    if(force)url+='&force=1';
+    const r=await fetch(url);
     const d=await r.json();
+    if(d.period)$('#period-active').textContent='📊 '+d.period.label;
     if(d.error&&!d.campaigns){$('#root').innerHTML=`<div class="err-banner">⚠ ${esc(d.error)} (${esc(d.client_name||slug)})</div>`;$('#pill-updated').textContent='✗';return;}
-    $('#root').innerHTML=portfolio(d)+(d.campaigns.length?'<div class="camps-grid">'+d.campaigns.map(campBlock).join('')+'</div>':'<div class="empty">Nenhuma campanha ativa.</div>');
+    const ativas=d.campaigns.length?'<div class="camps-grid">'+d.campaigns.map(c=>campBlock(c,true)).join('')+'</div>':'<div class="empty">Nenhuma campanha ativa.</div>';
+    $('#root').innerHTML=portfolio(d)+ativas+inactiveSection(d);
     $('#pill-updated').textContent='✓ '+new Date(d.updated_at).toLocaleTimeString('pt-BR');$('#pill-updated').className='pill ok';
   }catch(e){$('#root').innerHTML=`<div class="err-banner">Erro: ${esc(e.message)}</div>`;$('#pill-updated').textContent='✗';}
 }
+// seletor de período
+function setPeriod(p){
+  PERIOD=p;
+  document.querySelectorAll('.pbtn').forEach(b=>b.classList.toggle('active',b.dataset.p===p));
+  $('#custom-range').style.display=p==='custom'?'inline-flex':'none';
+  if(p!=='custom'&&CURRENT)loadClient(CURRENT);
+}
+document.querySelectorAll('.pbtn').forEach(b=>b.onclick=()=>setPeriod(b.dataset.p));
+$('#apply-custom').onclick=()=>{
+  const s=$('#since').value,u=$('#until').value;
+  if(!s||!u){$('#pill-updated').textContent='⚠ escolha as 2 datas';$('#pill-updated').className='pill warn';return;}
+  if(s>u){$('#pill-updated').textContent='⚠ data inicial > final';$('#pill-updated').className='pill warn';return;}
+  SINCE=s;UNTIL=u;if(CURRENT)loadClient(CURRENT);
+};
+(function(){const p=n=>String(n).padStart(2,'0'),fmt=x=>`${x.getFullYear()}-${p(x.getMonth()+1)}-${p(x.getDate())}`,now=new Date();
+  $('#until').value=fmt(now);$('#since').value=fmt(new Date(now.getTime()-6*864e5));})();
+
 async function init(){
   try{
     const r=await fetch(location.origin+'/api/admin/estruturas');
     const cs=(await r.json()).clients||[];
     $('#tabs').innerHTML=cs.map(c=>`<button class="tab" data-slug="${c.slug}" onclick="loadClient('${c.slug}')">${esc(c.name)}</button>`).join('');
-    const want=new URLSearchParams(location.search).get('slug');
+    const qp=new URLSearchParams(location.search),want=qp.get('slug'),wp=qp.get('period');
+    if(wp){PERIOD=wp;SINCE=qp.get('since');UNTIL=qp.get('until');
+      document.querySelectorAll('.pbtn').forEach(b=>b.classList.toggle('active',b.dataset.p===wp));
+      $('#custom-range').style.display=wp==='custom'?'inline-flex':'none';}
     if(cs.length)loadClient(cs.find(c=>c.slug===want)?want:(cs.find(c=>c.slug==='feio')?'feio':cs[0].slug));
     else $('#root').innerHTML='<div class="empty">Nenhum cliente com conta de anúncio.</div>';
   }catch(e){$('#root').innerHTML=`<div class="err-banner">Erro: ${esc(e.message)}</div>`;}
