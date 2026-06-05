@@ -785,6 +785,74 @@ function computeAdsetFlags(objective, adset) {
   return flags;
 }
 
+// Insights (gasto, resultados, ROAS, CPA, CTR, CPM, alcance) a partir de uma linha de insights
+function parseInsightsFull(insRow) {
+  if (!insRow) return null;
+  const actions = insRow.actions || [];
+  const vals = insRow.action_values || [];
+  const omni = actions.find(a => a.action_type === 'omni_purchase') || actions.find(a => a.action_type === 'purchase');
+  const omniVal = vals.find(a => a.action_type === 'omni_purchase') || vals.find(a => a.action_type === 'purchase');
+  const lc = actions.find(a => a.action_type === 'link_click');
+  const roasArr = insRow.purchase_roas || [];
+  const roasObj = roasArr.find(r => r.action_type === 'omni_purchase') || roasArr[0];
+  const spend = parseFloat(insRow.spend || 0);
+  const purchases = parseInt(omni?.value || 0);
+  const roas = parseFloat(roasObj?.value || 0);
+  const revenue = omniVal ? parseFloat(omniVal.value || 0) : +(spend * roas).toFixed(2);
+  return {
+    spend, impressions: parseInt(insRow.impressions || 0), reach: parseInt(insRow.reach || 0),
+    frequency: parseFloat(insRow.frequency || 0), clicks: parseInt(insRow.clicks || 0),
+    link_clicks: parseInt(lc?.value || 0), ctr: parseFloat(insRow.ctr || 0),
+    cpm: parseFloat(insRow.cpm || 0), cpc: parseFloat(insRow.cpc || 0),
+    purchases, revenue: +revenue.toFixed(2), roas,
+    cpa: purchases > 0 ? +(spend / purchases).toFixed(2) : null,
+  };
+}
+
+// Criativo: título, copy, descrição, CTA, link, imagem (resolvendo asset_feed_spec)
+function parseCreative(cr) {
+  if (!cr) return null;
+  const afs = cr.asset_feed_spec || {};
+  const oss = cr.object_story_spec || {};
+  const ld = oss.link_data || oss.video_data || oss.photo_data || {};
+  return {
+    id: cr.id,
+    title: cr.title || afs.titles?.[0]?.text || ld.name || null,
+    body: cr.body || afs.bodies?.[0]?.text || ld.message || null,
+    description: ld.description || afs.descriptions?.[0]?.text || null,
+    cta: cr.call_to_action_type || afs.call_to_action_types?.[0] || ld.call_to_action?.type || null,
+    link: ld.link || afs.link_urls?.[0]?.website_url || null,
+    image: cr.thumbnail_url || cr.image_url || null,
+    customized: (afs.asset_customization_rules || []).length > 0,
+    formatos: (afs.images || []).length || ((cr.image_url || cr.thumbnail_url) ? 1 : 0),
+  };
+}
+
+// Direcionamento legível: geo, idade, gênero, dispositivo, posicionamento, interesses
+function parseTargeting(t) {
+  if (!t) return {};
+  const geo = t.geo_locations || {};
+  const parts = [];
+  (geo.custom_locations || []).forEach(l => parts.push(`raio ${l.radius}${l.distance_unit === 'kilometer' ? 'km' : 'mi'}`));
+  (geo.cities || []).forEach(c => parts.push(c.name + (c.region ? '/' + c.region : '')));
+  (geo.regions || []).forEach(r => parts.push(r.name));
+  (geo.countries || []).forEach(c => parts.push(c));
+  const interests = [];
+  (t.flexible_spec || []).forEach(spec => (spec.interests || []).forEach(i => interests.push(i.name)));
+  const g = t.genders;
+  const genders = !g || (g.includes(1) && g.includes(2)) ? 'todos' : (g.includes(1) ? 'homens' : 'mulheres');
+  return {
+    geo: parts.join(' · ') || '—',
+    location_types: geo.location_types || null,
+    age: (t.age_min || '—') + (t.age_max ? '-' + t.age_max : '+'),
+    genders,
+    device: t.device_platforms || null,
+    fb_positions: t.facebook_positions || null,
+    ig_positions: t.instagram_positions || null,
+    interests: interests.length ? interests : null,
+  };
+}
+
 async function fetchEstruturas(slug) {
   const now = Date.now();
   const cached = estruturasCache.get(slug);
@@ -811,11 +879,15 @@ async function fetchEstruturas(slug) {
     return { updated_at: new Date().toISOString(), error: 'no_ad_account', slug, client_name: client?.name || slug, campaigns: [] };
   }
 
-  const F = 'name,objective,effective_status,daily_budget,lifetime_budget,stop_time,'
-    + 'adsets.limit(30){name,effective_status,optimization_goal,billing_event,lifetime_budget,daily_budget,'
+  const INS = 'insights.date_preset(maximum){spend,impressions,reach,frequency,clicks,ctr,cpm,cpc,actions,action_values,purchase_roas}';
+  const F = `name,objective,effective_status,daily_budget,lifetime_budget,stop_time,start_time,${INS},`
+    + 'adsets.limit(25){name,effective_status,optimization_goal,billing_event,lifetime_budget,daily_budget,'
     + 'pacing_type,adset_schedule,promoted_object,destination_type,frequency_control_specs,'
-    + 'targeting{device_platforms,publisher_platforms,facebook_positions,instagram_positions,age_min,age_max,'
-    + 'geo_locations{location_types}},ads.limit(30){name,effective_status}}';
+    + 'targeting{device_platforms,publisher_platforms,facebook_positions,instagram_positions,age_min,age_max,genders,flexible_spec,'
+    + 'geo_locations{cities,regions,countries,custom_locations,location_types}},'
+    + `ads.limit(15){name,effective_status,${INS},`
+    + 'creative{id,title,body,call_to_action_type,image_url,thumbnail_url,object_story_spec,'
+    + 'asset_feed_spec{bodies,titles,descriptions,call_to_action_types,link_urls,asset_customization_rules,images}}}}';
   const filtering = encodeURIComponent(JSON.stringify([{ field: 'effective_status', operator: 'IN', value: ['ACTIVE'] }]));
 
   let campaigns = [];
@@ -833,19 +905,15 @@ async function fetchEstruturas(slug) {
         daily_budget_cents: s.daily_budget ? parseInt(s.daily_budget) : null,
         destination_type: s.destination_type || null,
         pixel: s.promoted_object?.pixel_id ? { id: s.promoted_object.pixel_id, event: s.promoted_object.custom_event_type || null } : null,
-        dayparting: (s.adset_schedule || []).map(w => ({
-          days: w.days, start_minute: w.start_minute, end_minute: w.end_minute, tz: w.timezone_type,
-        })),
+        dayparting: (s.adset_schedule || []).map(w => ({ days: w.days, start_minute: w.start_minute, end_minute: w.end_minute, tz: w.timezone_type })),
         frequency: (s.frequency_control_specs || [])[0] || null,
-        targeting: {
-          device_platforms: s.targeting?.device_platforms || null,
-          facebook_positions: s.targeting?.facebook_positions || null,
-          instagram_positions: s.targeting?.instagram_positions || null,
-          age_min: s.targeting?.age_min ?? null, age_max: s.targeting?.age_max ?? null,
-          location_types: s.targeting?.geo_locations?.location_types || null,
-        },
+        targeting: parseTargeting(s.targeting),
         flags: computeAdsetFlags(c.objective, s),
-        ads: (s.ads?.data || []).map(a => ({ id: a.id, name: a.name, effective_status: a.effective_status })),
+        ads: (s.ads?.data || []).map(a => ({
+          id: a.id, name: a.name, effective_status: a.effective_status,
+          creative: parseCreative(a.creative),
+          insights: parseInsightsFull(a.insights?.data?.[0]),
+        })),
         ads_count: (s.ads?.data || []).length,
       }));
       return {
@@ -853,17 +921,27 @@ async function fetchEstruturas(slug) {
         effective_status: c.effective_status, budget_level: budgetLevel,
         lifetime_budget_cents: c.lifetime_budget ? parseInt(c.lifetime_budget) : null,
         daily_budget_cents: c.daily_budget ? parseInt(c.daily_budget) : null,
-        stop_time: c.stop_time || null,
+        stop_time: c.stop_time || null, start_time: c.start_time || null,
+        insights: parseInsightsFull(c.insights?.data?.[0]),
         adsets, adsets_count: adsets.length,
       };
     });
   } catch (e) { err = e.message; }
 
+  // Totais da carteira do cliente
+  const totals = campaigns.reduce((a, c) => {
+    if (c.insights) { a.spend += c.insights.spend; a.revenue += c.insights.revenue; a.purchases += c.insights.purchases; a.impressions += c.insights.impressions; }
+    return a;
+  }, { spend: 0, revenue: 0, purchases: 0, impressions: 0 });
+  totals.spend = +totals.spend.toFixed(2); totals.revenue = +totals.revenue.toFixed(2);
+  totals.roas = totals.spend > 0 ? +(totals.revenue / totals.spend).toFixed(2) : 0;
+  totals.cpa = totals.purchases > 0 ? +(totals.spend / totals.purchases).toFixed(2) : null;
+
   const result = {
     updated_at: new Date().toISOString(),
     slug, client_name: client.name, agencia: client.agencia || null,
-    ad_account_id: client.ad_account_id,
-    campaigns_count: campaigns.length, campaigns, error: err,
+    ad_account_id: client.ad_account_id, periodo: 'Vida útil (maximum)',
+    totals, campaigns_count: campaigns.length, campaigns, error: err,
   };
   estruturasCache.set(slug, { data: result, ts: now });
   return result;
