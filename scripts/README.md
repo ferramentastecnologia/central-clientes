@@ -34,30 +34,54 @@ systemctl stop story-corpus-academia.timer                 # cancelar
 
 ## publish-story-feio.mjs
 
-Versão **parametrizada por dia** dos stories recorrentes da **Hamburgueria Feio**
+Publica a **sequência de stories recorrentes** da **Hamburgueria Feio**
 (IG `17841440639973754` · @hamburgueria.feio). Mesma mecânica do script da Academia
-(container `STORIES` com retry → poll de status → publish → auto-registro), mas escolhe
-o criativo pelo argumento `--day`:
+(container `STORIES` com retry → poll de status → publish → auto-registro), mas
+parametrizado por **dia** e **slot**:
 
 ```bash
-node --env-file=.env scripts/publish-story-feio.mjs --day=sexta
-node --env-file=.env scripts/publish-story-feio.mjs --day=sabado
-# dias válidos: segunda, quinta, sexta, sabado
+node --env-file=.env scripts/publish-story-feio.mjs --day=sexta --slot=almoco
+node --env-file=.env scripts/publish-story-feio.mjs --day=sexta --slot=jantar
+node --env-file=.env scripts/publish-story-feio.mjs --day=sexta --slot=jantar --with-promo
+# dias:  segunda, terca, quarta, quinta, sexta, sabado   (domingo fechado)
+# slots: almoco (11h), jantar (18h)
 ```
 
-- Criativos servidos em `https://central.starkentecnologia.com.br/feio/assets/photos/promo-<dia>.png`.
-- Registro com dedupe por `id` = `story-feio-<dia>-MMDD` em `data/stories-publicados.json`.
+Cada dia aberto tem uma variante de criativo "estamos abertos" (A = Seg/Qua/Sex,
+B = Ter/Qui/Sáb) + a promo do dia. O que cada slot publica:
+
+| slot | 11h almoço | 18h jantar |
+|---|---|---|
+| stories | abertura-almoço **+ promo do dia** | abertura-jantar |
+
+- `--with-promo` adiciona a promo ao slot do jantar (usado quando a promo perdeu o
+  slot das 11h e precisa ser recuperada à noite).
+- Criativos servidos em `https://central.starkentecnologia.com.br/feio/assets/photos/`
+  (`promo-<dia>.png`, `feio-abre-{almoco,jantar}-{a,b}.png`).
+- Registro com dedupe por `id` = `story-feio-<dia>-<imagem>-MMDD` em `data/stories-publicados.json`.
 - `STORIES_STORE` (env, opcional) sobrescreve o caminho do JSON de registro.
 
-### Timer de sábado (one-shot via systemd-run)
+> Fonte dos criativos (renomeada/limpa) fica em
+> `Hamburgueria Feio/Materiais/Stories Recorrentes/<Dia>/{abre-almoco,abre-jantar,promo}.png`
+> (working folder local, fora do Git). Ao trocar a arte, re-copie para `feio/assets/photos/`
+> com o nome canônico, commite e faça deploy.
+
+### Timers (one-shot via systemd-run)
+
+Um timer por (dia, slot). 11h BRT = 14:00 UTC · 18h BRT = 21:00 UTC. Exemplo (sábado):
 
 ```bash
 systemd-run --on-calendar="2026-06-06 14:00:00 UTC" \
-  --unit=story-feio-sabado \
+  --unit=story-feio-sabado-almoco-0606 \
   --working-directory=/var/www/central-clientes \
   /usr/bin/node --env-file=/var/www/central-clientes/.env \
-  /var/www/central-clientes/scripts/publish-story-feio.mjs --day=sabado
-# 14:00 UTC = 11:00 BRT (abertura do almoço de sábado)
+  /var/www/central-clientes/scripts/publish-story-feio.mjs --day=sabado --slot=almoco
+
+systemd-run --on-calendar="2026-06-06 21:00:00 UTC" \
+  --unit=story-feio-sabado-jantar-0606 \
+  --working-directory=/var/www/central-clientes \
+  /usr/bin/node --env-file=/var/www/central-clientes/.env \
+  /var/www/central-clientes/scripts/publish-story-feio.mjs --day=sabado --slot=jantar
 ```
 
 ### Dados relacionados (VPS-owned, gitignored)
