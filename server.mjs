@@ -818,6 +818,12 @@ function parseCreative(cr) {
   const hashes = [];
   (afs.images || []).forEach(im => { if (im.hash) hashes.push({ label: im.adlabels?.[0]?.name || null, hash: im.hash }); });
   if (!hashes.length && ld.image_hash) hashes.push({ label: null, hash: ld.image_hash });
+  // vídeos: asset_feed_spec.videos (asset customization) ou object_story_spec.video_data (vídeo único)
+  const videoRefs = [];
+  (afs.videos || []).forEach(v => { if (v.video_id) videoRefs.push({ label: v.adlabels?.[0]?.name || null, video_id: v.video_id, thumb: v.thumbnail_url || null }); });
+  if (!videoRefs.length && oss.video_data?.video_id) videoRefs.push({ label: null, video_id: oss.video_data.video_id, thumb: oss.video_data.image_url || null });
+  // fallback: vídeo no nível do criativo (ex.: tráfego impulsionando reel do Instagram)
+  if (!videoRefs.length && cr.video_id) videoRefs.push({ label: null, video_id: cr.video_id, thumb: cr.image_url || cr.thumbnail_url || null });
   return {
     id: cr.id,
     title: cr.title || afs.titles?.[0]?.text || ld.name || null,
@@ -828,6 +834,8 @@ function parseCreative(cr) {
     thumbnail: cr.thumbnail_url || null,
     image_direct: cr.image_url || null,
     hashes, // resolvidos depois em fetchEstruturas (adimages → URL alta)
+    videoRefs, // resolvidos depois (video_id → source mp4 + poster)
+    ig_permalink: cr.instagram_permalink_url || null, // reel do IG (fallback de play p/ vídeos sem source)
     customized: (afs.asset_customization_rules || []).length > 0,
   };
 }
@@ -885,13 +893,13 @@ async function fetchEstruturas(slug) {
 
   const INS = 'insights.date_preset(maximum){spend,impressions,reach,frequency,clicks,ctr,cpm,cpc,actions,action_values,purchase_roas}';
   const F = `name,objective,effective_status,daily_budget,lifetime_budget,stop_time,start_time,${INS},`
-    + `adsets.limit(25){name,effective_status,optimization_goal,billing_event,lifetime_budget,daily_budget,${INS},`
+    + `adsets.limit(25){name,effective_status,optimization_goal,billing_event,lifetime_budget,daily_budget,start_time,end_time,${INS},`
     + 'pacing_type,adset_schedule,promoted_object,destination_type,frequency_control_specs,'
     + 'targeting{device_platforms,publisher_platforms,facebook_positions,instagram_positions,age_min,age_max,genders,flexible_spec,'
     + 'geo_locations{cities,regions,countries,custom_locations,location_types}},'
     + `ads.limit(15){name,effective_status,${INS},`
-    + 'creative{id,title,body,call_to_action_type,image_url,thumbnail_url,object_story_spec,'
-    + 'asset_feed_spec{bodies,titles,descriptions,call_to_action_types,link_urls,asset_customization_rules,images}}}}';
+    + 'creative{id,title,body,call_to_action_type,image_url,thumbnail_url,video_id,instagram_permalink_url,object_story_spec,'
+    + 'asset_feed_spec{bodies,titles,descriptions,call_to_action_types,link_urls,asset_customization_rules,images,videos}}}}';
   const filtering = encodeURIComponent(JSON.stringify([{ field: 'effective_status', operator: 'IN', value: ['ACTIVE'] }]));
 
   let campaigns = [];
@@ -908,6 +916,7 @@ async function fetchEstruturas(slug) {
         lifetime_budget_cents: s.lifetime_budget ? parseInt(s.lifetime_budget) : null,
         daily_budget_cents: s.daily_budget ? parseInt(s.daily_budget) : null,
         destination_type: s.destination_type || null,
+        start_time: s.start_time || null, end_time: s.end_time || null,
         pixel: s.promoted_object?.pixel_id ? { id: s.promoted_object.pixel_id, event: s.promoted_object.custom_event_type || null } : null,
         dayparting: (s.adset_schedule || []).map(w => ({ days: w.days, start_minute: w.start_minute, end_minute: w.end_minute, tz: w.timezone_type })),
         frequency: (s.frequency_control_specs || [])[0] || null,
@@ -933,6 +942,8 @@ async function fetchEstruturas(slug) {
     });
   } catch (e) { err = e.message; }
 
+  const labelPt = l => (l === 'feed_image' || l === 'feed_video') ? 'Feed' : ((l === 'story_image' || l === 'story_video') ? 'Story/Reels' : (l || null));
+
   // Resolve image_hash → URL de alta resolução (1 chamada adimages; traz as 2 artes do asset customization)
   try {
     const allHashes = new Set();
@@ -944,7 +955,6 @@ async function fetchEstruturas(slug) {
       const j = await r.json();
       (j.data || []).forEach(i => { hashUrl[i.hash] = { url: i.url, w: i.width, h: i.height }; });
     }
-    const labelPt = l => l === 'feed_image' ? 'Feed' : (l === 'story_image' ? 'Story/Reels' : (l || null));
     campaigns.forEach(c => c.adsets.forEach(s => s.ads.forEach(a => {
       const cr = a.creative; if (!cr) return;
       const imgs = (cr.hashes || [])
@@ -953,6 +963,36 @@ async function fetchEstruturas(slug) {
       cr.images = imgs.length ? imgs : (cr.image_direct ? [{ label: null, url: cr.image_direct }] : (cr.thumbnail ? [{ label: null, url: cr.thumbnail }] : []));
       cr.image = cr.images[0]?.url || cr.thumbnail || null;
       delete cr.hashes; delete cr.image_direct;
+    })));
+  } catch {}
+
+  // Resolve video_id → source (mp4 tocável) + poster (1 chamada batch ?ids=)
+  try {
+    const allVids = new Set();
+    campaigns.forEach(c => c.adsets.forEach(s => s.ads.forEach(a => (a.creative?.videoRefs || []).forEach(v => allVids.add(v.video_id)))));
+    const vinfo = {};
+    if (allVids.size) {
+      const ids = [...allVids].slice(0, 50).join(',');
+      const r = await fetch(`https://graph.facebook.com/v23.0/?ids=${ids}&fields=source,picture,permalink_url,thumbnails{uri,is_preferred,width,height}&access_token=${token}`);
+      const j = await r.json();
+      Object.entries(j || {}).forEach(([id, v]) => {
+        if (!v || v.error) return;
+        const tb = (v.thumbnails?.data || []).find(x => x.is_preferred) || v.thumbnails?.data?.[0];
+        vinfo[id] = {
+          source: v.source || null,
+          poster: tb?.uri || v.picture || null,
+          permalink: v.permalink_url ? ('https://www.facebook.com' + v.permalink_url) : null,
+          w: tb?.width || null, h: tb?.height || null,
+        };
+      });
+    }
+    campaigns.forEach(c => c.adsets.forEach(s => s.ads.forEach(a => {
+      const cr = a.creative; if (!cr) return;
+      cr.videos = (cr.videoRefs || []).map(v => {
+        const info = vinfo[v.video_id] || {};
+        return { label: labelPt(v.label), video_id: v.video_id, source: info.source || null, poster: info.poster || v.thumb || null, permalink: cr.ig_permalink || info.permalink || null, w: info.w || null, h: info.h || null };
+      }).filter(x => x.poster || x.source);
+      delete cr.videoRefs; delete cr.ig_permalink;
     })));
   } catch {}
 
