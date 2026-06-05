@@ -35,11 +35,11 @@ const STORE = process.env.STORIES_STORE || path.join(__dirname, '..', 'data', 's
 // Variante A: Seg/Qua/Sex · Variante B: Ter/Qui/Sáb (domingo fechado).
 const DAYS = {
   segunda: { variant: 'a', promo: 'promo-segunda.png' },
-  terca:   { variant: 'b', promo: 'promo-terca.png' },
-  quarta:  { variant: 'a', promo: 'promo-quarta.png' },
+  terca:   { variant: 'b', promo: 'promo-terca.png',  extra: { img: 'feio-extra-duplo.png',     title: 'Feio Duplo' } },
+  quarta:  { variant: 'a', promo: 'promo-quarta.png', extra: { img: 'feio-extra-americano.png', title: 'Você pediria um Americano?' } },
   quinta:  { variant: 'b', promo: 'promo-quinta.png' },
-  sexta:   { variant: 'a', promo: 'promo-sexta.png' },
-  sabado:  { variant: 'b', promo: 'promo-sabado.png' },
+  sexta:   { variant: 'a', promo: 'promo-sexta.png',  extra: { img: 'feio-extra-blumenau.png',  title: 'Feio Blumenau' } },
+  sabado:  { variant: 'b', promo: 'promo-sabado.png', extra: { img: 'feio-extra-sabado.png',    title: 'Story Sábado' } },
 };
 const ABERTURA = {
   a: { almoco: 'feio-abre-almoco-a.png', jantar: 'feio-abre-jantar-a.png' },
@@ -79,6 +79,7 @@ if (imageArg) {
     items.push({ img: day.promo, title: `Promo de ${dayKey}` });
   } else {
     items.push({ img: ab.jantar, title: 'Estamos abertos · jantar (18h)' });
+    if (day.extra) items.push({ img: day.extra.img, title: day.extra.title });
     if (withPromo) items.push({ img: day.promo, title: `Promo de ${dayKey}` });
   }
 }

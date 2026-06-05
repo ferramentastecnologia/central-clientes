@@ -59,7 +59,9 @@ B = Ter/Qui/Sáb) + a promo do dia. O que cada slot publica:
 
 | slot | 11h almoço | 18h jantar |
 |---|---|---|
-| stories | abertura-almoço **+ promo do dia** | abertura-jantar |
+| stories | abertura-almoço **+ promo do dia** | abertura-jantar **+ story do dia** (ter=duplo, qua=americano, sex=blumenau, sáb=story-sábado) |
+
+Modo adhoc: `--image=<arquivo> --title="..."` publica 1 story avulso (ignora dia/slot).
 
 - `--with-promo` adiciona a promo ao slot do jantar (usado quando a promo perdeu o
   slot das 11h e precisa ser recuperada à noite).
