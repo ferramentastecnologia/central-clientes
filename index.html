@@ -4,37 +4,41 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Central de Clientes · Starken Tecnologia</title>
+<link rel="icon" href="/design-system/assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/design-system/tokens/starken-tokens.css">
 <meta name="description" content="Acesso central aos dashboards e relatórios dos clientes ativos da Starken Tecnologia.">
 <style>
   :root {
-    --bg-0: #0a0e1a;
-    --bg-1: #131b2e;
-    --bg-2: #1a2440;
-    --bg-3: #243154;
+    /* Identidade Starken (Design System) — slate + esmeralda */
+    --bg-0: #020617;   /* slate-950 */
+    --bg-1: #0f172a;   /* slate-900 */
+    --bg-2: #1e293b;   /* slate-800 */
+    --bg-3: #334155;   /* slate-700 */
     --text-0: #f8fafc;
     --text-1: #cbd5e1;
     --text-2: #94a3b8;
     --text-3: #64748b;
-    --accent: #fbbf24;
-    --accent-dim: rgba(251, 191, 36, 0.15);
+    --accent: #10b981;                          /* esmeralda — primária */
+    --accent-dim: rgba(16, 185, 129, 0.15);
     --fenice: #fb7185;
     --fenice-dim: rgba(251, 113, 133, 0.12);
-    --starken: #60a5fa;
-    --starken-dim: rgba(96, 165, 250, 0.12);
-    --ok: #4ade80;
-    --warn: #fbbf24;
-    --err: #f87171;
+    --starken: #0d9488;                         /* teal — apoio/gradiente da marca */
+    --starken-dim: rgba(13, 148, 136, 0.12);
+    --ok: #10b981;
+    --warn: #f59e0b;
+    --err: #ef4444;
     --border: rgba(255, 255, 255, 0.08);
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html, body { background: var(--bg-0); }
   body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: var(--font-body, 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
     background: radial-gradient(ellipse at top, var(--bg-1) 0%, var(--bg-0) 60%);
     color: var(--text-0);
     min-height: 100vh;
     padding: 28px 32px 80px;
   }
+  h1, h2, h3, .brand { font-family: var(--font-display, 'Sora', sans-serif); }
   a { color: inherit; text-decoration: none; }
 
   /* TOPNAV */
@@ -331,7 +335,7 @@
 <body>
 
 <nav class="topnav">
-  <div class="brand">⚡ <span class="brand-text">Starken Tecnologia</span></div>
+  <div class="brand"><img src="/design-system/assets/logo-starken-white.png" alt="Starken Tecnologia" style="height:26px;width:auto;display:block"></div>
   <div class="nav-links">
     <a href="/dashboard/" style="color:var(--accent);">🎯 Central</a>
     <a href="/agendamentos.html">📅 Agendamentos</a>
