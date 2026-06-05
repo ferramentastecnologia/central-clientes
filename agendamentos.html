@@ -92,13 +92,24 @@
   .filters {
     display: flex;
     gap: 10px;
-    margin-bottom: 24px;
+    margin-bottom: 12px;
     flex-wrap: wrap;
+    align-items: center;
     padding: 12px;
     background: var(--bg-1);
     border-radius: 12px;
     border: 1px solid var(--border);
   }
+  .filters + .filters { margin-top: -4px; }
+  .filter-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-2);
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin-right: 2px;
+  }
+  #client-filters { display: contents; }
   .filter-btn {
     padding: 7px 14px;
     border-radius: 8px;
@@ -535,8 +546,15 @@
 
 <!-- FILTERS -->
 <div class="filters">
-  <button class="filter-btn active" data-filter="all">Todos</button>
-  <label class="toggle">
+  <span class="filter-label">Cliente:</span>
+  <span id="client-filters"><button class="filter-btn active" data-client="all">Todos</button></span>
+</div>
+<div class="filters">
+  <span class="filter-label">Canal:</span>
+  <button class="filter-btn active" data-channel="all">Todos</button>
+  <button class="filter-btn" data-channel="ig">📸 Instagram</button>
+  <button class="filter-btn" data-channel="fb">📘 Facebook</button>
+  <label class="toggle" style="margin-left:auto;">
     <input type="checkbox" id="show-old"> Mostrar posts antigos/publicados
   </label>
 </div>
@@ -552,9 +570,28 @@
 
 <script>
 const REFRESH_MS = 30000;
-let currentFilter = 'all';
+let currentClient = 'all';
+let currentChannel = 'all';
 let showOld = false;
 let cachedData = null;
+let clientFiltersBuilt = false;
+
+// Canais de cada item (fallback p/ entradas antigas sem o campo).
+const cronChannels  = c => c.channels || (c.type === 'ig_publish' ? ['ig'] : c.type === 'campaign_monitor' ? ['monitor'] : []);
+const storyChannels = s => s.channels || ['ig'];
+const postChannels  = p => p.channels || ['fb'];
+const inClient  = slug => currentClient === 'all' || slug === currentClient;
+const inChannel = chans => currentChannel === 'all' || (chans || []).includes(currentChannel);
+
+// Badges de canal (📸/📘) a partir do array de canais.
+function channelBadges(chans) {
+  return (chans || []).map(ch =>
+    ch === 'ig' ? '<span class="channel-tag ig-tag">📸 Instagram</span>'
+    : ch === 'fb' ? '<span class="channel-tag fb-tag">📘 Facebook</span>'
+    : ch === 'monitor' ? '<span class="channel-tag monitor-tag">📊 Monitor</span>'
+    : ''
+  ).join(' ');
+}
 
 function fmtCountdown(seconds) {
   if (seconds <= 0) return 'PUBLICADO ✓';
@@ -726,7 +763,7 @@ function renderStoryCard(s) {
   const media = s.image_url
     ? `<a class="story-media" href="${escape(s.image_url)}" target="_blank" title="Abrir criativo">
          <img src="${escape(s.image_url)}" alt="story" loading="lazy">
-         ${badge}<span class="story-ch">📸</span>
+         ${badge}<span class="story-ch">${storyChannels(s).map(ch => ch === 'ig' ? '📸' : ch === 'fb' ? '📘' : '').join('')}</span>
        </a>`
     : `<div class="story-media">${badge}</div>`;
   return `
@@ -761,9 +798,7 @@ function renderCron(cron) {
     countdownHtml = `<div class="cron-countdown completed">✓ Publicado</div>`;
   }
 
-  const channelTag = cron.type === 'ig_publish' ? '<span class="channel-tag ig-tag">📸 Instagram</span>'
-    : cron.type === 'campaign_monitor' ? '<span class="channel-tag monitor-tag">📊 Monitor</span>'
-    : '<span class="channel-tag postmortem-tag">📋 Postmortem</span>';
+  const channelTag = channelBadges(cronChannels(cron)) || '<span class="channel-tag postmortem-tag">📋 Postmortem</span>';
 
   const statusChip = isCompleted ? '<span class="cron-status done">✓ Publicado</span>'
     : imminent ? '<span class="cron-status soon">🔴 Em instantes</span>'
@@ -829,26 +864,25 @@ function render() {
   if (!cachedData) return;
   const data = cachedData;
 
-  // Aplica filtro de agência
-  let clients = data.clients;
-  if (currentFilter !== 'all') {
-    clients = clients.filter(c => c.agencia === currentFilter);
-  }
+  // Aplica filtro por cliente
+  const clients = data.clients.filter(c => inClient(c.slug));
 
-  // Coleta todos os posts agendados (futuros) + descobre o próximo
+  // Coleta posts agendados (FB feed) — canal 'fb'
   const now = Math.floor(Date.now() / 1000);
   const upcomingPosts = [];
   const pastPosts = [];
 
-  clients.forEach(client => {
-    (client.fb_scheduled_posts || []).forEach(post => {
-      if (post.scheduled_publish_time > now) {
-        upcomingPosts.push({ post, client });
-      } else {
-        pastPosts.push({ post, client });
-      }
+  if (inChannel(['fb'])) {
+    clients.forEach(client => {
+      (client.fb_scheduled_posts || []).forEach(post => {
+        if (post.scheduled_publish_time > now) {
+          upcomingPosts.push({ post, client });
+        } else {
+          pastPosts.push({ post, client });
+        }
+      });
     });
-  });
+  }
 
   upcomingPosts.sort((a, b) => a.post.scheduled_publish_time - b.post.scheduled_publish_time);
 
@@ -878,7 +912,7 @@ function render() {
   html += '</div>';
 
   // Seção: Posts Publicados (curados — data/posts-publicados.json)
-  const publicados = (data.posts_publicados || []).filter(p => currentFilter === 'all' || p.agencia === currentFilter);
+  const publicados = (data.posts_publicados || []).filter(p => inClient(p.client_slug) && inChannel(postChannels(p)));
   if (publicados.length > 0) {
     html += '<div class="section">';
     html += `<div class="section-header">
@@ -893,7 +927,7 @@ function render() {
 
   // Seção: Stories Publicados (curados — data/stories-publicados.json)
   const stories = (data.stories_publicados || [])
-    .filter(s => currentFilter === 'all' || s.agencia === currentFilter)
+    .filter(s => inClient(s.client_slug) && inChannel(storyChannels(s)))
     .slice()
     .sort((a, b) => new Date(b.published_iso) - new Date(a.published_iso));
   if (stories.length > 0) {
@@ -926,7 +960,7 @@ function render() {
 
   // Seção: Cron Jobs
   html += '<div class="section">';
-  let crons = data.crons || [];
+  let crons = (data.crons || []).filter(c => inClient(c.client_slug) && inChannel(cronChannels(c)));
   // Filtra crons completos quando showOld for false
   const activeCrons = showOld ? crons : crons.filter(c => c.status !== 'completed');
   html += `<div class="section-header">
@@ -952,6 +986,7 @@ async function loadData(force = false) {
     const res = await fetch(url);
     const data = await res.json();
     cachedData = data;
+    buildClientFilters(data.clients);
 
     // Token status
     const t = document.getElementById('token-status');
@@ -976,14 +1011,37 @@ async function loadData(force = false) {
   }
 }
 
-// Filter buttons
-document.querySelectorAll('.filter-btn').forEach(b => {
-  b.addEventListener('click', () => {
-    document.querySelectorAll('.filter-btn').forEach(x => x.classList.remove('active'));
-    b.classList.add('active');
-    currentFilter = b.dataset.filter;
-    render();
+// Constrói os botões de cliente dinamicamente (uma vez), na ordem do mapping
+function buildClientFilters(clients) {
+  if (clientFiltersBuilt) return;
+  const wrap = document.getElementById('client-filters');
+  (clients || []).forEach(c => {
+    const b = document.createElement('button');
+    b.className = 'filter-btn';
+    b.dataset.client = c.slug;
+    b.textContent = c.name;
+    wrap.appendChild(b);
   });
+  clientFiltersBuilt = true;
+}
+
+// Filtros (delegação — botões de cliente são dinâmicos)
+document.addEventListener('click', (e) => {
+  const cb = e.target.closest('[data-client]');
+  if (cb) {
+    document.querySelectorAll('[data-client]').forEach(x => x.classList.remove('active'));
+    cb.classList.add('active');
+    currentClient = cb.dataset.client;
+    render();
+    return;
+  }
+  const ch = e.target.closest('[data-channel]');
+  if (ch) {
+    document.querySelectorAll('[data-channel]').forEach(x => x.classList.remove('active'));
+    ch.classList.add('active');
+    currentChannel = ch.dataset.channel;
+    render();
+  }
 });
 
 // Show old toggle
