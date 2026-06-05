@@ -67,7 +67,7 @@ const items = [];
 let regKey;   // prefixo do id de registro
 if (imageArg) {
   items.push({ img: imageArg, title: titleArg || 'Story' });
-  regKey = 'extra';
+  regKey = dayKey || 'extra';   // usa o dia no id de registro quando informado
 } else {
   const day = DAYS[dayKey];
   if (!day) { log(`FALHOU: --day inválido (${dayKey}). Use: ${Object.keys(DAYS).join(', ')} (ou --image=<arquivo>)`); process.exit(1); }
