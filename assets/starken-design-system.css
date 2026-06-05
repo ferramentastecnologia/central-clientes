@@ -1,0 +1,293 @@
+/* ============================================================
+   Starkën Design System — Base CSS
+   Tokens, resets e componentes core
+   ============================================================ */
+
+/* ─── Fontes ──────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;300;400;500;600;700;800;900&family=Sora:wght@400;600;700;800&family=Fira+Code:wght@400;500;600&display=swap');
+
+/* ─── Tokens CSS ──────────────────────────────────────────── */
+:root {
+  /* Cores da marca */
+  --brand-primary:   #10b981;
+  --brand-secondary: #0d9488;
+  --brand-light:     #6ee7b7;
+  --brand-dark:      #059669;
+
+  /* Backgrounds */
+  --bg-dark:     #020617;
+  --bg-surface:  #0f172a;
+  --bg-elevated: #1e293b;
+  --bg-hover:    #334155;
+
+  /* Texto */
+  --text-primary:   #ffffff;
+  --text-secondary: #94a3b8;
+  --text-muted:     #64748b;
+  --text-disabled:  #475569;
+
+  /* Semânticas */
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger:  #ef4444;
+  --info:    #3b82f6;
+
+  /* Tipografia */
+  --font-body:    'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-display: 'Sora', 'Inter', sans-serif;
+  --font-mono:    'Fira Code', 'Courier New', monospace;
+
+  /* Espaçamentos (múltiplos de 4px) */
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  20px;
+  --space-6:  24px;
+  --space-8:  32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* Border radius */
+  --radius-sm:  6px;
+  --radius-md:  10px;
+  --radius-lg:  16px;
+  --radius-xl:  24px;
+  --radius-full: 9999px;
+
+  /* Sombras */
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.5);
+  --shadow-brand: 0 4px 20px rgba(16,185,129,0.25);
+}
+
+/* ─── Reset ───────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-body);
+  background-color: var(--bg-dark);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ─── Botões ──────────────────────────────────────────────── */
+.starken-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1;
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-decoration: none;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.starken-btn:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+
+.starken-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Primary */
+.starken-btn-primary {
+  background: linear-gradient(135deg, var(--brand-primary), var(--brand-secondary));
+  color: #ffffff;
+  border-color: transparent;
+  box-shadow: var(--shadow-brand);
+}
+
+.starken-btn-primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #34d399, #0d9488);
+  box-shadow: 0 6px 24px rgba(16,185,129,0.35);
+  transform: translateY(-1px);
+}
+
+.starken-btn-primary:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: var(--shadow-brand);
+}
+
+/* Secondary */
+.starken-btn-secondary {
+  background: transparent;
+  color: var(--brand-primary);
+  border-color: rgba(16, 185, 129, 0.4);
+}
+
+.starken-btn-secondary:hover:not(:disabled) {
+  background: rgba(16, 185, 129, 0.08);
+  border-color: var(--brand-primary);
+}
+
+/* Ghost */
+.starken-btn-ghost {
+  background: transparent;
+  color: var(--text-secondary);
+  border-color: rgba(255,255,255,0.1);
+}
+
+.starken-btn-ghost:hover:not(:disabled) {
+  background: rgba(255,255,255,0.06);
+  color: var(--text-primary);
+  border-color: rgba(255,255,255,0.2);
+}
+
+/* Danger */
+.starken-btn-danger {
+  background: rgba(239,68,68,0.12);
+  color: #f87171;
+  border-color: rgba(239,68,68,0.3);
+}
+
+.starken-btn-danger:hover:not(:disabled) {
+  background: rgba(239,68,68,0.2);
+  border-color: #ef4444;
+}
+
+/* Sizes */
+.starken-btn-sm {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.75rem;
+  border-radius: var(--radius-sm);
+}
+
+.starken-btn-lg {
+  padding: 0.875rem 1.75rem;
+  font-size: 1rem;
+  border-radius: var(--radius-lg);
+}
+
+/* ─── Cards ───────────────────────────────────────────────── */
+.starken-card {
+  background: var(--bg-surface);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.starken-card:hover {
+  border-color: rgba(255,255,255,0.14);
+  box-shadow: var(--shadow-md);
+}
+
+.starken-card-elevated {
+  background: var(--bg-elevated);
+}
+
+/* ─── Badges ──────────────────────────────────────────────── */
+.starken-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--radius-full);
+  letter-spacing: 0.04em;
+  border: 1px solid transparent;
+}
+
+.starken-badge-success {
+  background: rgba(16,185,129,0.12);
+  color: var(--brand-primary);
+  border-color: rgba(16,185,129,0.3);
+}
+
+.starken-badge-warning {
+  background: rgba(245,158,11,0.12);
+  color: #fbbf24;
+  border-color: rgba(245,158,11,0.3);
+}
+
+.starken-badge-danger {
+  background: rgba(239,68,68,0.12);
+  color: #f87171;
+  border-color: rgba(239,68,68,0.3);
+}
+
+.starken-badge-info {
+  background: rgba(59,130,246,0.12);
+  color: #60a5fa;
+  border-color: rgba(59,130,246,0.3);
+}
+
+.starken-badge-neutral {
+  background: rgba(100,116,139,0.12);
+  color: var(--text-secondary);
+  border-color: rgba(100,116,139,0.3);
+}
+
+/* ─── Inputs ──────────────────────────────────────────────── */
+.starken-input {
+  width: 100%;
+  background: var(--bg-surface);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: var(--radius-md);
+  padding: 0.625rem 0.875rem;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.starken-input:focus {
+  border-color: var(--brand-primary);
+  box-shadow: 0 0 0 3px rgba(16,185,129,0.12);
+}
+
+.starken-input::placeholder {
+  color: var(--text-muted);
+}
+
+.starken-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.starken-input-error {
+  border-color: var(--danger) !important;
+  box-shadow: 0 0 0 3px rgba(239,68,68,0.1) !important;
+}
+
+/* ─── Typography helpers ──────────────────────────────────── */
+.starken-heading-1 { font-family: var(--font-display); font-size: 2.25rem; font-weight: 800; letter-spacing: -0.02em; line-height: 1.1; color: var(--text-primary); }
+.starken-heading-2 { font-family: var(--font-display); font-size: 1.875rem; font-weight: 700; letter-spacing: -0.01em; line-height: 1.2; color: var(--text-primary); }
+.starken-heading-3 { font-size: 1.5rem; font-weight: 700; line-height: 1.3; color: var(--text-primary); }
+.starken-body      { font-size: 1rem; font-weight: 400; line-height: 1.75; color: var(--text-secondary); }
+.starken-caption   { font-size: 0.75rem; font-weight: 400; color: var(--text-muted); }
+.starken-mono      { font-family: var(--font-mono); font-size: 0.875rem; color: var(--brand-light); }
+
+/* ─── Gradients ───────────────────────────────────────────── */
+.starken-gradient-brand {
+  background: linear-gradient(135deg, var(--brand-primary), var(--brand-secondary));
+}
+
+.starken-gradient-text {
+  background: linear-gradient(135deg, var(--brand-primary), var(--brand-secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
