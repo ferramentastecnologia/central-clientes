@@ -32,6 +32,34 @@ journalctl -u story-corpus-academia.service                # ver log da execuç�
 systemctl stop story-corpus-academia.timer                 # cancelar
 ```
 
+## publish-story-feio.mjs
+
+Versão **parametrizada por dia** dos stories recorrentes da **Hamburgueria Feio**
+(IG `17841440639973754` · @hamburgueria.feio). Mesma mecânica do script da Academia
+(container `STORIES` com retry → poll de status → publish → auto-registro), mas escolhe
+o criativo pelo argumento `--day`:
+
+```bash
+node --env-file=.env scripts/publish-story-feio.mjs --day=sexta
+node --env-file=.env scripts/publish-story-feio.mjs --day=sabado
+# dias válidos: segunda, quinta, sexta, sabado
+```
+
+- Criativos servidos em `https://central.starkentecnologia.com.br/feio/assets/photos/promo-<dia>.png`.
+- Registro com dedupe por `id` = `story-feio-<dia>-MMDD` em `data/stories-publicados.json`.
+- `STORIES_STORE` (env, opcional) sobrescreve o caminho do JSON de registro.
+
+### Timer de sábado (one-shot via systemd-run)
+
+```bash
+systemd-run --on-calendar="2026-06-06 14:00:00 UTC" \
+  --unit=story-feio-sabado \
+  --working-directory=/var/www/central-clientes \
+  /usr/bin/node --env-file=/var/www/central-clientes/.env \
+  /var/www/central-clientes/scripts/publish-story-feio.mjs --day=sabado
+# 14:00 UTC = 11:00 BRT (abertura do almoço de sábado)
+```
+
 ### Dados relacionados (VPS-owned, gitignored)
 
 - `data/stories-publicados.json` — stories publicados (mutado em runtime por este script)
