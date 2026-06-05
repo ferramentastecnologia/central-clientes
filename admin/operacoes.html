@@ -86,9 +86,13 @@
   @media(min-width:720px){.ads-grid{grid-template-columns:repeat(2,1fr);}}
   .adcard{display:flex;gap:12px;background:var(--bg-2);border:1px solid var(--border);border-radius:10px;padding:10px;}
   .adcard.paused{opacity:.55;}
-  .adcard-img{width:84px;height:84px;flex-shrink:0;border-radius:8px;overflow:hidden;background:var(--bg-0);border:1px solid var(--border);}
-  .adcard-img img{width:100%;height:100%;object-fit:cover;display:block;}
-  .noimg{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--text-3);text-align:center;}
+  .adcard-imgs{display:flex;flex-direction:column;gap:6px;flex-shrink:0;}
+  .cimg{position:relative;width:80px;height:80px;border-radius:8px;overflow:hidden;background:var(--bg-0);border:1px solid var(--border);display:block;}
+  .cimg:hover{border-color:var(--accent);}
+  .cimg img{width:100%;height:100%;object-fit:cover;display:block;}
+  .cimg.broken{display:none;}
+  .ilab{position:absolute;bottom:0;left:0;right:0;font-size:8px;font-weight:700;text-align:center;background:rgba(0,0,0,.65);color:#fff;padding:1px 0;letter-spacing:.02em;}
+  .noimg{width:80px;height:80px;display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--text-3);text-align:center;border:1px solid var(--border);border-radius:8px;}
   .adcard-body{flex:1;min-width:0;}
   .adcard-head{display:flex;align-items:center;gap:6px;font-size:12px;flex-wrap:wrap;margin-bottom:4px;}
   .adcard-head b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:160px;}
@@ -153,8 +157,14 @@ function targBlock(t){
 }
 function adCard(a){
   const cr=a.creative||{},i=a.insights;
+  const imgs=cr.images||[];
+  const imgHtml=imgs.length
+    ? imgs.map(im=>`<a class="cimg" href="${esc(im.url)}" target="_blank" title="${im.label?esc(im.label)+' · ':''}abrir em alta">
+        <img src="${esc(im.url)}" loading="lazy" onerror="this.closest('.cimg').classList.add('broken')">
+        ${im.label?`<span class="ilab">${esc(im.label)}</span>`:''}</a>`).join('')
+    : '<div class="noimg">sem<br>prévia</div>';
   return `<div class="adcard ${a.effective_status!=='ACTIVE'?'paused':''}">
-    <div class="adcard-img">${cr.image?`<img src="${esc(cr.image)}" loading="lazy" onerror="this.parentNode.innerHTML='<div class=noimg>sem prévia</div>'>`:'<div class="noimg">sem<br>prévia</div>'}</div>
+    <div class="adcard-imgs">${imgHtml}</div>
     <div class="adcard-body">
       <div class="adcard-head"><b title="${esc(a.name)}">${esc(a.name)}</b><span class="st ${esc(a.effective_status)}">${esc(a.effective_status)}</span>${cr.customized?'<span class="cust">Feed+Story</span>':''}</div>
       ${cr.title?`<div class="ad-title">${esc(cr.title)}</div>`:''}

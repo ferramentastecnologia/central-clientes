@@ -815,6 +815,9 @@ function parseCreative(cr) {
   const afs = cr.asset_feed_spec || {};
   const oss = cr.object_story_spec || {};
   const ld = oss.link_data || oss.video_data || oss.photo_data || {};
+  const hashes = [];
+  (afs.images || []).forEach(im => { if (im.hash) hashes.push({ label: im.adlabels?.[0]?.name || null, hash: im.hash }); });
+  if (!hashes.length && ld.image_hash) hashes.push({ label: null, hash: ld.image_hash });
   return {
     id: cr.id,
     title: cr.title || afs.titles?.[0]?.text || ld.name || null,
@@ -822,9 +825,10 @@ function parseCreative(cr) {
     description: ld.description || afs.descriptions?.[0]?.text || null,
     cta: cr.call_to_action_type || afs.call_to_action_types?.[0] || ld.call_to_action?.type || null,
     link: ld.link || afs.link_urls?.[0]?.website_url || null,
-    image: cr.thumbnail_url || cr.image_url || null,
+    thumbnail: cr.thumbnail_url || null,
+    image_direct: cr.image_url || null,
+    hashes, // resolvidos depois em fetchEstruturas (adimages → URL alta)
     customized: (afs.asset_customization_rules || []).length > 0,
-    formatos: (afs.images || []).length || ((cr.image_url || cr.thumbnail_url) ? 1 : 0),
   };
 }
 
@@ -927,6 +931,29 @@ async function fetchEstruturas(slug) {
       };
     });
   } catch (e) { err = e.message; }
+
+  // Resolve image_hash → URL de alta resolução (1 chamada adimages; traz as 2 artes do asset customization)
+  try {
+    const allHashes = new Set();
+    campaigns.forEach(c => c.adsets.forEach(s => s.ads.forEach(a => (a.creative?.hashes || []).forEach(hp => allHashes.add(hp.hash)))));
+    const hashUrl = {};
+    if (allHashes.size) {
+      const q = encodeURIComponent(JSON.stringify([...allHashes].slice(0, 80)));
+      const r = await fetch(`https://graph.facebook.com/v23.0/act_${client.ad_account_id}/adimages?hashes=${q}&fields=hash,url,width,height&access_token=${token}`);
+      const j = await r.json();
+      (j.data || []).forEach(i => { hashUrl[i.hash] = { url: i.url, w: i.width, h: i.height }; });
+    }
+    const labelPt = l => l === 'feed_image' ? 'Feed' : (l === 'story_image' ? 'Story/Reels' : (l || null));
+    campaigns.forEach(c => c.adsets.forEach(s => s.ads.forEach(a => {
+      const cr = a.creative; if (!cr) return;
+      const imgs = (cr.hashes || [])
+        .map(hp => ({ label: labelPt(hp.label), url: hashUrl[hp.hash]?.url || null, w: hashUrl[hp.hash]?.w || null, h: hashUrl[hp.hash]?.h || null }))
+        .filter(x => x.url);
+      cr.images = imgs.length ? imgs : (cr.image_direct ? [{ label: null, url: cr.image_direct }] : (cr.thumbnail ? [{ label: null, url: cr.thumbnail }] : []));
+      cr.image = cr.images[0]?.url || cr.thumbnail || null;
+      delete cr.hashes; delete cr.image_direct;
+    })));
+  } catch {}
 
   // Totais da carteira do cliente
   const totals = campaigns.reduce((a, c) => {
