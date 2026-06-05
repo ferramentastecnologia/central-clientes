@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Central de Operações · Estruturas · Starken</title>
+<style>
+  :root {
+    --bg-0:#0a0e1a;--bg-1:#131b2e;--bg-2:#1a2440;--bg-3:#243154;
+    --text-0:#f8fafc;--text-1:#cbd5e1;--text-2:#94a3b8;--text-3:#64748b;
+    --accent:#fbbf24;--ok:#4ade80;--warn:#fbbf24;--err:#f87171;--info:#60a5fa;--purple:#a78bfa;
+    --border:rgba(255,255,255,0.08);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html,body{background:var(--bg-0);}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:linear-gradient(180deg,var(--bg-0),var(--bg-1));color:var(--text-0);min-height:100vh;padding:24px 32px 60px;}
+  a{color:var(--info);text-decoration:none;}
+  .mono{font-variant-numeric:tabular-nums;}
+  .topnav{display:flex;align-items:center;gap:18px;padding:14px 22px;background:rgba(19,27,46,.85);backdrop-filter:blur(8px);border:1px solid var(--border);border-radius:16px;margin-bottom:22px;flex-wrap:wrap;position:sticky;top:12px;z-index:100;}
+  .brand{font-weight:800;font-size:18px;background:linear-gradient(90deg,var(--accent),#f59e0b);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;white-space:nowrap;}
+  .brand-sub{color:var(--text-3);font-size:12px;font-weight:500;margin-left:-8px;}
+  .nav-links{display:flex;gap:6px;flex-wrap:wrap;margin-left:6px;}
+  .nav-links a{padding:6px 12px;border-radius:8px;color:var(--text-1);font-size:13px;font-weight:500;}
+  .nav-links a:hover{background:rgba(255,255,255,.05);color:var(--text-0);text-decoration:none;}
+  .topnav-right{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+  .pill{padding:6px 12px;border-radius:999px;background:rgba(255,255,255,.05);border:1px solid var(--border);font-size:12px;font-weight:600;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;}
+  .pill.ok{background:rgba(74,222,128,.12);border-color:rgba(74,222,128,.35);color:var(--ok);}
+  .pill.warn{background:rgba(251,191,36,.12);border-color:rgba(251,191,36,.35);color:var(--warn);}
+  .pill.err{background:rgba(248,113,113,.12);border-color:rgba(248,113,113,.35);color:var(--err);}
+  .btn{padding:8px 16px;border-radius:10px;background:rgba(255,255,255,.06);border:1px solid var(--border);color:#fff;cursor:pointer;font-weight:600;font-size:12px;}
+  .btn:hover{opacity:.85;}
+
+  .tabs{display:flex;gap:6px;margin-bottom:22px;flex-wrap:wrap;}
+  .tab{padding:8px 15px;border:1px solid var(--border);background:var(--bg-1);color:var(--text-2);font-size:13px;font-weight:600;border-radius:999px;cursor:pointer;}
+  .tab.active{background:var(--accent);color:#1a0f08;border-color:var(--accent);}
+
+  .summary{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px;}
+  .sum-card{background:var(--bg-1);border:1px solid var(--border);border-radius:12px;padding:12px 18px;}
+  .sum-label{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-3);font-weight:700;}
+  .sum-value{font-size:22px;font-weight:800;margin-top:3px;}
+  .sum-value.warn{color:var(--warn);}
+
+  .camp{background:var(--bg-1);border:1px solid var(--border);border-radius:14px;margin-bottom:12px;overflow:hidden;}
+  .camp.has-warn{border-color:rgba(251,191,36,.3);}
+  .camp-head{display:flex;align-items:center;gap:12px;padding:14px 18px;cursor:pointer;}
+  .camp-head:hover{background:rgba(255,255,255,.02);}
+  .obj{font-size:10px;font-weight:800;padding:3px 9px;border-radius:6px;white-space:nowrap;}
+  .obj.OUTCOME_SALES{background:rgba(74,222,128,.15);color:var(--ok);}
+  .obj.OUTCOME_AWARENESS{background:rgba(96,165,250,.15);color:var(--info);}
+  .obj.OUTCOME_TRAFFIC{background:rgba(167,139,250,.15);color:var(--purple);}
+  .obj.other{background:rgba(148,163,184,.15);color:var(--text-2);}
+  .camp-name{font-weight:700;font-size:14px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .st{font-size:9px;font-weight:700;padding:3px 8px;border-radius:999px;white-space:nowrap;}
+  .st.ACTIVE{background:rgba(74,222,128,.15);color:var(--ok);}
+  .st.PAUSED{background:rgba(148,163,184,.12);color:var(--text-3);}
+  .st.IN_REVIEW,.st.PENDING_REVIEW,.st.IN_PROCESS{background:rgba(251,191,36,.15);color:var(--warn);}
+  .st.WITH_ISSUES,.st.DISAPPROVED{background:rgba(248,113,113,.15);color:var(--err);}
+  .budget-tag{font-size:10px;color:var(--text-2);font-variant-numeric:tabular-nums;white-space:nowrap;}
+  .warn-count{font-size:11px;font-weight:700;color:var(--warn);white-space:nowrap;}
+  .chev{color:var(--text-3);transition:transform .15s;}
+  .camp.open .chev{transform:rotate(90deg);}
+
+  .camp-body{display:none;padding:0 18px 14px;}
+  .camp.open .camp-body{display:block;}
+  .adset{background:rgba(0,0,0,.18);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-top:10px;}
+  .adset-name{font-weight:700;font-size:13px;margin-bottom:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .adset-meta{font-size:11px;color:var(--text-2);line-height:1.7;}
+  .adset-meta b{color:var(--text-1);}
+  .flags{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0;}
+  .flag{font-size:10px;font-weight:600;padding:3px 8px;border-radius:6px;display:inline-flex;align-items:center;gap:4px;}
+  .flag.ok{background:rgba(74,222,128,.12);color:var(--ok);}
+  .flag.warn{background:rgba(248,113,113,.13);color:var(--err);}
+  .flag.info{background:rgba(96,165,250,.1);color:var(--info);}
+  .ads-line{font-size:11px;color:var(--text-3);margin-top:8px;border-top:1px dashed var(--border);padding-top:8px;}
+  .ad-chip{display:inline-block;font-size:10px;color:var(--text-2);padding:2px 8px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:999px;margin:2px 4px 2px 0;}
+  .multi-note{font-size:10px;color:var(--text-3);margin-top:8px;font-style:italic;}
+  .loading{text-align:center;color:var(--text-2);padding:60px 20px;}
+  .empty{color:var(--text-3);padding:30px;text-align:center;}
+  .err-banner{background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:var(--err);padding:14px 18px;border-radius:12px;}
+</style>
+</head>
+<body>
+<nav class="topnav">
+  <div><span class="brand">🎛️ Central de Operações</span><span class="brand-sub"> · estruturas de campanha</span></div>
+  <div class="nav-links">
+    <a href="/admin/">🛡️ Admin</a>
+    <a href="/admin/monitor.html">📡 Monitor</a>
+    <a href="/admin/galeria.html">🖼️ Galeria</a>
+    <a href="/agendamentos.html">📅 Agendamentos</a>
+  </div>
+  <div class="topnav-right">
+    <span class="pill" id="pill-updated">⏳</span>
+    <button class="btn" onclick="loadClient(CURRENT,true)">↻ Atualizar</button>
+  </div>
+</nav>
+
+<div class="tabs" id="tabs"></div>
+<div id="root"><div class="loading">Carregando clientes…</div></div>
+
+<script>
+const $=(s,r=document)=>r.querySelector(s);
+let CURRENT=null;
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const brl=c=>c==null?'—':'R$ '+(c/100).toLocaleString('pt-BR',{minimumFractionDigits:2});
+const DIAS={0:'Dom',1:'Seg',2:'Ter',3:'Qua',4:'Qui',5:'Sex',6:'Sáb'};
+const h=m=>String(Math.floor(m/60)).padStart(2,'0')+'h';
+function dayparting(dp){if(!dp||!dp.length)return null;return dp.map(w=>w.days.map(d=>DIAS[d]).join('+')+' '+h(w.start_minute)+'-'+h(w.end_minute)).join(' · ');}
+function flagIcon(l){return l==='ok'?'✅':l==='warn'?'⚠️':'ℹ️';}
+
+function adsetBlock(s){
+  const t=s.targeting||{};
+  const dp=dayparting(s.dayparting);
+  const fbp=(t.facebook_positions||[]).join(', ');
+  const igp=(t.instagram_positions||[]).join(', ');
+  const budget=s.lifetime_budget_cents?'lifetime '+brl(s.lifetime_budget_cents):(s.daily_budget_cents?'diário '+brl(s.daily_budget_cents):'—');
+  return `<div class="adset">
+    <div class="adset-name">🎯 ${esc(s.name)} <span class="st ${esc(s.effective_status)}">${esc(s.effective_status)}</span></div>
+    <div class="flags">${s.flags.map(f=>`<span class="flag ${f.l}">${flagIcon(f.l)} ${esc(f.t)}</span>`).join('')}</div>
+    <div class="adset-meta">
+      <b>Otim:</b> ${esc(s.optimization_goal)} · <b>cobrança:</b> ${esc(s.billing_event||'—')} · <b>budget:</b> ${budget}<br>
+      ${dp?`<b>Day-parting:</b> ${esc(dp)} (${s.dayparting[0].tz})<br>`:''}
+      <b>Device:</b> ${esc((t.device_platforms||['todos']).join('+'))} · <b>idade:</b> ${t.age_min||'—'}${t.age_max?'-'+t.age_max:'+'} · <b>local:</b> ${esc((t.location_types||['—']).join('+'))}<br>
+      ${fbp||igp?`<b>Placements:</b> FB[${esc(fbp||'—')}] IG[${esc(igp||'—')}]<br>`:''}
+      ${s.pixel?`<b>Pixel:</b> ${esc(s.pixel.id)}${s.pixel.event?' · '+esc(s.pixel.event):''}`:''}
+      ${s.frequency?` · <b>Freq:</b> ${s.frequency.max_frequency}/${s.frequency.interval_days}d`:''}
+    </div>
+    <div class="ads-line">${s.ads.length} anúncio(s): ${s.ads.map(a=>`<span class="ad-chip">${esc(a.name)} · ${esc(a.effective_status)}</span>`).join('')||'—'}</div>
+  </div>`;
+}
+
+function campBlock(c){
+  const warns=c.adsets.reduce((n,s)=>n+s.flags.filter(f=>f.l==='warn').length,0);
+  const objClass=['OUTCOME_SALES','OUTCOME_AWARENESS','OUTCOME_TRAFFIC'].includes(c.objective)?c.objective:'other';
+  const budget=c.budget_level==='CBO'?'CBO '+(c.lifetime_budget_cents?brl(c.lifetime_budget_cents):brl(c.daily_budget_cents)):'ABO';
+  const hasSales=c.objective==='OUTCOME_SALES';
+  return `<div class="camp ${warns?'has-warn':''}" id="c-${c.id}">
+    <div class="camp-head" onclick="document.getElementById('c-${c.id}').classList.toggle('open')">
+      <span class="obj ${objClass}">${esc(c.objective_label)}</span>
+      <span class="camp-name" title="${esc(c.name)}">${esc(c.name)}</span>
+      <span class="budget-tag">${esc(budget)}</span>
+      ${warns?`<span class="warn-count">⚠️ ${warns}</span>`:''}
+      <span class="st ${esc(c.effective_status)}">${esc(c.effective_status)}</span>
+      <span class="chev">▶</span>
+    </div>
+    <div class="camp-body">
+      ${c.adsets.map(adsetBlock).join('')}
+      ${hasSales?'<div class="multi-note">⚠️ Lembrete (skill §2.2): conferir "Anúncios com vários anunciantes" desmarcado no Gerenciador — a API não controla.</div>':''}
+    </div>
+  </div>`;
+}
+
+async function loadClient(slug,force){
+  CURRENT=slug;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.slug===slug));
+  $('#root').innerHTML='<div class="loading">Carregando estruturas…</div>';
+  $('#pill-updated').textContent='⏳ Atualizando…';$('#pill-updated').className='pill warn';
+  try{
+    const r=await fetch(location.origin+'/api/admin/estruturas?slug='+slug+(force?'&force=1':''));
+    const d=await r.json();
+    if(d.error){$('#root').innerHTML=`<div class="err-banner">⚠ ${esc(d.error)} (${esc(d.client_name||slug)})</div>`;$('#pill-updated').textContent='✗';return;}
+    const totalWarns=d.campaigns.reduce((n,c)=>n+c.adsets.reduce((m,s)=>m+s.flags.filter(f=>f.l==='warn').length,0),0);
+    const summary=`<div class="summary">
+      <div class="sum-card"><div class="sum-label">Campanhas ativas</div><div class="sum-value">${d.campaigns_count}</div></div>
+      <div class="sum-card"><div class="sum-label">Conta</div><div class="sum-value" style="font-size:14px;margin-top:7px">act_${esc(d.ad_account_id)}</div></div>
+      <div class="sum-card"><div class="sum-label">Alertas de regra</div><div class="sum-value ${totalWarns?'warn':''}">${totalWarns?'⚠️ '+totalWarns:'✅ 0'}</div></div>
+    </div>`;
+    $('#root').innerHTML=summary+(d.campaigns.length?d.campaigns.map(campBlock).join(''):'<div class="empty">Nenhuma campanha ativa.</div>');
+    $('#pill-updated').textContent='✓ '+new Date(d.updated_at).toLocaleTimeString('pt-BR');$('#pill-updated').className='pill ok';
+  }catch(e){$('#root').innerHTML=`<div class="err-banner">Erro: ${esc(e.message)}</div>`;$('#pill-updated').textContent='✗';}
+}
+
+async function init(){
+  try{
+    const r=await fetch(location.origin+'/api/admin/estruturas');
+    const d=await r.json();
+    const cs=d.clients||[];
+    $('#tabs').innerHTML=cs.map(c=>`<button class="tab" data-slug="${c.slug}" onclick="loadClient('${c.slug}')">${esc(c.name)}</button>`).join('');
+    if(cs.length)loadClient(cs.find(c=>c.slug==='centro')?'centro':cs[0].slug);
+    else $('#root').innerHTML='<div class="empty">Nenhum cliente com conta de anúncio.</div>';
+  }catch(e){$('#root').innerHTML=`<div class="err-banner">Erro ao carregar clientes: ${esc(e.message)}</div>`;}
+}
+init();
+</script>
+</body>
+</html>

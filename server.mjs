@@ -752,6 +752,124 @@ async function fetchPostsGaleria() {
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
+// OPERAÇÕES — estruturas de campanha por cliente (admin only) · V1
+// ──────────────────────────────────────────────────────────────────────────────
+const estruturasCache = new Map(); // slug -> { data, ts }
+const ESTRUTURAS_TTL_MS = 600_000; // 10 min
+
+const OBJ_LABEL = {
+  OUTCOME_SALES: 'Vendas', OUTCOME_AWARENESS: 'Reconhecimento', OUTCOME_TRAFFIC: 'Tráfego',
+  OUTCOME_ENGAGEMENT: 'Engajamento', OUTCOME_LEADS: 'Leads', OUTCOME_APP_PROMOTION: 'App',
+};
+
+// Selos cruzando a estrutura com as regras da skill trafego-pago (§2/§3)
+function computeAdsetFlags(objective, adset) {
+  const flags = [];
+  const t = adset.targeting || {};
+  const dev = t.device_platforms || [];
+  const isMobileOnly = dev.length === 1 && dev[0] === 'mobile';
+  const hasManual = (t.facebook_positions || []).length > 0 || (t.instagram_positions || []).length > 0;
+  const px = adset.promoted_object || {};
+  const hasDayparting = (adset.pacing_type || []).includes('day_parting') && (adset.adset_schedule || []).length > 0;
+
+  if (objective === 'OUTCOME_SALES') {
+    flags.push(isMobileOnly ? { l: 'ok', t: 'Mobile-only' } : { l: 'warn', t: 'Não é mobile-only (' + (dev.length ? dev.join('+') : 'todos') + ')' });
+    flags.push((px.pixel_id && px.custom_event_type === 'PURCHASE') ? { l: 'ok', t: 'Pixel + PURCHASE' } : { l: 'warn', t: 'Sem pixel/PURCHASE' });
+    flags.push(adset.optimization_goal === 'OFFSITE_CONVERSIONS' ? { l: 'ok', t: 'Otim. Conversões' } : { l: 'warn', t: 'Otim: ' + adset.optimization_goal });
+  } else if (objective === 'OUTCOME_AWARENESS') {
+    flags.push(adset.optimization_goal === 'REACH' ? { l: 'ok', t: 'Otim. Alcance' } : { l: 'info', t: 'Otim: ' + adset.optimization_goal });
+  }
+  flags.push(hasManual ? { l: 'ok', t: 'Posic. manual' } : { l: 'info', t: 'Posic. automático' });
+  if (hasDayparting) flags.push({ l: 'info', t: 'Day-parting · ' + adset.adset_schedule.length + ' janela(s)' });
+  if (adset.frequency_control_specs) flags.push({ l: 'info', t: 'Freq. controlada' });
+  return flags;
+}
+
+async function fetchEstruturas(slug) {
+  const now = Date.now();
+  const cached = estruturasCache.get(slug);
+  if (cached && (now - cached.ts) < ESTRUTURAS_TTL_MS) return cached.data;
+
+  const token = await readToken();
+  if (!token) return { updated_at: new Date().toISOString(), error: 'token_not_found', slug, campaigns: [] };
+
+  let mapping = { clients: [] };
+  try { mapping = JSON.parse(await fs.readFile(path.join(__dirname, 'data', 'clients-mapping.json'), 'utf-8')); } catch {}
+
+  // Sem slug → lista de clientes com conta de anúncio (pro seletor da página)
+  if (!slug) {
+    return {
+      updated_at: new Date().toISOString(),
+      clients: mapping.clients
+        .filter(c => c.ad_account_id)
+        .map(c => ({ slug: c.slug, name: c.name, agencia: c.agencia || null })),
+    };
+  }
+
+  const client = mapping.clients.find(c => c.slug === slug);
+  if (!client || !client.ad_account_id) {
+    return { updated_at: new Date().toISOString(), error: 'no_ad_account', slug, client_name: client?.name || slug, campaigns: [] };
+  }
+
+  const F = 'name,objective,effective_status,daily_budget,lifetime_budget,stop_time,'
+    + 'adsets.limit(30){name,effective_status,optimization_goal,billing_event,lifetime_budget,daily_budget,'
+    + 'pacing_type,adset_schedule,promoted_object,destination_type,frequency_control_specs,'
+    + 'targeting{device_platforms,publisher_platforms,facebook_positions,instagram_positions,age_min,age_max,'
+    + 'geo_locations{location_types}},ads.limit(30){name,effective_status}}';
+  const filtering = encodeURIComponent(JSON.stringify([{ field: 'effective_status', operator: 'IN', value: ['ACTIVE'] }]));
+
+  let campaigns = [];
+  let err = null;
+  try {
+    const r = await fetch(`https://graph.facebook.com/v23.0/act_${client.ad_account_id}/campaigns?fields=${F}&filtering=${filtering}&limit=30&access_token=${token}`);
+    const j = await r.json();
+    if (j.error) err = j.error.message;
+    else campaigns = (j.data || []).map(c => {
+      const budgetLevel = (c.lifetime_budget || c.daily_budget) ? 'CBO' : 'ABO';
+      const adsets = (c.adsets?.data || []).map(s => ({
+        id: s.id, name: s.name, effective_status: s.effective_status,
+        optimization_goal: s.optimization_goal, billing_event: s.billing_event,
+        lifetime_budget_cents: s.lifetime_budget ? parseInt(s.lifetime_budget) : null,
+        daily_budget_cents: s.daily_budget ? parseInt(s.daily_budget) : null,
+        destination_type: s.destination_type || null,
+        pixel: s.promoted_object?.pixel_id ? { id: s.promoted_object.pixel_id, event: s.promoted_object.custom_event_type || null } : null,
+        dayparting: (s.adset_schedule || []).map(w => ({
+          days: w.days, start_minute: w.start_minute, end_minute: w.end_minute, tz: w.timezone_type,
+        })),
+        frequency: (s.frequency_control_specs || [])[0] || null,
+        targeting: {
+          device_platforms: s.targeting?.device_platforms || null,
+          facebook_positions: s.targeting?.facebook_positions || null,
+          instagram_positions: s.targeting?.instagram_positions || null,
+          age_min: s.targeting?.age_min ?? null, age_max: s.targeting?.age_max ?? null,
+          location_types: s.targeting?.geo_locations?.location_types || null,
+        },
+        flags: computeAdsetFlags(c.objective, s),
+        ads: (s.ads?.data || []).map(a => ({ id: a.id, name: a.name, effective_status: a.effective_status })),
+        ads_count: (s.ads?.data || []).length,
+      }));
+      return {
+        id: c.id, name: c.name, objective: c.objective, objective_label: OBJ_LABEL[c.objective] || c.objective,
+        effective_status: c.effective_status, budget_level: budgetLevel,
+        lifetime_budget_cents: c.lifetime_budget ? parseInt(c.lifetime_budget) : null,
+        daily_budget_cents: c.daily_budget ? parseInt(c.daily_budget) : null,
+        stop_time: c.stop_time || null,
+        adsets, adsets_count: adsets.length,
+      };
+    });
+  } catch (e) { err = e.message; }
+
+  const result = {
+    updated_at: new Date().toISOString(),
+    slug, client_name: client.name, agencia: client.agencia || null,
+    ad_account_id: client.ad_account_id,
+    campaigns_count: campaigns.length, campaigns, error: err,
+  };
+  estruturasCache.set(slug, { data: result, ts: now });
+  return result;
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
 // PÚBLICO — lista de clientes ativos sem dados financeiros (pra central pública)
 // ──────────────────────────────────────────────────────────────────────────────
 async function fetchPublicClients() {
@@ -910,6 +1028,19 @@ const server = http.createServer(async (req, res) => {
       const force = req.url.includes('force=1');
       if (force) galeriaCache = { data: null, ts: 0 };
       const data = await fetchPostsGaleria();
+      res.writeHead(200, {
+        'Content-Type': 'application/json; charset=utf-8',
+        'Cache-Control': 'no-cache',
+      });
+      res.end(JSON.stringify(data, null, 2));
+      return;
+    }
+
+    if (req.url.startsWith('/api/admin/estruturas')) {
+      const qs = new URLSearchParams(req.url.split('?')[1] || '');
+      const slug = qs.get('slug') || '';
+      if (qs.get('force') === '1') estruturasCache.delete(slug);
+      const data = await fetchEstruturas(slug);
       res.writeHead(200, {
         'Content-Type': 'application/json; charset=utf-8',
         'Cache-Control': 'no-cache',
