@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Starkën — Design System</title>
+<!-- CSS REAL do design system (tokens + componentes) -->
+<link rel="stylesheet" href="/design-system/starken-design-system.css">
+<style>
+  body { max-width: 1100px; margin: 0 auto; padding: 0 24px 80px; }
+  .ds-hero {
+    text-align: center; padding: 80px 0 48px; border-bottom: 1px solid rgba(255,255,255,0.08);
+    margin-bottom: 8px;
+  }
+  .ds-hero .wm {
+    font-family: var(--font-display); font-weight: 800; font-size: clamp(48px, 8vw, 88px);
+    letter-spacing: -0.03em; line-height: 1;
+    background: var(--gradient-brand, linear-gradient(135deg,#10b981,#0d9488));
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .ds-hero .sub { color: var(--text-secondary); margin-top: 14px; font-size: 17px; }
+  .ds-hero .ver { display:inline-block; margin-top:18px; }
+
+  section { padding: 48px 0; border-bottom: 1px solid rgba(255,255,255,0.06); }
+  .kicker {
+    font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--brand-light); margin-bottom: 8px;
+  }
+  section > h2 {
+    font-family: var(--font-display); font-weight: 700; font-size: 28px; margin: 0 0 6px;
+    color: var(--text-primary);
+  }
+  section > .desc { color: var(--text-secondary); margin: 0 0 28px; max-width: 70ch; }
+  .row { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; }
+  .grid { display: grid; gap: 16px; }
+
+  /* Swatches de cor */
+  .scale { display: grid; grid-template-columns: repeat(11, 1fr); border-radius: var(--radius-md); overflow: hidden; }
+  .scale.teal { grid-template-columns: repeat(11, 1fr); }
+  .sw { height: 64px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 6px;
+        font-family: var(--font-mono); font-size: 11px; }
+  .brandcards { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 22px; }
+  .ccard { border-radius: var(--radius-lg); padding: 22px; display: flex; flex-direction: column; gap: 4px;
+           min-height: 110px; justify-content: flex-end; }
+  .ccard .nm { font-weight: 700; }
+  .ccard .hx { font-family: var(--font-mono); font-size: 13px; opacity: 0.85; }
+  .neutrals { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px,1fr)); gap: 12px; margin-top: 16px; }
+
+  .label { font-family: var(--font-mono); font-size: 12px; color: var(--text-muted); margin: 22px 0 8px; }
+  .swatch-name { color: var(--text-secondary); font-size: 13px; margin-top: 14px; }
+
+  /* Tipografia samples */
+  .type-sample + .type-sample { margin-top: 22px; }
+  .type-meta { font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); margin-bottom: 6px; }
+
+  /* Tokens table */
+  table.tokens { width: 100%; border-collapse: collapse; }
+  table.tokens td { padding: 8px 10px; border-bottom: 1px solid rgba(255,255,255,0.06); font-size: 14px; }
+  table.tokens td:first-child { font-family: var(--font-mono); color: var(--brand-light); white-space: nowrap; }
+  .chip-radius { display:inline-block; width:64px; height:40px; background: var(--bg-elevated); border:1px solid rgba(255,255,255,.12); }
+  .box-shadow-demo { width: 130px; height: 80px; border-radius: var(--radius-md); background: var(--bg-elevated);
+                     display:flex; align-items:center; justify-content:center; font-size:12px; color: var(--text-secondary); }
+
+  footer { padding: 40px 0; text-align: center; color: var(--text-muted); font-size: 13px; }
+  a.back { color: var(--brand-light); text-decoration: none; font-size: 14px; }
+</style>
+</head>
+<body>
+
+<div class="ds-hero">
+  <div class="wm">Starkën</div>
+  <div class="sub">Design System · tema dark/tech · destaque Esmeralda</div>
+  <span class="starken-badge starken-badge-success ver">v1.0 · 2026</span>
+</div>
+
+<p style="margin:18px 0 0"><a class="back" href="/agendamentos.html">← Dashboard</a></p>
+
+<!-- PALETA -->
+<section>
+  <div class="kicker">01 · Paleta</div>
+  <h2>Cores</h2>
+  <p class="desc">Esmeralda é a primária (crescimento/performance); Teal é apoio (gradiente). Base de neutros slate escuros. Regra: um destaque por vez.</p>
+
+  <div class="brandcards">
+    <div class="ccard" style="background:#10b981;color:#022c22"><span class="nm">Esmeralda · primária</span><span class="hx">#10b981 · emerald-500</span></div>
+    <div class="ccard" style="background:#0d9488;color:#f0fdfa"><span class="nm">Teal · secundária/acento</span><span class="hx">#0d9488 · teal-600</span></div>
+  </div>
+
+  <div class="label">Escala Esmeralda</div>
+  <div class="scale">
+    <div class="sw" style="background:#ecfdf5;color:#065f46">50</div>
+    <div class="sw" style="background:#d1fae5;color:#065f46">100</div>
+    <div class="sw" style="background:#a7f3d0;color:#065f46">200</div>
+    <div class="sw" style="background:#6ee7b7;color:#064e3b">300</div>
+    <div class="sw" style="background:#34d399;color:#022c22">400</div>
+    <div class="sw" style="background:#10b981;color:#022c22">500</div>
+    <div class="sw" style="background:#059669;color:#fff">600</div>
+    <div class="sw" style="background:#047857;color:#fff">700</div>
+    <div class="sw" style="background:#065f46;color:#fff">800</div>
+    <div class="sw" style="background:#064e3b;color:#fff">900</div>
+    <div class="sw" style="background:#022c22;color:#6ee7b7">950</div>
+  </div>
+
+  <div class="label">Escala Teal</div>
+  <div class="scale teal">
+    <div class="sw" style="background:#f0fdfa;color:#115e59">50</div>
+    <div class="sw" style="background:#ccfbf1;color:#115e59">100</div>
+    <div class="sw" style="background:#99f6e4;color:#115e59">200</div>
+    <div class="sw" style="background:#5eead4;color:#134e4a">300</div>
+    <div class="sw" style="background:#2dd4bf;color:#042f2e">400</div>
+    <div class="sw" style="background:#14b8a6;color:#042f2e">500</div>
+    <div class="sw" style="background:#0d9488;color:#fff">600</div>
+    <div class="sw" style="background:#0f766e;color:#fff">700</div>
+    <div class="sw" style="background:#115e59;color:#fff">800</div>
+    <div class="sw" style="background:#134e4a;color:#fff">900</div>
+    <div class="sw" style="background:#042f2e;color:#5eead4">950</div>
+  </div>
+
+  <div class="label">Neutros (Slate) — base do tema escuro</div>
+  <div class="neutrals">
+    <div class="ccard" style="background:#020617;color:#94a3b8;border:1px solid #1e293b"><span class="nm">bg-dark</span><span class="hx">#020617 · slate-950</span></div>
+    <div class="ccard" style="background:#0f172a;color:#94a3b8;border:1px solid #1e293b"><span class="nm">bg-surface</span><span class="hx">#0f172a · slate-900</span></div>
+    <div class="ccard" style="background:#1e293b;color:#cbd5e1"><span class="nm">bg-elevated</span><span class="hx">#1e293b · slate-800</span></div>
+    <div class="ccard" style="background:#334155;color:#e2e8f0"><span class="nm">bg-hover</span><span class="hx">#334155 · slate-700</span></div>
+  </div>
+
+  <div class="label">Estados semânticos</div>
+  <div class="row">
+    <span class="starken-badge starken-badge-success">success · #10b981</span>
+    <span class="starken-badge starken-badge-warning">warning · #f59e0b</span>
+    <span class="starken-badge starken-badge-danger">danger · #ef4444</span>
+    <span class="starken-badge starken-badge-info">info · #3b82f6</span>
+  </div>
+</section>
+
+<!-- TIPOGRAFIA -->
+<section>
+  <div class="kicker">02 · Tipografia</div>
+  <h2>Sora · Inter · Fira Code</h2>
+  <p class="desc">Sora nos títulos (display), Inter no corpo/UI, Fira Code em dados/código.</p>
+
+  <div class="type-sample">
+    <div class="type-meta">Sora 800 — heading-1</div>
+    <div class="starken-heading-1">Tecnologia que fortalece</div>
+  </div>
+  <div class="type-sample">
+    <div class="type-meta">Sora 700 — heading-2</div>
+    <div class="starken-heading-2">Performance em cada detalhe</div>
+  </div>
+  <div class="type-sample">
+    <div class="type-meta">Inter 400 — body</div>
+    <div class="starken-body">O corpo de texto usa Inter para máxima legibilidade em telas densas — relatórios, dashboards e painéis operacionais.</div>
+  </div>
+  <div class="type-sample">
+    <div class="type-meta">Fira Code — mono</div>
+    <div class="starken-mono">faturamento_total = R$ 128.430,00 · ROAS 4.2x</div>
+  </div>
+</section>
+
+<!-- BOTÕES -->
+<section>
+  <div class="kicker">03 · Botões</div>
+  <h2>Buttons</h2>
+  <p class="desc"><code class="starken-mono">.starken-btn</code> + variante + tamanho.</p>
+  <div class="row" style="margin-bottom:16px">
+    <button class="starken-btn starken-btn-primary">Primary</button>
+    <button class="starken-btn starken-btn-secondary">Secondary</button>
+    <button class="starken-btn starken-btn-ghost">Ghost</button>
+    <button class="starken-btn starken-btn-danger">Danger</button>
+    <button class="starken-btn starken-btn-primary" disabled>Disabled</button>
+  </div>
+  <div class="row">
+    <button class="starken-btn starken-btn-primary starken-btn-sm">Small</button>
+    <button class="starken-btn starken-btn-primary">Default</button>
+    <button class="starken-btn starken-btn-primary starken-btn-lg">Large</button>
+  </div>
+</section>
+
+<!-- CARDS -->
+<section>
+  <div class="kicker">04 · Cards</div>
+  <h2>Cards</h2>
+  <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(260px,1fr))">
+    <div class="starken-card">
+      <div class="starken-heading-3">Card padrão</div>
+      <p class="starken-body" style="margin:8px 0 16px">Superfície sobre o fundo escuro, com hover sutil.</p>
+      <button class="starken-btn starken-btn-secondary starken-btn-sm">Ação</button>
+    </div>
+    <div class="starken-card starken-card-elevated">
+      <div class="starken-heading-3">Card elevado</div>
+      <p class="starken-body" style="margin:8px 0 16px">Fundo mais claro (bg-elevated) para destacar do restante.</p>
+      <button class="starken-btn starken-btn-primary starken-btn-sm">CTA</button>
+    </div>
+    <div class="starken-card" style="background:var(--gradient-brand);border:none">
+      <div class="starken-heading-3" style="color:#022c22">Card destaque</div>
+      <p style="color:#022c22;margin:8px 0 16px;font-weight:500">Gradiente assinatura para banners/CTAs.</p>
+      <button class="starken-btn" style="background:#022c22;color:#6ee7b7">Saiba mais</button>
+    </div>
+  </div>
+</section>
+
+<!-- BADGES -->
+<section>
+  <div class="kicker">05 · Badges</div>
+  <h2>Badges</h2>
+  <div class="row">
+    <span class="starken-badge starken-badge-success">No ar</span>
+    <span class="starken-badge starken-badge-warning">Agendado</span>
+    <span class="starken-badge starken-badge-danger">Falhou</span>
+    <span class="starken-badge starken-badge-info">Instagram</span>
+    <span class="starken-badge starken-badge-neutral">Rascunho</span>
+  </div>
+</section>
+
+<!-- INPUTS -->
+<section>
+  <div class="kicker">06 · Inputs</div>
+  <h2>Form fields</h2>
+  <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(240px,1fr));max-width:760px">
+    <div>
+      <div class="label">Normal</div>
+      <input class="starken-input" placeholder="Digite aqui…">
+    </div>
+    <div>
+      <div class="label">Preenchido</div>
+      <input class="starken-input" value="Academia São Pedro">
+    </div>
+    <div>
+      <div class="label">Erro</div>
+      <input class="starken-input starken-input-error" value="valor inválido">
+    </div>
+  </div>
+</section>
+
+<!-- GRADIENTES & SOMBRAS -->
+<section>
+  <div class="kicker">07 · Gradientes & Sombras</div>
+  <h2>Gradientes & elevação</h2>
+  <div class="row" style="margin-bottom:24px">
+    <div class="starken-gradient-brand" style="width:200px;height:70px;border-radius:var(--radius-md)"></div>
+    <div class="starken-gradient-text" style="font-family:var(--font-display);font-weight:800;font-size:34px">gradient-text</div>
+  </div>
+  <div class="row">
+    <div class="box-shadow-demo" style="box-shadow:var(--shadow-sm)">shadow-sm</div>
+    <div class="box-shadow-demo" style="box-shadow:var(--shadow-md)">shadow-md</div>
+    <div class="box-shadow-demo" style="box-shadow:var(--shadow-lg)">shadow-lg</div>
+    <div class="box-shadow-demo" style="box-shadow:var(--shadow-brand)">shadow-brand</div>
+  </div>
+</section>
+
+<!-- TOKENS -->
+<section>
+  <div class="kicker">08 · Tokens base</div>
+  <h2>Espaçamento & raio</h2>
+  <table class="tokens">
+    <tr><td>--space-1…16</td><td>4 · 8 · 12 · 16 · 20 · 24 · 32 · 40 · 48 · 64 px (grid de 4px)</td></tr>
+    <tr><td>--radius-sm</td><td><span class="chip-radius" style="border-radius:6px"></span> 6px</td></tr>
+    <tr><td>--radius-md</td><td><span class="chip-radius" style="border-radius:10px"></span> 10px</td></tr>
+    <tr><td>--radius-lg</td><td><span class="chip-radius" style="border-radius:16px"></span> 16px</td></tr>
+    <tr><td>--radius-xl</td><td><span class="chip-radius" style="border-radius:24px"></span> 24px</td></tr>
+    <tr><td>--font-display / body / mono</td><td>Sora · Inter · Fira Code</td></tr>
+  </table>
+</section>
+
+<footer>
+  Starkën Design System · v1.0 · Starken Tecnologia<br>
+  Tokens em <span class="starken-mono">/design-system/tokens/</span> · Brand book em <span class="starken-mono">Starken-Design-System.md</span>
+</footer>
+
+</body>
+</html>
