@@ -101,3 +101,24 @@ systemd-run --on-calendar="2026-06-06 21:00:00 UTC" \
 
 > Imagens dos criativos ficam em `academia/assets/` na VPS (servidas publicamente),
 > necessárias porque a Graph API busca a imagem por URL no momento da publicação.
+
+## publish-reel-feio.mjs (REELS · IG + FB)
+
+Publica um **Reel** no Instagram (`media_type=REELS`) e no Facebook (Reels da página,
+upload resumável via `file_url`), best-effort por canal. Registra em `posts-publicados.json`.
+
+```bash
+node --env-file=.env scripts/publish-reel-feio.mjs --video=<arquivo.mp4> [--channels=ig,fb] [--thumb-offset=2000]
+```
+
+- Vídeo hospedado em `feio/assets/videos/` (gitignored — `*.mp4`/`*.mov` fora do Git, só na VPS).
+- `--thumb-offset` (ms) = capa do Reel no **Instagram** (frame não-preto). No FB a capa é automática.
+
+### ⚠️ Qualidade / codec (importante)
+**Sempre fornecer o vídeo em H.264.** O IG/FB preferem H.264; o script publica H.264
+**sem transcodar** (qualidade nativa). Se o arquivo for outro formato *decodificável*, ele
+transcoda p/ H.264 (libopenh264 14M) via `ffmpeg` na VPS.
+
+> **HEVC/H.265 (padrão do iPhone) NÃO funciona bem:** o `ffmpeg-free` da VPS **não decodifica HEVC**
+> (decoder patenteado, removido do build livre) → cai no original HEVC, que o Meta re-encoda pior.
+> **Solução:** gravar/exportar em H.264 (iPhone: Ajustes → Câmera → Formatos → **"Mais Compatível"**).
