@@ -61,16 +61,30 @@ const FFPROBE = process.env.FFPROBE_BIN || '/usr/bin/ffprobe';
 // em alta qualidade (libopenh264, bitrate alto, faststart) e devolve o novo arquivo.
 async function ensureH264(filename) {
   const input = path.join(VIDEO_DIR, filename);
+  const ext = path.extname(filename).toLowerCase();
   let codec = '';
   try {
     const { stdout } = await exec(FFPROBE, ['-v', 'error', '-select_streams', 'v:0', '-show_entries', 'stream=codec_name', '-of', 'default=nw=1:nk=1', input]);
     codec = stdout.trim();
   } catch (e) { log('   ffprobe indisponível (' + e.message + ') — usando arquivo original'); return filename; }
-  log('   codec de origem: ' + codec);
-  if (codec === 'h264') return filename;
+  log('   codec de origem: ' + codec + ' · contêiner: ' + ext);
+
   const outName = filename.replace(/\.[^.]+$/, '') + '-h264.mp4';
+  const outPath = path.join(VIDEO_DIR, outName);
+
+  if (codec === 'h264') {
+    if (ext === '.mp4') return filename;                 // já no formato ideal
+    log('   remux ' + ext + ' (h264) → .mp4 (sem perda)…');
+    await exec(FFMPEG, ['-y', '-i', input, '-c', 'copy', '-movflags', '+faststart', outPath]);
+    return outName;
+  }
+  if (codec === 'hevc' || codec === 'h265') {
+    // ffmpeg-free não decodifica HEVC → não dá pra transcodar no servidor
+    throw new Error('HEVC/H.265 não decodifica no servidor — exporte o vídeo em H.264 (iPhone: "Mais Compatível")');
+  }
+  // demais codecs decodificáveis (prores, mpeg4, vp9…) → transcoda p/ H.264
   log('   transcodando ' + codec + ' → H.264 (libopenh264, 14M)…');
-  await exec(FFMPEG, ['-y', '-i', input, '-c:v', 'libopenh264', '-b:v', '14M', '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-b:a', '192k', '-movflags', '+faststart', path.join(VIDEO_DIR, outName)], { maxBuffer: 1 << 27 });
+  await exec(FFMPEG, ['-y', '-i', input, '-c:v', 'libopenh264', '-b:v', '14M', '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-b:a', '192k', '-movflags', '+faststart', outPath], { maxBuffer: 1 << 27 });
   log('   transcode OK → ' + outName);
   return outName;
 }
