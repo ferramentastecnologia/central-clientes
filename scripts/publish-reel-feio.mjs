@@ -7,6 +7,9 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
+const exec = promisify(execFile);
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA = process.env.DATA_DIR || path.join(__dirname, '..', 'data');
@@ -49,7 +52,29 @@ Vem aproveitar esse dia especial com a gente! Marca nos comentários aquele algu
 if (!token) { log('FALHOU: META_GRAPH_TOKEN ausente'); process.exit(1); }
 if (!video) { log('FALHOU: --video obrigatório'); process.exit(1); }
 
-const url = `${BASE}/${video}`;
+let url = `${BASE}/${video}`;   // pode virar a versão H.264 após transcode
+const VIDEO_DIR = path.join(__dirname, '..', 'feio', 'assets', 'videos');
+const FFMPEG = process.env.FFMPEG_BIN || '/usr/bin/ffmpeg';
+const FFPROBE = process.env.FFPROBE_BIN || '/usr/bin/ffprobe';
+
+// Garante H.264 (codec preferido do IG/FB). Se a origem não for h264, transcoda
+// em alta qualidade (libopenh264, bitrate alto, faststart) e devolve o novo arquivo.
+async function ensureH264(filename) {
+  const input = path.join(VIDEO_DIR, filename);
+  let codec = '';
+  try {
+    const { stdout } = await exec(FFPROBE, ['-v', 'error', '-select_streams', 'v:0', '-show_entries', 'stream=codec_name', '-of', 'default=nw=1:nk=1', input]);
+    codec = stdout.trim();
+  } catch (e) { log('   ffprobe indisponível (' + e.message + ') — usando arquivo original'); return filename; }
+  log('   codec de origem: ' + codec);
+  if (codec === 'h264') return filename;
+  const outName = filename.replace(/\.[^.]+$/, '') + '-h264.mp4';
+  log('   transcodando ' + codec + ' → H.264 (libopenh264, 14M)…');
+  await exec(FFMPEG, ['-y', '-i', input, '-c:v', 'libopenh264', '-b:v', '14M', '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-b:a', '192k', '-movflags', '+faststart', path.join(VIDEO_DIR, outName)], { maxBuffer: 1 << 27 });
+  log('   transcode OK → ' + outName);
+  return outName;
+}
+
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 const post = (n, p) => fetch(`https://graph.facebook.com/${GV}/${n}`, { method: 'POST', body: new URLSearchParams(p) }).then(r => r.json());
 const get  = (n, q) => fetch(`https://graph.facebook.com/${GV}/${n}?` + new URLSearchParams(q)).then(r => r.json());
@@ -107,6 +132,9 @@ async function publishFB() {
 }
 
 log(`Feio · REEL · ${video} · canais=${channelsArg.join('+')}`);
+// Normaliza p/ H.264 (máxima compatibilidade/qualidade no Meta)
+try { const f = await ensureH264(video); url = `${BASE}/${f}`; log('   publicando: ' + url); }
+catch (e) { log('   transcode falhou (' + e.message + ') — seguindo com o original'); }
 const channels = []; let ig_id = null, fb_id = null;
 if (wantIG) { try { ig_id = await publishIG(); channels.push('ig'); log('   IG REEL ✓ ' + ig_id); } catch (e) { log('   IG ERRO: ' + e.message); } }
 if (wantFB) { try { fb_id = await publishFB(); channels.push('fb'); log('   FB REEL ✓ ' + fb_id); } catch (e) { log('   FB ERRO: ' + e.message); } }
