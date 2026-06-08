@@ -21,6 +21,7 @@ const arg = (k) => { const a = process.argv.find(x => x.startsWith(`--${k}=`)); 
 const log = (m) => console.log(`[${new Date().toISOString()}] ${m}`);
 
 const video = arg('video');
+const thumbOffset = arg('thumb-offset');   // ms p/ capa do Reel (frame não-preto)
 const channelsArg = (arg('channels') || 'ig,fb').split(',').map(s => s.trim()).filter(Boolean);
 const wantIG = channelsArg.includes('ig');
 const wantFB = channelsArg.includes('fb');
@@ -64,7 +65,7 @@ async function pageToken() {
 
 // ---- Instagram Reels ----
 async function publishIG() {
-  const c = await post(`${IG}/media`, { media_type: 'REELS', video_url: url, caption: CAPTION, share_to_feed: 'true', access_token: token });
+  const c = await post(`${IG}/media`, { media_type: 'REELS', video_url: url, caption: CAPTION, share_to_feed: 'true', ...(thumbOffset ? { thumb_offset: thumbOffset } : {}), access_token: token });
   if (c.error) throw new Error('IG container: ' + c.error.message);
   log('   IG container: ' + c.id + ' (processando vídeo…)');
   let st = 'IN_PROGRESS';
@@ -117,8 +118,8 @@ if (channels.length) {
     const id = `reel-feio-namorados-${mm}${dd}`;
     let data = { posts: [] };
     try { data = JSON.parse(await fs.readFile(path.join(DATA, 'posts-publicados.json'), 'utf-8')); } catch {}
-    data.posts = data.posts || [];
-    if (!data.posts.some(p => p.id === id)) {
+    data.posts = (data.posts || []).filter(p => p.id !== id);   // upsert (repost atualiza)
+    {
       const igLink = ig_id ? (await get(ig_id, { fields: 'permalink', access_token: token }).then(r => r.permalink).catch(() => null)) : null;
       data.posts.unshift({
         id, client: 'Hamburgueria Feio', client_slug: 'feio', agencia: 'Starken',
