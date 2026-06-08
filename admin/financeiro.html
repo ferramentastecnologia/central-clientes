@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Financeiro · Clientes · Starken</title>
+<link rel="icon" href="/design-system/assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/design-system/starken-design-system.css">
+<style>
+  :root{
+    --bg-0:#020617; --bg-1:#0f172a; --bg-2:#1e293b; --bg-3:#334155;
+    --text-0:#f8fafc; --text-1:#cbd5e1; --text-2:#94a3b8; --text-3:#64748b;
+    --accent:#10b981; --border:rgba(255,255,255,0.08);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{ font-family:var(--font-body); background:radial-gradient(ellipse at top,var(--bg-1) 0%,var(--bg-0) 60%); color:var(--text-0); min-height:100vh; padding:24px 28px 70px; }
+  a{color:inherit;text-decoration:none;}
+  h1,h2{font-family:var(--font-display);}
+
+  .topnav{ display:flex; align-items:center; gap:14px; padding:12px 18px; background:rgba(15,23,42,.85); border:1px solid var(--border); border-radius:14px; margin-bottom:24px; flex-wrap:wrap; }
+  .topnav img{height:24px;width:auto;display:block;}
+  .nav-links{display:flex;gap:4px;flex-wrap:wrap;margin-left:8px;}
+  .nav-links a{padding:7px 12px;border-radius:8px;font-size:13px;color:var(--text-2);}
+  .nav-links a:hover{background:rgba(255,255,255,.05);color:var(--text-0);}
+  .nav-links a.active{background:var(--accent-dim,rgba(16,185,129,.15));color:var(--accent);}
+
+  .head{margin-bottom:20px;}
+  .head h1{font-size:26px;font-weight:800;}
+  .head .sub{color:var(--text-2);font-size:14px;margin-top:3px;}
+
+  .summary{ display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px; margin-bottom:26px; }
+  .stat{ background:var(--bg-1); border:1px solid var(--border); border-left:3px solid var(--accent); border-radius:14px; padding:16px 18px; }
+  .stat .lbl{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-2);font-weight:700;}
+  .stat .val{font-family:var(--font-display);font-size:26px;font-weight:800;margin-top:6px;}
+  .stat .val.money{color:var(--accent);}
+  .stat .hint{font-size:11px;color:var(--text-3);margin-top:4px;}
+
+  .sec-title{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-2);font-weight:700;margin:8px 0 14px;}
+
+  .grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:18px; }
+  .fcard{ background:var(--bg-1); border:1px solid var(--border); border-left:3px solid var(--accent); border-radius:16px; padding:18px; display:flex; flex-direction:column; gap:12px; }
+  .fcard.recuperar{ border-left-color:var(--text-3); opacity:.92; }
+  .fc-top{display:flex;align-items:center;gap:12px;}
+  .fc-icon{font-size:30px;line-height:1;}
+  .fc-name{font-weight:700;font-size:16px;}
+  .fc-cat{color:var(--text-3);font-size:12px;}
+  .fc-badges{display:flex;gap:6px;flex-wrap:wrap;}
+  .bdg{font-size:10px;font-weight:800;letter-spacing:.04em;padding:3px 8px;border-radius:6px;text-transform:uppercase;}
+  .bdg-mrr{background:rgba(16,185,129,.15);color:var(--accent);}
+  .bdg-out{background:rgba(245,158,11,.15);color:#fbbf24;}
+  .bdg-rec{background:rgba(148,163,184,.15);color:var(--text-2);}
+
+  .valbox{ background:var(--bg-2); border-radius:12px; padding:14px; text-align:center; }
+  .valbox.adj{ background:rgba(124,58,237,.12); border:1px solid rgba(124,58,237,.3); }
+  .valbox .vlbl{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-2);font-weight:700;}
+  .valbox .vval{font-family:var(--font-display);font-size:24px;font-weight:800;color:var(--accent);margin-top:4px;}
+  .valbox .vpad{font-size:11px;color:var(--text-3);margin-top:3px;}
+
+  .fc-actions{display:flex;gap:8px;flex-wrap:wrap;}
+  .fc-actions .starken-btn{flex:1;}
+  .pago-chip{font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;}
+  .pago-sim{background:rgba(16,185,129,.15);color:var(--accent);}
+  .pago-nao{background:rgba(245,158,11,.12);color:#fbbf24;}
+
+  .meta{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;font-size:13px;border-top:1px solid var(--border);padding-top:12px;}
+  .meta dt{color:var(--text-3);} .meta dd{color:var(--text-1);text-align:right;}
+  .loading{color:var(--text-2);padding:40px;text-align:center;}
+  .foot{margin-top:36px;color:var(--text-3);font-size:12px;}
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <a href="/"><img src="/design-system/assets/logo-starken-white.png" alt="Starken"></a>
+  <div class="nav-links">
+    <a href="/admin/">🛡️ Admin</a>
+    <a href="/admin/operacoes.html">🎛️ Operações</a>
+    <a href="/admin/galeria.html">🖼️ Galeria</a>
+    <a href="/agendamentos.html">📅 Agendamentos</a>
+    <a href="/admin/financeiro.html" class="active">💰 Financeiro</a>
+  </div>
+</nav>
+
+<div class="head">
+  <h1>💰 Área Financeira</h1>
+  <div class="sub">Mensalidades dos clientes · <span id="mes-ref">—</span></div>
+</div>
+
+<div class="summary" id="summary"></div>
+<div id="content"><div class="loading">Carregando…</div></div>
+
+<div class="foot">MRR base = recorrente padrão · "a faturar este mês" considera ajustes do mês · clientes a recuperar não entram no MRR.</div>
+
+<script>
+const BRL = v => (v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+let DATA = null;
+
+const valorMes = c => { const a = c.ajustes && c.ajustes[DATA.mes_ref]; return (a && a.valor !== undefined && a.valor !== null) ? a.valor : c.valor_mensal; };
+const pago = c => !!(c.ajustes && c.ajustes[DATA.mes_ref] && c.ajustes[DATA.mes_ref].pago);
+const ajustado = c => { const a = c.ajustes && c.ajustes[DATA.mes_ref]; return a && a.valor !== undefined && a.valor !== null; };
+
+async function load(){
+  const r = await fetch('/api/admin/financeiro');
+  DATA = await r.json();
+  render();
+}
+
+async function post(payload){
+  const r = await fetch('/api/admin/financeiro', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+  DATA = await r.json();
+  render();
+}
+
+function ajustar(slug){
+  const c = DATA.clientes.find(x=>x.slug===slug);
+  const atual = valorMes(c);
+  const txt = prompt(`Ajustar valor de ${c.name} para ${DATA.mes_ref}:\n(vazio = voltar ao padrão R$ ${c.valor_mensal})`, ajustado(c)? atual : '');
+  if (txt === null) return;
+  post({ slug, mes: DATA.mes_ref, valor: txt.trim()==='' ? null : Number(txt.replace(',','.')) });
+}
+function togglePago(slug){ const c = DATA.clientes.find(x=>x.slug===slug); post({ slug, mes: DATA.mes_ref, pago: !pago(c) }); }
+
+function badge(b){ const cls = b==='MRR'?'bdg-mrr':b==='OUTBOUND'?'bdg-out':'bdg-rec'; return `<span class="bdg ${cls}">${b}</span>`; }
+
+function card(c){
+  const adj = ajustado(c);
+  const v = valorMes(c);
+  const p = pago(c);
+  const isRec = c.status === 'a_recuperar';
+  return `
+   <div class="fcard ${isRec?'recuperar':''}">
+     <div class="fc-top">
+       <div class="fc-icon">${c.icon||'🏢'}</div>
+       <div style="flex:1">
+         <div class="fc-name">${c.name}</div>
+         <div class="fc-cat">${c.categoria||''}</div>
+       </div>
+     </div>
+     <div class="fc-badges">${(c.badges||[]).map(badge).join('')}${isRec?'<span class="bdg bdg-rec">A RECUPERAR</span>':''}</div>
+     <div class="valbox ${adj?'adj':''}">
+       <div class="vlbl">${adj?'Valor ajustado este mês':'Valor mensal'}</div>
+       <div class="vval">${BRL(v)}</div>
+       ${adj?`<div class="vpad">Padrão: ${BRL(c.valor_mensal)}</div>`:''}
+     </div>
+     ${isRec ? '' : `
+     <div class="fc-actions">
+       <button class="starken-btn starken-btn-secondary starken-btn-sm" onclick="ajustar('${c.slug}')">📝 Ajustar valor do mês</button>
+       <button class="starken-btn ${p?'starken-btn-primary':'starken-btn-ghost'} starken-btn-sm" onclick="togglePago('${c.slug}')">${p?'✓ Pago':'Marcar pago'}</button>
+     </div>`}
+     <dl class="meta">
+       <dt>📅 Fechamento</dt><dd>${c.fechamento||'—'}</dd>
+       <dt>🚀 Início</dt><dd>${c.inicio||'—'}</dd>
+       <dt>📆 1º Vencimento</dt><dd>${c.primeiro_vencimento||'—'}</dd>
+       <dt>💳 Pagamento</dt><dd>${c.pagamento||'—'}</dd>
+       ${isRec?'':`<dt>Status do mês</dt><dd><span class="pago-chip ${p?'pago-sim':'pago-nao'}">${p?'Pago':'Pendente'}</span></dd>`}
+     </dl>
+   </div>`;
+}
+
+function render(){
+  document.getElementById('mes-ref').textContent = 'mês ref. ' + (DATA.mes_ref||'—');
+  const ativos = DATA.clientes.filter(c=>c.status==='ativo');
+  const rec = DATA.clientes.filter(c=>c.status==='a_recuperar');
+  const mrrBase = ativos.reduce((s,c)=>s+(c.valor_mensal||0),0);
+  const aFaturar = ativos.reduce((s,c)=>s+valorMes(c),0);
+  const recebido = ativos.filter(pago).reduce((s,c)=>s+valorMes(c),0);
+
+  document.getElementById('summary').innerHTML = `
+    <div class="stat"><div class="lbl">MRR base</div><div class="val money">${BRL(mrrBase)}</div><div class="hint">recorrente padrão</div></div>
+    <div class="stat"><div class="lbl">Clientes ativos</div><div class="val">${ativos.length}</div><div class="hint">${rec.length} a recuperar</div></div>
+    <div class="stat"><div class="lbl">A faturar este mês</div><div class="val money">${BRL(aFaturar)}</div><div class="hint">com ajustes do mês</div></div>
+    <div class="stat"><div class="lbl">Recebido</div><div class="val money">${BRL(recebido)}</div><div class="hint">${BRL(aFaturar-recebido)} pendente</div></div>`;
+
+  let html = `<div class="sec-title">Clientes ativos (${ativos.length})</div><div class="grid">${ativos.map(card).join('')}</div>`;
+  if (rec.length) html += `<div class="sec-title" style="margin-top:30px">A recuperar — fora do MRR (${rec.length})</div><div class="grid">${rec.map(card).join('')}</div>`;
+  document.getElementById('content').innerHTML = html;
+}
+
+load();
+</script>
+</body>
+</html>

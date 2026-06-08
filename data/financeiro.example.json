@@ -1,0 +1,50 @@
+{
+  "_doc": "Área financeira dos clientes (admin/financeiro.html). VPS-owned, gitignored. valor_mensal = MRR base; ajustes[mes] sobrescreve valor e marca pago no mês.",
+  "updated_at": "2026-01-01T00:00:00Z",
+  "mes_ref": "2026-06",
+  "clientes": [
+    {
+      "slug": "academia", "name": "Academia São Pedro", "categoria": "Academia", "icon": "💪",
+      "badges": ["MRR", "OUTBOUND"], "status": "ativo",
+      "valor_mensal": 0,
+      "fechamento": "01/10/2025", "inicio": "Out/2025", "primeiro_vencimento": "10/10/2025",
+      "pagamento": "Boleto", "ajustes": {}
+    },
+    {
+      "slug": "feio", "name": "Hamburgueria Feio", "categoria": "Hamburgueria", "icon": "🍔",
+      "badges": ["MRR", "OUTBOUND"], "status": "ativo",
+      "valor_mensal": 0,
+      "fechamento": "01/10/2025", "inicio": "Out/2025", "primeiro_vencimento": "15/10/2025",
+      "pagamento": "Boleto", "ajustes": {}
+    },
+    {
+      "slug": "centro", "name": "Madrugão Centro", "categoria": "Restaurante", "icon": "🍽️",
+      "badges": ["MRR", "OUTBOUND"], "status": "ativo",
+      "valor_mensal": 0,
+      "fechamento": "30/01/2026", "inicio": "Jan/2026", "primeiro_vencimento": "30/01/2026",
+      "pagamento": "Boleto/Pix", "ajustes": {}
+    },
+    {
+      "slug": "garcia", "name": "Madrugão Garcia", "categoria": "Restaurante", "icon": "🍽️",
+      "badges": ["MRR", "OUTBOUND"], "status": "ativo",
+      "valor_mensal": 0,
+      "fechamento": "30/01/2026", "inicio": "Jan/2026", "primeiro_vencimento": "30/01/2026",
+      "pagamento": "Boleto/Pix", "ajustes": {}
+    },
+    {
+      "slug": "fortaleza", "name": "Madrugão Fortaleza", "categoria": "Restaurante", "icon": "🍽️",
+      "badges": ["MRR", "OUTBOUND"], "status": "ativo",
+      "valor_mensal": 0,
+      "fechamento": "30/01/2026", "inicio": "Out/2025", "primeiro_vencimento": "30/03/2026",
+      "pagamento": "Boleto/Pix",
+      "ajustes": { "2026-06": { "valor": 0, "pago": false } }
+    },
+    {
+      "slug": "jpr", "name": "JPR Móveis Rústicos", "categoria": "Móveis", "icon": "🪑",
+      "badges": ["MRR", "OUTBOUND"], "status": "a_recuperar",
+      "valor_mensal": 0,
+      "fechamento": "01/11/2025", "inicio": "Out/2025", "primeiro_vencimento": "10/10/2025",
+      "pagamento": "Boleto", "ajustes": {}
+    }
+  ]
+}

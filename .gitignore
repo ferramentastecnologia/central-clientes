@@ -54,3 +54,4 @@ out/
 # Arquivos pessoais do desenvolvedor
 .scratch/
 playground/
+data/financeiro.json

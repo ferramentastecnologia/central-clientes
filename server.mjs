@@ -1402,6 +1402,37 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
+    if (req.url === '/api/admin/financeiro' || req.url.startsWith('/api/admin/financeiro?')) {
+      const FIN = path.join(__dirname, 'data', 'financeiro.json');
+      const readFin = async () => { try { return JSON.parse(await fs.readFile(FIN, 'utf-8')); } catch { return { mes_ref: null, clientes: [] }; } };
+      if (req.method === 'POST') {
+        let body = '';
+        for await (const chunk of req) body += chunk;
+        let payload = {};
+        try { payload = JSON.parse(body || '{}'); } catch {}
+        const data = await readFin();
+        const mes = payload.mes || data.mes_ref;
+        const cli = (data.clientes || []).find(c => c.slug === payload.slug);
+        if (cli && mes) {
+          cli.ajustes = cli.ajustes || {};
+          const a = cli.ajustes[mes] || {};
+          if (payload.valor !== undefined) a.valor = (payload.valor === null || payload.valor === '') ? null : Number(payload.valor);
+          if (payload.pago !== undefined) a.pago = !!payload.pago;
+          if (a.valor === null || a.valor === undefined) delete a.valor;  // limpa override
+          if (Object.keys(a).length) cli.ajustes[mes] = a; else delete cli.ajustes[mes];
+          data.updated_at = new Date().toISOString();
+          await fs.writeFile(FIN, JSON.stringify(data, null, 2) + '\n', 'utf-8');
+        }
+        res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-cache' });
+        res.end(JSON.stringify(data, null, 2));
+        return;
+      }
+      const data = await readFin();
+      res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-cache' });
+      res.end(JSON.stringify(data, null, 2));
+      return;
+    }
+
     if (req.url.startsWith('/api/admin/estruturas')) {
       const qs = new URLSearchParams(req.url.split('?')[1] || '');
       const slug = qs.get('slug') || '';
