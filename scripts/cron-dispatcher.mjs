@@ -84,6 +84,32 @@ async function publishFB(pageId, url) {
   return s.post_id || s.id || photo.id;
 }
 
+// ── POSTS DE FEED (kind: 'feed') ──
+async function publishIGFeed(igId, url, caption) {
+  let c = null;
+  for (let i = 1; i <= 4; i++) {
+    const r = await post(`${igId}/media`, { image_url: url, caption: caption || '', access_token: token });
+    if (!r.error) { c = r; break; }
+    log(`   IG feed container ${i}: ${r.error.message}`); await sleep(4000);
+  }
+  if (!c) throw new Error('IG feed container falhou');
+  let st = 'IN_PROGRESS';
+  for (let i = 0; i < 20; i++) {
+    const s = await get(c.id, { fields: 'status_code', access_token: token });
+    st = s.status_code; if (st === 'FINISHED') break; if (st === 'ERROR') throw new Error('IG feed status ERROR'); await sleep(2000);
+  }
+  if (st !== 'FINISHED') throw new Error('IG feed status=' + st);
+  const pub = await post(`${igId}/media_publish`, { creation_id: c.id, access_token: token });
+  if (pub.error) throw new Error('IG feed publish: ' + pub.error.message);
+  return pub.id;
+}
+async function publishFBFeed(pageId, url, caption) {
+  const pt = await pageToken(pageId);
+  const r = await post(`${pageId}/photos`, { url, message: caption || '', published: 'true', access_token: pt });
+  if (r.error) throw new Error('FB feed: ' + r.error.message);
+  return r.post_id || r.id;
+}
+
 async function register(cron, ig, fb) {
   try {
     let data = { stories: [] };
@@ -124,10 +150,16 @@ async function main() {
     const pageId = pageBySlug[c.client_slug] || null;
     const url = c.image_url;
     if (!igId || !url) { c.status = 'error'; c.error = 'sem ig_business_id/image_url'; changed = true; continue; }
-    log(`publicando ${c.id} (${c.client_slug}) → ${url}`);
+    const isFeed = c.kind === 'feed';
+    log(`publicando ${c.id} (${c.client_slug}) [${isFeed ? 'FEED' : 'story'}] → ${url}`);
     let ig = null, fb = null;
-    try { ig = await publishIG(igId, url); log('   IG ✓ ' + ig); } catch (e) { log('   IG ERRO: ' + e.message); }
-    if (pageId) { try { fb = await publishFB(pageId, url); log('   FB ✓ ' + fb); } catch (e) { log('   FB ERRO: ' + e.message); } }
+    if (isFeed) {
+      try { ig = await publishIGFeed(igId, url, c.caption); log('   IG feed ✓ ' + ig); } catch (e) { log('   IG ERRO: ' + e.message); }
+      if (pageId) { try { fb = await publishFBFeed(pageId, url, c.caption); log('   FB feed ✓ ' + fb); } catch (e) { log('   FB ERRO: ' + e.message); } }
+    } else {
+      try { ig = await publishIG(igId, url); log('   IG ✓ ' + ig); } catch (e) { log('   IG ERRO: ' + e.message); }
+      if (pageId) { try { fb = await publishFB(pageId, url); log('   FB ✓ ' + fb); } catch (e) { log('   FB ERRO: ' + e.message); } }
+    }
     if (ig || fb) {
       c.status = 'completed'; c.published_iso = new Date().toISOString();
       c.channels = [ig && 'ig', fb && 'fb'].filter(Boolean); changed = true; published++;
