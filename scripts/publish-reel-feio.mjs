@@ -16,11 +16,10 @@ const DATA = process.env.DATA_DIR || path.join(__dirname, '..', 'data');
 
 const token = (process.env.META_GRAPH_TOKEN || '').trim();
 const GV = 'v23.0';
-const IG = '17841440639973754';   // @hamburgueria.feio
-const PAGE = '101076538404413';   // Página FB Hamburgueria FEIO
-const BASE = 'https://central.starkentecnologia.com.br/feio/assets/videos';
-
 const arg = (k) => { const a = process.argv.find(x => x.startsWith(`--${k}=`)); return a ? a.split('=').slice(1).join('=') : undefined; };
+const IG = arg('ig') || '17841440639973754';     // default @hamburgueria.feio
+const PAGE = arg('page') || '101076538404413';   // default Página FB Hamburgueria FEIO
+const BASE = arg('base') || 'https://central.starkentecnologia.com.br/feio/assets/videos';
 const log = (m) => console.log(`[${new Date().toISOString()}] ${m}`);
 
 const video = arg('video');
@@ -167,8 +166,8 @@ if (channels.length) {
     {
       const igLink = ig_id ? (await get(ig_id, { fields: 'permalink', access_token: token }).then(r => r.permalink).catch(() => null)) : null;
       data.posts.unshift({
-        id, client: 'Hamburgueria Feio', client_slug: 'feio', agencia: 'Starken',
-        ig_username: 'hamburgueria.feio', title: arg('title') || 'Reel · Dia dos Namorados', published_iso: now.toISOString(),
+        id, client: arg('client') || 'Hamburgueria Feio', client_slug: arg('slug') || 'feio', agencia: 'Starken',
+        ig_username: arg('ig-username') || 'hamburgueria.feio', title: arg('title') || 'Reel · Dia dos Namorados', published_iso: now.toISOString(),
         image_url: 'https://central.starkentecnologia.com.br/feio/assets/photos/promo-sexta.png',
         caption: CAPTION,
         channels: { instagram: igLink || undefined, facebook: fb_id ? `https://www.facebook.com/${fb_id}` : undefined },

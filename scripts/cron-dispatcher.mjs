@@ -169,8 +169,8 @@ async function main() {
   const doc = JSON.parse(await fs.readFile(CRONS, 'utf-8'));
   let mapping = { clients: [] };
   try { mapping = JSON.parse(await fs.readFile(MAPPING, 'utf-8')); } catch {}
-  const pageBySlug = {};
-  (mapping.clients || []).forEach(c => { if (c.slug) pageBySlug[c.slug] = c.page_id; });
+  const pageBySlug = {}, clientBy = {};
+  (mapping.clients || []).forEach(c => { if (c.slug) { pageBySlug[c.slug] = c.page_id; clientBy[c.slug] = c; } });
 
   const now = Date.now();
   let changed = false, published = 0, skipped = 0, future = 0;
@@ -186,13 +186,15 @@ async function main() {
     // DUE — venceu dentro da janela → publica
     // REEL/vídeo (kind:'reel') → reusa o publish-reel-feio.mjs (transcode H.264 + IG Reels + FB Reels)
     if (c.kind === 'reel') {
-      if (c.client_slug !== 'feio') { c.status = 'error'; c.error = 'reel só suportado p/ feio por ora'; changed = true; continue; }
       if (!c.video) { c.status = 'error'; c.error = 'reel sem campo video'; changed = true; continue; }
+      const cl = clientBy[c.client_slug] || {};
+      const base = c.video_base || `https://central.starkentecnologia.com.br/${c.client_slug}/assets/videos`;
       log(`publicando ${c.id} (${c.client_slug}) [REEL] → ${c.video}`);
+      const args = ['--env-file=.env', 'scripts/publish-reel-feio.mjs', `--video=${c.video}`, `--id=${c.id}`, `--title=${c.description || 'Reel'}`,
+        `--ig=${c.ig_business_id || cl.ig_business_id || ''}`, `--page=${cl.page_id || ''}`, `--base=${base}`,
+        `--client=${c.client || cl.name || ''}`, `--slug=${c.client_slug}`, `--ig-username=${cl.ig_username || ''}`];
       try {
-        const { stdout } = await execFileAsync('/usr/bin/node',
-          ['--env-file=.env', 'scripts/publish-reel-feio.mjs', `--video=${c.video}`, `--id=${c.id}`, `--title=${c.description || 'Reel'}`],
-          { cwd: ROOT, maxBuffer: 1 << 27, env: { ...process.env, REEL_CAPTION: c.caption || '' } });
+        const { stdout } = await execFileAsync('/usr/bin/node', args, { cwd: ROOT, maxBuffer: 1 << 27, env: { ...process.env, REEL_CAPTION: c.caption || '' } });
         if (/CONCLUÍDO/.test(stdout)) { c.status = 'completed'; c.published_iso = new Date().toISOString(); published++; log('   REEL ✓'); }
         else { c.error = 'reel não confirmou'; log('   reel stdout(fim): ' + stdout.slice(-280)); }
         changed = true;
