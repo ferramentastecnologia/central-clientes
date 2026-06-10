@@ -29,7 +29,7 @@ const channelsArg = (arg('channels') || 'ig,fb').split(',').map(s => s.trim()).f
 const wantIG = channelsArg.includes('ig');
 const wantFB = channelsArg.includes('fb');
 
-const CAPTION = `❤️🍔 DIA DOS NAMORADOS NO FEIO · 12 DE JUNHO
+const DEFAULT_CAPTION = `❤️🍔 DIA DOS NAMORADOS NO FEIO · 12 DE JUNHO
 
 O nosso COMBO DAS ANTIGAS, até então EXCLUSIVO DO DELIVERY e campeão de vendas nas entregas, agora também vai estar AQUI NA CASA! 💛 No Dia dos Namorados é a chance do casal vir consumir junto e aproveitar esse dia especial.
 
@@ -48,6 +48,8 @@ Pra concorrer é simples: venha na casa, poste e marque a gente (@hamburgueria.f
 Vem aproveitar esse dia especial com a gente! Marca nos comentários aquele alguém especial que vai te trazer no Feio 👇❤️
 
 #DiaDosNamorados #FeioHamburgueria #Blumenau #Hamburgueria #ComboDasAntigas`;
+// Caption parametrizável: env REEL_CAPTION (usado pelo dispatcher) > --caption > default
+const CAPTION = process.env.REEL_CAPTION || arg('caption') || DEFAULT_CAPTION;
 
 if (!token) { log('FALHOU: META_GRAPH_TOKEN ausente'); process.exit(1); }
 if (!video) { log('FALHOU: --video obrigatório'); process.exit(1); }
@@ -60,6 +62,7 @@ const FFPROBE = process.env.FFPROBE_BIN || '/usr/bin/ffprobe';
 // Garante H.264 (codec preferido do IG/FB). Se a origem não for h264, transcoda
 // em alta qualidade (libopenh264, bitrate alto, faststart) e devolve o novo arquivo.
 async function ensureH264(filename) {
+  if (/-h264\.mp4$/i.test(filename)) { log('   arquivo já marcado -h264 — pulando transcode'); return filename; }
   const input = path.join(VIDEO_DIR, filename);
   const ext = path.extname(filename).toLowerCase();
   let codec = '';
@@ -157,7 +160,7 @@ if (channels.length) {
   try {
     const now = new Date();
     const dd = String(now.getUTCDate()).padStart(2, '0'); const mm = String(now.getUTCMonth() + 1).padStart(2, '0');
-    const id = `reel-feio-namorados-${mm}${dd}`;
+    const id = arg('id') || `reel-feio-namorados-${mm}${dd}`;
     let data = { posts: [] };
     try { data = JSON.parse(await fs.readFile(path.join(DATA, 'posts-publicados.json'), 'utf-8')); } catch {}
     data.posts = (data.posts || []).filter(p => p.id !== id);   // upsert (repost atualiza)
@@ -165,7 +168,7 @@ if (channels.length) {
       const igLink = ig_id ? (await get(ig_id, { fields: 'permalink', access_token: token }).then(r => r.permalink).catch(() => null)) : null;
       data.posts.unshift({
         id, client: 'Hamburgueria Feio', client_slug: 'feio', agencia: 'Starken',
-        ig_username: 'hamburgueria.feio', title: 'Reel · Dia dos Namorados', published_iso: now.toISOString(),
+        ig_username: 'hamburgueria.feio', title: arg('title') || 'Reel · Dia dos Namorados', published_iso: now.toISOString(),
         image_url: 'https://central.starkentecnologia.com.br/feio/assets/photos/promo-sexta.png',
         caption: CAPTION,
         channels: { instagram: igLink || undefined, facebook: fb_id ? `https://www.facebook.com/${fb_id}` : undefined },

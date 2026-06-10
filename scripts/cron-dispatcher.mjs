@@ -13,6 +13,9 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
+const execFileAsync = promisify(execFile);
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, '..');
@@ -24,7 +27,7 @@ const LOCK = path.join(ROOT, 'data', '.dispatcher.lock');
 const token = (process.env.META_GRAPH_TOKEN || '').trim();
 const GV = 'v23.0';
 const GRACE_MS = 90 * 60 * 1000;   // publica o que venceu nos últimos 90 min
-const LOCK_TTL = 5 * 60 * 1000;
+const LOCK_TTL = 15 * 60 * 1000;   // reels demoram minutos (transcode + processamento)
 
 const log = (m) => console.log(`[${new Date().toISOString()}] ${m}`);
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
@@ -146,6 +149,21 @@ async function main() {
       c.status = 'skipped'; c.skipped_iso = new Date().toISOString(); changed = true; skipped++; continue;
     }
     // DUE — venceu dentro da janela → publica
+    // REEL/vídeo (kind:'reel') → reusa o publish-reel-feio.mjs (transcode H.264 + IG Reels + FB Reels)
+    if (c.kind === 'reel') {
+      if (c.client_slug !== 'feio') { c.status = 'error'; c.error = 'reel só suportado p/ feio por ora'; changed = true; continue; }
+      if (!c.video) { c.status = 'error'; c.error = 'reel sem campo video'; changed = true; continue; }
+      log(`publicando ${c.id} (${c.client_slug}) [REEL] → ${c.video}`);
+      try {
+        const { stdout } = await execFileAsync('/usr/bin/node',
+          ['--env-file=.env', 'scripts/publish-reel-feio.mjs', `--video=${c.video}`, `--id=${c.id}`, `--title=${c.description || 'Reel'}`],
+          { cwd: ROOT, maxBuffer: 1 << 27, env: { ...process.env, REEL_CAPTION: c.caption || '' } });
+        if (/CONCLUÍDO/.test(stdout)) { c.status = 'completed'; c.published_iso = new Date().toISOString(); published++; log('   REEL ✓'); }
+        else { c.error = 'reel não confirmou'; log('   reel stdout(fim): ' + stdout.slice(-280)); }
+        changed = true;
+      } catch (e) { c.error = 'reel falhou: ' + e.message; changed = true; log('   REEL ERRO: ' + (e.stderr || e.message).slice(-280)); }
+      continue;
+    }
     const igId = c.ig_business_id;
     const pageId = pageBySlug[c.client_slug] || null;
     const url = c.image_url;
