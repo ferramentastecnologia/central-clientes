@@ -156,7 +156,7 @@ async function register(cron, ig, fb) {
     if (data.stories.some(s => s.id === cron.id)) return;
     data.stories.unshift({
       id: cron.id, client: cron.client || cron.client_slug, client_slug: cron.client_slug || null,
-      title: cron.description || 'Story', channels: [ig && 'ig', fb && 'fb'].filter(Boolean),
+      kind: cron.kind || 'story', title: cron.description || 'Story', channels: [ig && 'ig', fb && 'fb'].filter(Boolean),
       published_iso: new Date().toISOString(), image_url: cron.image_url,
       media_id: ig || null, ig_media_id: ig || null, fb_story_id: fb || null, via: 'dispatcher',
     });

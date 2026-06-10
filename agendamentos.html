@@ -516,6 +516,7 @@
   .story-card { background: var(--bg-1); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; }
   .story-card.live { border-color: rgba(74,222,128,.4); box-shadow: 0 0 0 1px rgba(74,222,128,.08); }
   .story-media { position: relative; aspect-ratio: 9/16; background: var(--bg-0); display: block; }
+  .story-media.media-45 { aspect-ratio: 4/5; }
   .story-media img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .story-media::before {
     content: ''; position: absolute; inset: 0;
@@ -530,6 +531,7 @@
   .story-badge.live { background: var(--ok); color: #06210f; }
   .story-badge.live .pulse { width: 6px; height: 6px; border-radius: 999px; background: #06210f; animation: pulse 1.2s ease-in-out infinite; }
   .story-badge.expired { background: rgba(15,23,42,.78); color: var(--text-2); border: 1px solid var(--border); }
+  .story-badge.perma { background: rgba(16,185,129,.18); color: var(--ok); border: 1px solid rgba(16,185,129,.4); }
   .story-ch { position: absolute; top: 9px; right: 9px; z-index: 2; font-size: 13px; filter: drop-shadow(0 1px 2px rgba(0,0,0,.6)); }
   .story-info { padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; }
   .story-client { font-weight: 700; font-size: 13px; }
@@ -790,7 +792,7 @@ function renderEmptyClientCard(client) {
   `;
 }
 
-function renderPublishedCard(p) {
+function renderPublishedCard(p, fmt) {
   const igUrl = p.channels && p.channels.instagram;
   const fbUrl = p.channels && p.channels.facebook;
   return `
@@ -800,7 +802,7 @@ function renderPublishedCard(p) {
           <div class="card-client">${escape(p.client)}</div>
           <div class="card-handle">${p.ig_username ? '@' + p.ig_username : ''}</div>
         </div>
-        ${channelBadges(postChannels(p))}
+        <div class="cron-badges">${fmt ? formatBadge(fmt) : ''}${channelBadges(postChannels(p))}</div>
       </div>
       ${p.image_url ? `<img class="card-image" src="${escape(p.image_url)}" alt="post" loading="lazy">` : ''}
       <div class="card-body">
@@ -817,7 +819,8 @@ function renderPublishedCard(p) {
   `;
 }
 
-function renderStoryCard(s) {
+function renderStoryCard(s, fmt) {
+  const isStory = !fmt || fmt === 'story';   // feed/carrossel/reel não expiram em 24h
   const pub = new Date(s.published_iso).getTime();
   const exp = pub + 24 * 3600 * 1000;
   const now = Date.now();
@@ -825,23 +828,28 @@ function renderStoryCard(s) {
   const remMs = exp - now;
   const remH = Math.floor(remMs / 3600000);
   const remM = Math.floor((remMs % 3600000) / 60000);
-  const badge = active
+  const badge = !isStory
+    ? `<span class="story-badge perma">${FORMAT[fmt]?.icon || '✓'} publicado</span>`
+    : active
     ? '<span class="story-badge live"><span class="pulse"></span>NO AR</span>'
     : '<span class="story-badge expired">Expirado</span>';
-  const statusLine = active
+  const statusLine = !isStory
+    ? '<div class="story-meta">✓ publicado</div>'
+    : active
     ? `<div class="story-meta live-text">⏳ expira em ${remH}h ${remM}m</div>`
     : `<div class="story-meta">⚪ expirou ${fmtBRT(new Date(exp).toISOString())}</div>`;
+  const arClass = (fmt === 'feed' || fmt === 'carousel') ? ' media-45' : '';   // feed/carrossel = 4:5, story/reel = 9:16
   const media = s.image_url
-    ? `<a class="story-media" href="${escape(s.image_url)}" target="_blank" title="Abrir criativo">
-         <img src="${escape(s.image_url)}" alt="story" loading="lazy">
+    ? `<a class="story-media${arClass}" href="${escape(s.image_url)}" target="_blank" title="Abrir criativo">
+         <img src="${escape(s.image_url)}" alt="post" loading="lazy">
          ${badge}<span class="story-ch">${storyChannels(s).map(ch => ch === 'ig' ? '📸' : ch === 'fb' ? '📘' : '').join('')}</span>
        </a>`
-    : `<div class="story-media">${badge}</div>`;
+    : `<div class="story-media${arClass}">${badge}</div>`;
   return `
-    <div class="story-card ${active ? 'live' : ''}">
+    <div class="story-card ${isStory && active ? 'live' : ''}">
       ${media}
       <div class="story-info">
-        <div class="story-client">${escape(s.client)}</div>
+        <div class="story-client">${escape(s.client)}${fmt && fmt !== 'story' ? ' ' + formatBadge(fmt) : ''}</div>
         ${s.title ? `<div class="story-title">${escape(s.title)}</div>` : ''}
         <div class="story-meta">📅 ${fmtBRT(s.published_iso)} BRT</div>
         ${statusLine}
@@ -964,7 +972,7 @@ function render() {
 
   document.getElementById('vc-ag').textContent = agCrons.length + upcomingPosts.length;
   document.getElementById('vc-pub').textContent = publicados.length + stories.length;
-  document.getElementById('format-filters').style.display = currentView === 'agendados' ? '' : 'none';
+  document.getElementById('format-filters').style.display = '';   // filtro de formato vale nas duas views
 
   let html = '';
   if (currentView === 'agendados') {
@@ -980,18 +988,39 @@ function render() {
     else html += '<div class="empty-state">Nenhum material agendado neste filtro</div>';
     html += '</div>';
   } else {
-    if (publicados.length) {
-      html += '<div class="section"><div class="section-header"><div class="section-title">🚀 Posts Publicados</div><div class="section-count">' + publicados.length + ' post' + (publicados.length !== 1 ? 's' : '') + '</div></div><div class="grid grid-pub">';
-      publicados.forEach(p => { html += renderPublishedCard(p); });
+    // Formato real de cada material publicado: campo kind > join por id no cron > heurística do id/título
+    const kindById = {}; (data.crons || []).forEach(c => { kindById[c.id] = c.kind || 'story'; });
+    const guessFmt = (id, title) => { const t = ((id || '') + ' ' + (title || '')).toLowerCase(); if (/reel/.test(t)) return 'reel'; if (/carrossel|carousel/.test(t)) return 'carousel'; if (/feed/.test(t)) return 'feed'; return null; };
+    const fmtOf = (item, fallback) => item.kind || kindById[item.id] || guessFmt(item.id, item.title) || fallback;
+
+    // Itens unificados: posts curados (renderer pub) + stories auto-registrados (renderer story)
+    const items = [
+      ...publicados.map(p => ({ rec: p, fmt: fmtOf(p, 'feed'), src: 'post', when: p.published_iso })),
+      ...stories.map(s => ({ rec: s, fmt: fmtOf(s, 'story'), src: 'story', when: s.published_iso })),
+    ];
+    const counts = { story: 0, feed: 0, reel: 0, carousel: 0 };
+    items.forEach(i => { counts[i.fmt] = (counts[i.fmt] || 0) + 1; });
+    const shown = items.filter(i => currentFormat === 'all' || i.fmt === currentFormat);
+    const postItems = shown.filter(i => i.fmt !== 'story').sort((a, b) => new Date(b.when) - new Date(a.when));
+    const storyItems = shown.filter(i => i.fmt === 'story').sort((a, b) => new Date(b.when) - new Date(a.when));
+
+    html += `<div class="fmt-summary">${fmtChip('story', counts.story)}${fmtChip('feed', counts.feed)}${fmtChip('reel', counts.reel)}${fmtChip('carousel', counts.carousel)}</div>`;
+
+    if (postItems.length) {
+      html += '<div class="section"><div class="section-header"><div class="section-title">🚀 Posts Publicados</div><div class="section-count">' + postItems.length + ' post' + (postItems.length !== 1 ? 's' : '') + (currentFormat !== 'all' ? ' · ' + FORMAT[currentFormat].label : '') + '</div></div>';
+      const cardsPub = postItems.filter(i => i.src === 'post');
+      const cardsStory = postItems.filter(i => i.src === 'story');
+      if (cardsPub.length) { html += '<div class="grid grid-pub">'; cardsPub.forEach(i => { html += renderPublishedCard(i.rec, i.fmt); }); html += '</div>'; }
+      if (cardsStory.length) { html += '<div class="stories-grid">'; cardsStory.forEach(i => { html += renderStoryCard(i.rec, i.fmt); }); html += '</div>'; }
+      html += '</div>';
+    }
+    if (storyItems.length) {
+      const noAr = storyItems.filter(i => Date.now() < new Date(i.when).getTime() + 24 * 3600 * 1000).length;
+      html += '<div class="section"><div class="section-header"><div class="section-title">📱 Stories Publicados</div><div class="section-count">' + noAr + ' no ar · ' + storyItems.length + ' total</div></div><div class="stories-grid">';
+      storyItems.forEach(i => { html += renderStoryCard(i.rec, 'story'); });
       html += '</div></div>';
     }
-    if (stories.length) {
-      const noAr = stories.filter(s => Date.now() < new Date(s.published_iso).getTime() + 24 * 3600 * 1000).length;
-      html += '<div class="section"><div class="section-header"><div class="section-title">📱 Stories Publicados</div><div class="section-count">' + noAr + ' no ar · ' + stories.length + ' total</div></div><div class="stories-grid">';
-      stories.forEach(s => { html += renderStoryCard(s); });
-      html += '</div></div>';
-    }
-    if (!publicados.length && !stories.length) html += '<div class="empty-state">Nada publicado ainda neste filtro</div>';
+    if (!shown.length) html += '<div class="empty-state">Nada publicado neste filtro</div>';
   }
 
   document.getElementById('content').innerHTML = html;
