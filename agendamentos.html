@@ -487,6 +487,23 @@
   .cron-status.soon { background: rgba(248,113,113,.15); color: var(--err); }
   .cron-status.done { background: rgba(74,222,128,.12); color: var(--ok); }
 
+  /* VIEW TABS (Agendados / Publicados) + FORMATO */
+  .view-tabs { display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
+  .view-tab { padding:11px 22px; border-radius:12px; background:var(--bg-1); border:1px solid var(--border); color:var(--text-2); font-weight:700; font-size:14px; cursor:pointer; display:inline-flex; gap:8px; align-items:center; transition:all .15s; }
+  .view-tab:hover { border-color:var(--accent); }
+  .view-tab.active { background:var(--accent-dim); border-color:var(--accent); color:var(--accent); }
+  .view-tab .vt-count { font-size:11px; font-weight:700; background:rgba(255,255,255,.08); padding:2px 8px; border-radius:999px; }
+  .fmt-summary { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:18px; }
+  .fmt-chip { display:inline-flex; align-items:center; gap:7px; padding:9px 15px; border-radius:12px; background:var(--bg-1); border:1px solid var(--border); font-size:13px; font-weight:600; color:var(--text-1); }
+  .fmt-chip b { font-size:15px; }
+  .fmt-badge { padding:3px 9px; border-radius:7px; font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.4px; white-space:nowrap; }
+  .fmt-story { background:rgba(96,165,250,.15); color:#60a5fa; }
+  .fmt-feed { background:rgba(16,185,129,.16); color:#10b981; }
+  .fmt-reel { background:rgba(168,85,247,.18); color:#c084fc; }
+  .fmt-carousel { background:rgba(245,158,11,.18); color:#f59e0b; }
+  .cron-thumb.placeholder { display:flex; align-items:center; justify-content:center; font-size:30px; color:var(--text-3); }
+  .cron-badges { display:flex; flex-direction:column; gap:6px; align-items:flex-end; }
+
   /* STORIES PUBLICADOS */
   .stories-grid {
     display: grid;
@@ -562,6 +579,12 @@
   </div>
 </header>
 
+<!-- VIEW TABS -->
+<div class="view-tabs">
+  <button class="view-tab active" data-view="agendados">📅 Agendados <span class="vt-count" id="vc-ag">0</span></button>
+  <button class="view-tab" data-view="publicados">✅ Publicados <span class="vt-count" id="vc-pub">0</span></button>
+</div>
+
 <!-- FILTERS -->
 <div class="filters">
   <span class="filter-label">Cliente:</span>
@@ -573,8 +596,16 @@
   <button class="filter-btn" data-channel="ig">📸 Instagram</button>
   <button class="filter-btn" data-channel="fb">📘 Facebook</button>
   <label class="toggle" style="margin-left:auto;">
-    <input type="checkbox" id="show-old"> Mostrar posts antigos/publicados
+    <input type="checkbox" id="show-old"> Mostrar concluídos
   </label>
+</div>
+<div class="filters" id="format-filters">
+  <span class="filter-label">Formato:</span>
+  <button class="filter-btn active" data-format="all">Todos</button>
+  <button class="filter-btn" data-format="story">📖 Story</button>
+  <button class="filter-btn" data-format="feed">🖼️ Feed</button>
+  <button class="filter-btn" data-format="reel">🎬 Reel</button>
+  <button class="filter-btn" data-format="carousel">🎠 Carrossel</button>
 </div>
 
 <div id="content">
@@ -593,6 +624,20 @@ let currentChannel = 'all';
 let showOld = false;
 let cachedData = null;
 let clientFiltersBuilt = false;
+let currentView = 'agendados';
+let currentFormat = 'all';
+
+// Formatos de material (selo por tipo)
+const FORMAT = {
+  story:    { label: 'Story',     icon: '📖', cls: 'fmt-story' },
+  feed:     { label: 'Feed',      icon: '🖼️', cls: 'fmt-feed' },
+  reel:     { label: 'Reel',      icon: '🎬', cls: 'fmt-reel' },
+  carousel: { label: 'Carrossel', icon: '🎠', cls: 'fmt-carousel' },
+};
+const cronFormat = c => (c.kind && FORMAT[c.kind]) ? c.kind : 'story';
+const formatBadge = kind => { const f = FORMAT[kind] || FORMAT.story; return `<span class="fmt-badge ${f.cls}">${f.icon} ${f.label}</span>`; };
+const inFormat = c => currentFormat === 'all' || cronFormat(c) === currentFormat;
+const fmtChip = (kind, n) => { const f = FORMAT[kind]; return `<span class="fmt-chip"><b>${f.icon}</b> ${n} ${f.label}${n !== 1 ? 's' : ''}</span>`; };
 
 // Canais de cada item (fallback p/ entradas antigas sem o campo).
 const cronChannels  = c => c.channels || (c.type === 'ig_publish' ? ['ig'] : c.type === 'campaign_monitor' ? ['monitor'] : []);
@@ -833,7 +878,7 @@ function renderCron(cron) {
 
   const thumb = cron.image_url
     ? `<a class="cron-thumb" href="${escape(cron.image_url)}" target="_blank" title="Abrir criativo"><img src="${escape(cron.image_url)}" alt="preview" loading="lazy"></a>`
-    : '';
+    : `<div class="cron-thumb placeholder">${FORMAT[cronFormat(cron)]?.icon || '📄'}</div>`;
 
   return `
     <div class="cron-card ${isCompleted?'completed':''} ${imminent?'imminent':''}">
@@ -845,7 +890,7 @@ function renderCron(cron) {
               <div class="cron-client">${escape(cron.client)}</div>
               <div class="cron-desc">${escape(cron.description)}</div>
             </div>
-            ${channelTag}
+            <div class="cron-badges">${formatBadge(cronFormat(cron))}${channelTag}</div>
           </div>
           ${countdownHtml}
           ${whenLabel ? `<div class="cron-when">${whenLabel}</div>` : ''}
@@ -886,119 +931,60 @@ function updateCountdowns() {
 function render() {
   if (!cachedData) return;
   const data = cachedData;
-
-  // Aplica filtro por cliente
   const clients = data.clients.filter(c => inClient(c.slug));
-
-  // Coleta posts agendados (FB feed) — canal 'fb'
   const now = Math.floor(Date.now() / 1000);
+
+  // FB scheduled posts (raros — entram em "Agendados")
   const upcomingPosts = [];
-  const pastPosts = [];
-
-  if (inChannel(['fb'])) {
-    clients.forEach(client => {
-      (client.fb_scheduled_posts || []).forEach(post => {
-        if (post.scheduled_publish_time > now) {
-          upcomingPosts.push({ post, client });
-        } else {
-          pastPosts.push({ post, client });
-        }
-      });
-    });
-  }
-
+  if (inChannel(['fb'])) clients.forEach(client => (client.fb_scheduled_posts || []).forEach(post => {
+    if (post.scheduled_publish_time > now) upcomingPosts.push({ post, client });
+  }));
   upcomingPosts.sort((a, b) => a.post.scheduled_publish_time - b.post.scheduled_publish_time);
 
-  let html = '';
+  // Crons (materiais agendados)
+  const cronsAll = (data.crons || []).filter(c => inClient(c.client_slug) && inChannel(cronChannels(c)));
+  const agCrons = cronsAll.filter(c => showOld || !cronDone(c));
+  const fmtCounts = { story: 0, feed: 0, reel: 0, carousel: 0 };
+  agCrons.forEach(c => { const k = cronFormat(c); fmtCounts[k] = (fmtCounts[k] || 0) + 1; });
+  const cronsShown = agCrons.filter(inFormat).sort((a, b) => new Date(a.next_fire_iso || 0) - new Date(b.next_fire_iso || 0));
 
-  // HERO — próximo post
-  if (upcomingPosts.length > 0) {
-    html += renderHero(upcomingPosts[0].post, upcomingPosts[0].client);
-  }
-
-  // Seção: Posts futuros
-  html += '<div class="section">';
-  html += `<div class="section-header">
-    <div class="section-title">📘 Próximos Posts Agendados</div>
-    <div class="section-count">${upcomingPosts.length} agendado${upcomingPosts.length!==1?'s':''}</div>
-  </div>`;
-
-  if (upcomingPosts.length > 0) {
-    html += '<div class="grid">';
-    upcomingPosts.forEach(({ post, client }) => {
-      html += renderPostCard(post, client, false);
-    });
-    html += '</div>';
-  } else {
-    html += '<div class="empty-state">Nenhum post agendado no momento</div>';
-  }
-  html += '</div>';
-
-  // Seção: Posts Publicados (curados — data/posts-publicados.json)
+  // Publicados
   const publicados = (data.posts_publicados || []).filter(p => inClient(p.client_slug) && inChannel(postChannels(p)));
-  if (publicados.length > 0) {
-    html += '<div class="section">';
-    html += `<div class="section-header">
-      <div class="section-title">🚀 Posts Publicados</div>
-      <div class="section-count">${publicados.length} post${publicados.length!==1?'s':''}</div>
-    </div>`;
-    html += '<div class="grid grid-pub">';
-    publicados.forEach(p => { html += renderPublishedCard(p); });
-    html += '</div>';
-    html += '</div>';
-  }
-
-  // Seção: Stories Publicados (curados — data/stories-publicados.json)
   const stories = (data.stories_publicados || [])
     .filter(s => inClient(s.client_slug) && inChannel(storyChannels(s)))
-    .slice()
     .sort((a, b) => new Date(b.published_iso) - new Date(a.published_iso));
-  if (stories.length > 0) {
-    const noAr = stories.filter(s => Date.now() < new Date(s.published_iso).getTime() + 24*3600*1000).length;
-    html += '<div class="section">';
-    html += `<div class="section-header">
-      <div class="section-title">📱 Stories Publicados</div>
-      <div class="section-count">${noAr} no ar · ${stories.length} total</div>
-    </div>`;
-    html += '<div class="stories-grid">';
-    stories.forEach(s => { html += renderStoryCard(s); });
-    html += '</div>';
-    html += '</div>';
-  }
 
-  // Seção: Posts antigos (se toggle ativo)
-  if (showOld && pastPosts.length > 0) {
-    html += '<div class="section">';
-    html += `<div class="section-header">
-      <div class="section-title">📜 Posts Antigos/Publicados</div>
-      <div class="section-count">${pastPosts.length} item${pastPosts.length!==1?'s':''}</div>
-    </div>`;
-    html += '<div class="grid">';
-    pastPosts.forEach(({ post, client }) => {
-      html += renderPostCard(post, client, true);
-    });
-    html += '</div>';
-    html += '</div>';
-  }
+  document.getElementById('vc-ag').textContent = agCrons.length + upcomingPosts.length;
+  document.getElementById('vc-pub').textContent = publicados.length + stories.length;
+  document.getElementById('format-filters').style.display = currentView === 'agendados' ? '' : 'none';
 
-  // Seção: Cron Jobs
-  html += '<div class="section">';
-  let crons = (data.crons || []).filter(c => inClient(c.client_slug) && inChannel(cronChannels(c)));
-  // Cron Jobs mostra só os agendados (ainda não disparados). Os já publicados saem
-  // daqui e aparecem em "Stories Publicados". "Mostrar antigos" revela os concluídos.
-  const activeCrons = showOld ? crons : crons.filter(c => !cronDone(c));
-  html += `<div class="section-header">
-    <div class="section-title">🤖 Cron Jobs Claude</div>
-    <div class="section-count">${activeCrons.length} ${showOld?'total':'ativo'}${activeCrons.length!==1?'s':''}</div>
-  </div>`;
-  if (activeCrons.length > 0) {
-    html += '<div class="cron-grid">';
-    activeCrons.forEach(c => { html += renderCron(c); });
+  let html = '';
+  if (currentView === 'agendados') {
+    html += `<div class="fmt-summary">${fmtChip('story', fmtCounts.story)}${fmtChip('feed', fmtCounts.feed)}${fmtChip('reel', fmtCounts.reel)}${fmtChip('carousel', fmtCounts.carousel)}</div>`;
+    if (upcomingPosts.length) {
+      html += renderHero(upcomingPosts[0].post, upcomingPosts[0].client);
+      html += '<div class="section"><div class="section-header"><div class="section-title">📘 Agendados no Facebook (nativo)</div><div class="section-count">' + upcomingPosts.length + '</div></div><div class="grid">';
+      upcomingPosts.forEach(({ post, client }) => { html += renderPostCard(post, client, false); });
+      html += '</div></div>';
+    }
+    html += '<div class="section"><div class="section-header"><div class="section-title">📅 Materiais Agendados</div><div class="section-count">' + cronsShown.length + (currentFormat !== 'all' ? ' · ' + FORMAT[currentFormat].label : '') + '</div></div>';
+    if (cronsShown.length) { html += '<div class="cron-grid">'; cronsShown.forEach(c => { html += renderCron(c); }); html += '</div>'; }
+    else html += '<div class="empty-state">Nenhum material agendado neste filtro</div>';
     html += '</div>';
   } else {
-    html += '<div class="empty-state">Nenhum cron ativo</div>';
+    if (publicados.length) {
+      html += '<div class="section"><div class="section-header"><div class="section-title">🚀 Posts Publicados</div><div class="section-count">' + publicados.length + ' post' + (publicados.length !== 1 ? 's' : '') + '</div></div><div class="grid grid-pub">';
+      publicados.forEach(p => { html += renderPublishedCard(p); });
+      html += '</div></div>';
+    }
+    if (stories.length) {
+      const noAr = stories.filter(s => Date.now() < new Date(s.published_iso).getTime() + 24 * 3600 * 1000).length;
+      html += '<div class="section"><div class="section-header"><div class="section-title">📱 Stories Publicados</div><div class="section-count">' + noAr + ' no ar · ' + stories.length + ' total</div></div><div class="stories-grid">';
+      stories.forEach(s => { html += renderStoryCard(s); });
+      html += '</div></div>';
+    }
+    if (!publicados.length && !stories.length) html += '<div class="empty-state">Nada publicado ainda neste filtro</div>';
   }
-  html += '</div>';
 
   document.getElementById('content').innerHTML = html;
   updateCountdowns();
@@ -1051,6 +1037,22 @@ function buildClientFilters(clients) {
 
 // Filtros (delegação — botões de cliente são dinâmicos)
 document.addEventListener('click', (e) => {
+  const vt = e.target.closest('[data-view]');
+  if (vt) {
+    document.querySelectorAll('[data-view]').forEach(x => x.classList.remove('active'));
+    vt.classList.add('active');
+    currentView = vt.dataset.view;
+    render();
+    return;
+  }
+  const ff = e.target.closest('[data-format]');
+  if (ff) {
+    document.querySelectorAll('[data-format]').forEach(x => x.classList.remove('active'));
+    ff.classList.add('active');
+    currentFormat = ff.dataset.format;
+    render();
+    return;
+  }
   const cb = e.target.closest('[data-client]');
   if (cb) {
     document.querySelectorAll('[data-client]').forEach(x => x.classList.remove('active'));
