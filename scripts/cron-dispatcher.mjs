@@ -158,6 +158,7 @@ async function register(cron, ig, fb) {
       id: cron.id, client: cron.client || cron.client_slug, client_slug: cron.client_slug || null,
       kind: cron.kind || 'story', title: cron.description || 'Story', channels: [ig && 'ig', fb && 'fb'].filter(Boolean),
       published_iso: new Date().toISOString(), image_url: cron.image_url,
+      caption: cron.caption || null, images: Array.isArray(cron.images) ? cron.images : null,
       media_id: ig || null, ig_media_id: ig || null, fb_story_id: fb || null, via: 'dispatcher',
     });
     data.updated_at = new Date().toISOString();

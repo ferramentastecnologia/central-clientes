@@ -502,10 +502,40 @@
   .fmt-reel { background:rgba(168,85,247,.18); color:#c084fc; }
   .fmt-carousel { background:rgba(245,158,11,.18); color:#f59e0b; }
   .cron-thumb.placeholder { display:flex; align-items:center; justify-content:center; font-size:30px; color:var(--text-3); }
-  .cron-thumb.cron-video { object-fit:cover; background:#000; cursor:default; }
-  .cron-thumb.cron-video:hover { transform:none; border-color:var(--border); }
-  .cron-thumb.cron-video::after { content:none; }
+  button.cron-thumb { padding:0; font:inherit; color:inherit; cursor:pointer; }
+  .cron-thumb.cron-video, .cron-thumb.cron-gallery { background:#000; }
+  .cron-thumb.cron-video::after, .cron-thumb.cron-gallery::after { content:none; }
+  .cron-thumb.cron-video video { width:100%; height:100%; object-fit:cover; display:block; }
+  .cron-thumb .play-badge {
+    position:absolute; inset:0; margin:auto; width:36px; height:36px; z-index:3;
+    display:flex; align-items:center; justify-content:center; padding-left:2px;
+    background:rgba(0,0,0,.6); color:#fff; border-radius:999px; font-size:15px;
+    pointer-events:none; box-shadow:0 2px 8px rgba(0,0,0,.4);
+  }
+  .cron-thumb:hover .play-badge { background:var(--accent); color:#06210f; }
+  .cron-thumb .cc-count {
+    position:absolute; bottom:5px; right:5px; z-index:3; background:rgba(0,0,0,.62);
+    color:#fff; font-size:10px; font-weight:800; padding:2px 6px; border-radius:6px;
+  }
   .cron-badges { display:flex; flex-direction:column; gap:6px; align-items:flex-end; }
+
+  /* Galeria de carrossel no card publicado */
+  .card-carousel { position:relative; }
+  .cc-track { display:flex; overflow-x:auto; scroll-snap-type:x mandatory; aspect-ratio:4/5; background:var(--bg-0); scrollbar-width:none; }
+  .cc-track::-webkit-scrollbar { display:none; }
+  .cc-track img { flex:0 0 100%; width:100%; height:100%; object-fit:cover; scroll-snap-align:center; }
+  .card-carousel .cc-count { position:absolute; top:10px; right:10px; z-index:2; background:rgba(0,0,0,.62); color:#fff; font-size:11px; font-weight:800; padding:3px 9px; border-radius:999px; }
+
+  /* Lightbox de mídia */
+  .media-modal { position:fixed; inset:0; z-index:1000; display:flex; align-items:center; justify-content:center; padding:24px; }
+  .media-modal[hidden] { display:none; }
+  .mm-backdrop { position:absolute; inset:0; background:rgba(0,0,0,.82); backdrop-filter:blur(2px); cursor:zoom-out; }
+  .mm-box { position:relative; z-index:1; max-width:min(94vw,440px); max-height:90vh; }
+  .mm-close { position:absolute; top:-40px; right:0; width:34px; height:34px; border:none; border-radius:999px; background:rgba(255,255,255,.14); color:#fff; font-size:16px; cursor:pointer; }
+  .mm-close:hover { background:rgba(255,255,255,.26); }
+  .mm-media { width:100%; max-height:88vh; border-radius:14px; display:block; background:#000; }
+  .mm-gallery { display:flex; gap:10px; overflow-x:auto; scroll-snap-type:x mandatory; max-height:88vh; }
+  .mm-gallery img { flex:0 0 auto; max-width:88vw; max-height:88vh; border-radius:14px; scroll-snap-align:center; }
 
   /* STORIES PUBLICADOS */
   .stories-grid {
@@ -792,24 +822,35 @@ function renderEmptyClientCard(client) {
   `;
 }
 
+function carouselGallery(imgs) {
+  return `<div class="card-carousel">
+    <div class="cc-track">${imgs.map((u, i) => `<img src="${escape(u)}" alt="img ${i + 1}" loading="lazy">`).join('')}</div>
+    <span class="cc-count">🎠 ${imgs.length} imagens</span>
+  </div>`;
+}
+
 function renderPublishedCard(p, fmt) {
-  const igUrl = p.channels && p.channels.instagram;
-  const fbUrl = p.channels && p.channels.facebook;
+  const chans = p.channel_list || postChannels(p);
+  const igUrl = p.ig_url || (p.channels && p.channels.instagram) || null;
+  const fbUrl = p.fb_url || (p.channels && p.channels.facebook) || null;
+  const imgs = (p.images && p.images.length > 1) ? p.images : null;
+  const visual = imgs ? carouselGallery(imgs)
+    : p.image_url ? `<img class="card-image" src="${escape(p.image_url)}" alt="post" loading="lazy">` : '';
   return `
     <div class="card card-pub">
       <div class="card-top">
         <div>
           <div class="card-client">${escape(p.client)}</div>
-          <div class="card-handle">${p.ig_username ? '@' + p.ig_username : ''}</div>
+          ${p.ig_username ? `<div class="card-handle">@${escape(p.ig_username)}</div>` : ''}
         </div>
-        <div class="cron-badges">${fmt ? formatBadge(fmt) : ''}${channelBadges(postChannels(p))}</div>
+        <div class="cron-badges">${fmt ? formatBadge(fmt) : ''}${channelBadges(chans)}</div>
       </div>
-      ${p.image_url ? `<img class="card-image" src="${escape(p.image_url)}" alt="post" loading="lazy">` : ''}
+      ${visual}
       <div class="card-body">
         <div class="pub-date">✓ Publicado · ${fmtBRT(p.published_iso)} BRT</div>
         ${p.title ? `<div class="pub-title">${escape(p.title)}</div>` : ''}
-        <div class="caption collapsed" id="cap-${p.id}">${escape(p.caption)}</div>
-        <button class="caption-toggle" onclick="toggleCaption('${p.id}', this)">Ver copy completa ↓</button>
+        ${p.caption ? `<div class="caption collapsed" id="cap-${p.id}">${escape(p.caption)}</div>
+        <button class="caption-toggle" onclick="toggleCaption('${p.id}', this)">Ver copy completa ↓</button>` : ''}
         ${(igUrl || fbUrl) ? `<div class="pub-links">
           ${igUrl ? `<a class="btn btn-ghost btn-xs" href="${escape(igUrl)}" target="_blank">Instagram ↗</a>` : ''}
           ${fbUrl ? `<a class="btn btn-ghost btn-xs" href="${escape(fbUrl)}" target="_blank">Facebook ↗</a>` : ''}
@@ -887,14 +928,27 @@ function renderCron(cron) {
     ? `📅 ${fmtBRT(cron.next_fire_iso)} BRT`
     : (cron.recurring ? `↻ ${cron.expression} (${cron.tz})` : '');
 
-  const videoUrl = (cronFormat(cron) === 'reel' && cron.video)
+  const fmt0 = cronFormat(cron);
+  const videoUrl = (fmt0 === 'reel' && cron.video)
     ? `https://central.starkentecnologia.com.br/${cron.client_slug}/assets/videos/${cron.video}`
     : null;
-  const thumb = videoUrl
-    ? `<video class="cron-thumb cron-video" controls playsinline preload="metadata" src="${escape(videoUrl)}" title="▶ Reproduzir o reel"></video>`
-    : cron.image_url
-    ? `<a class="cron-thumb" href="${escape(cron.image_url)}" target="_blank" title="Abrir criativo"><img src="${escape(cron.image_url)}" alt="preview" loading="lazy"></a>`
-    : `<div class="cron-thumb placeholder">${FORMAT[cronFormat(cron)]?.icon || '📄'}</div>`;
+  const cronImgs = (fmt0 === 'carousel' && Array.isArray(cron.images) && cron.images.length > 1) ? cron.images : null;
+  let thumb;
+  if (videoUrl) {
+    thumb = `<button class="cron-thumb cron-video" data-video="${escape(videoUrl)}" title="▶ Reproduzir o reel">
+      <video src="${escape(videoUrl)}#t=0.5" muted playsinline preload="metadata"></video>
+      <span class="play-badge">▶</span>
+    </button>`;
+  } else if (cronImgs) {
+    thumb = `<button class="cron-thumb cron-gallery" data-gallery="${JSON.stringify(cronImgs).replace(/"/g, '&quot;')}" title="Ver ${cronImgs.length} imagens">
+      <img src="${escape(cronImgs[0])}" alt="preview" loading="lazy">
+      <span class="cc-count">🎠 ${cronImgs.length}</span>
+    </button>`;
+  } else if (cron.image_url) {
+    thumb = `<a class="cron-thumb" href="${escape(cron.image_url)}" target="_blank" title="Abrir criativo"><img src="${escape(cron.image_url)}" alt="preview" loading="lazy"></a>`;
+  } else {
+    thumb = `<div class="cron-thumb placeholder">${FORMAT[fmt0]?.icon || '📄'}</div>`;
+  }
 
   return `
     <div class="cron-card ${isCompleted?'completed':''} ${imminent?'imminent':''}">
@@ -989,14 +1043,32 @@ function render() {
     html += '</div>';
   } else {
     // Formato real de cada material publicado: campo kind > join por id no cron > heurística do id/título
-    const kindById = {}; (data.crons || []).forEach(c => { kindById[c.id] = c.kind || 'story'; });
+    const cronById = {}; (data.crons || []).forEach(c => { cronById[c.id] = c; });
+    const igHandle = {}; (data.clients || []).forEach(c => { if (c.ig_username) igHandle[c.slug] = c.ig_username; });
     const guessFmt = (id, title) => { const t = ((id || '') + ' ' + (title || '')).toLowerCase(); if (/reel/.test(t)) return 'reel'; if (/carrossel|carousel/.test(t)) return 'carousel'; if (/feed/.test(t)) return 'feed'; return null; };
-    const fmtOf = (item, fallback) => item.kind || kindById[item.id] || guessFmt(item.id, item.title) || fallback;
+    const fmtOf = (item, fallback) => item.kind || (cronById[item.id] && cronById[item.id].kind) || guessFmt(item.id, item.title) || fallback;
 
-    // Itens unificados: posts curados (renderer pub) + stories auto-registrados (renderer story)
+    // Normaliza qualquer registro (post curado OU auto-registrado) p/ o card rico,
+    // recuperando caption/imagens do cron correspondente quando o registro for "magro".
+    const normalizePub = (rec, fmt) => {
+      const cron = cronById[rec.id] || {};
+      const isArr = Array.isArray(rec.channels);
+      const chanList = isArr ? rec.channels : postChannels(rec);
+      const igUrl = rec.ig_permalink || (!isArr && rec.channels && rec.channels.instagram) || null;
+      const fbUrl = (!isArr && rec.channels && rec.channels.facebook) || (rec.fb_story_id ? `https://www.facebook.com/${rec.fb_story_id}` : null);
+      return {
+        ...rec, kind: fmt,
+        ig_username: rec.ig_username || igHandle[rec.client_slug] || '',
+        caption: rec.caption || cron.caption || '',
+        images: (rec.images && rec.images.length) ? rec.images : (cron.images || null),
+        image_url: rec.image_url || cron.image_url || '',
+        channel_list: chanList, ig_url: igUrl, fb_url: fbUrl,
+      };
+    };
+
     const items = [
-      ...publicados.map(p => ({ rec: p, fmt: fmtOf(p, 'feed'), src: 'post', when: p.published_iso })),
-      ...stories.map(s => ({ rec: s, fmt: fmtOf(s, 'story'), src: 'story', when: s.published_iso })),
+      ...publicados.map(p => ({ rec: p, fmt: fmtOf(p, 'feed'), when: p.published_iso })),
+      ...stories.map(s => ({ rec: s, fmt: fmtOf(s, 'story'), when: s.published_iso })),
     ];
     const counts = { story: 0, feed: 0, reel: 0, carousel: 0 };
     items.forEach(i => { counts[i.fmt] = (counts[i.fmt] || 0) + 1; });
@@ -1008,11 +1080,9 @@ function render() {
 
     if (postItems.length) {
       html += '<div class="section"><div class="section-header"><div class="section-title">🚀 Posts Publicados</div><div class="section-count">' + postItems.length + ' post' + (postItems.length !== 1 ? 's' : '') + (currentFormat !== 'all' ? ' · ' + FORMAT[currentFormat].label : '') + '</div></div>';
-      const cardsPub = postItems.filter(i => i.src === 'post');
-      const cardsStory = postItems.filter(i => i.src === 'story');
-      if (cardsPub.length) { html += '<div class="grid grid-pub">'; cardsPub.forEach(i => { html += renderPublishedCard(i.rec, i.fmt); }); html += '</div>'; }
-      if (cardsStory.length) { html += '<div class="stories-grid">'; cardsStory.forEach(i => { html += renderStoryCard(i.rec, i.fmt); }); html += '</div>'; }
-      html += '</div>';
+      html += '<div class="grid grid-pub">';
+      postItems.forEach(i => { html += renderPublishedCard(normalizePub(i.rec, i.fmt), i.fmt); });
+      html += '</div></div>';
     }
     if (storyItems.length) {
       const noAr = storyItems.filter(i => Date.now() < new Date(i.when).getTime() + 24 * 3600 * 1000).length;
@@ -1072,8 +1142,31 @@ function buildClientFilters(clients) {
   clientFiltersBuilt = true;
 }
 
+// ---- Lightbox de mídia (reel / galeria de carrossel) ----
+function openMediaModal(inner) {
+  const m = document.getElementById('media-modal');
+  m.querySelector('.mm-content').innerHTML = inner;
+  m.removeAttribute('hidden');
+  document.body.style.overflow = 'hidden';
+}
+function closeMediaModal() {
+  const m = document.getElementById('media-modal');
+  m.querySelector('.mm-content').innerHTML = '';   // para o vídeo / libera memória
+  m.setAttribute('hidden', '');
+  document.body.style.overflow = '';
+}
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeMediaModal(); });
+
 // Filtros (delegação — botões de cliente são dinâmicos)
 document.addEventListener('click', (e) => {
+  const vid = e.target.closest('[data-video]');
+  if (vid) { openMediaModal(`<video class="mm-media" src="${vid.dataset.video}" controls autoplay playsinline></video>`); return; }
+  const gal = e.target.closest('[data-gallery]');
+  if (gal) {
+    try { const urls = JSON.parse(gal.dataset.gallery); openMediaModal(`<div class="mm-gallery">${urls.map(u => `<img src="${u}" alt="">`).join('')}</div>`); } catch (_) {}
+    return;
+  }
+  if (e.target.closest('.mm-close, .mm-backdrop')) { closeMediaModal(); return; }
   const vt = e.target.closest('[data-view]');
   if (vt) {
     document.querySelectorAll('[data-view]').forEach(x => x.classList.remove('active'));
@@ -1117,6 +1210,14 @@ loadData();
 setInterval(() => loadData(false), REFRESH_MS);
 setInterval(updateCountdowns, 1000);
 </script>
+
+<div id="media-modal" class="media-modal" hidden>
+  <div class="mm-backdrop"></div>
+  <div class="mm-box">
+    <button class="mm-close" aria-label="Fechar">✕</button>
+    <div class="mm-content"></div>
+  </div>
+</div>
 
 </body>
 </html>
