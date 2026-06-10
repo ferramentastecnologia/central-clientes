@@ -1,0 +1,11 @@
+# Windsurf rules — Central de Clientes Starken
+
+📖 **Leia o `AGENTS.md` na raiz** — guia canônico completo (stack, deploy, automação, credenciais, regras). Vale também o `CLAUDE.md`.
+
+Essenciais (detalhe no AGENTS.md):
+- Stack: Node puro (`server.mjs`, zero deps) + HTML/JS vanilla, **sem build**. Rodar: `node --env-file=.env server.mjs`.
+- Deploy: GitHub `main` → `ssh hostinger-vps "cd /var/www/central-clientes && git pull && pm2 restart central-clientes-starken"`. **Push/deploy/persistência na VPS exigem OK explícito do usuário.**
+- **Nunca committar segredos.** `META_GRAPH_TOKEN` no `.env` (local + VPS); morre se trocar a senha do FB. Vários `data/*.json` e pastas de assets são **gitignored / VPS-owned**.
+- UI usa o **Starken Design System** (tokens, não hex). Exceção: hubs client-facing.
+- Stories/posts: `data/crons.json` + `scripts/cron-dispatcher.mjs` (crontab 10/10 min). NÃO usar `systemd-run`.
+- Pausar antes de publicar/anunciar/deploy.

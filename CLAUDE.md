@@ -1,5 +1,8 @@
 # CLAUDE.md — Central de Clientes Starken
 
+> 📖 Guia completo e **agnóstico de ferramenta** em [`AGENTS.md`](AGENTS.md) (stack, deploy, automação de
+> stories, credenciais, gotchas). Este arquivo foca a regra do Design System; o resto está no AGENTS.md.
+
 Projeto: dashboard/central de clientes da Starken Tecnologia (Node puro `server.mjs`,
 HTML/CSS/JS vanilla, sem build). Deploy: GitHub `main` → VPS `hostinger-vps`
 (`/var/www/central-clientes`, PM2 `central-clientes-starken`) → `central.starkentecnologia.com.br`.
