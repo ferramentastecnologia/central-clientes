@@ -502,6 +502,9 @@
   .fmt-reel { background:rgba(168,85,247,.18); color:#c084fc; }
   .fmt-carousel { background:rgba(245,158,11,.18); color:#f59e0b; }
   .cron-thumb.placeholder { display:flex; align-items:center; justify-content:center; font-size:30px; color:var(--text-3); }
+  .cron-thumb.cron-video { object-fit:cover; background:#000; cursor:default; }
+  .cron-thumb.cron-video:hover { transform:none; border-color:var(--border); }
+  .cron-thumb.cron-video::after { content:none; }
   .cron-badges { display:flex; flex-direction:column; gap:6px; align-items:flex-end; }
 
   /* STORIES PUBLICADOS */
@@ -876,7 +879,12 @@ function renderCron(cron) {
     ? `📅 ${fmtBRT(cron.next_fire_iso)} BRT`
     : (cron.recurring ? `↻ ${cron.expression} (${cron.tz})` : '');
 
-  const thumb = cron.image_url
+  const videoUrl = (cronFormat(cron) === 'reel' && cron.video)
+    ? `https://central.starkentecnologia.com.br/${cron.client_slug}/assets/videos/${cron.video}`
+    : null;
+  const thumb = videoUrl
+    ? `<video class="cron-thumb cron-video" controls playsinline preload="metadata" src="${escape(videoUrl)}" title="▶ Reproduzir o reel"></video>`
+    : cron.image_url
     ? `<a class="cron-thumb" href="${escape(cron.image_url)}" target="_blank" title="Abrir criativo"><img src="${escape(cron.image_url)}" alt="preview" loading="lazy"></a>`
     : `<div class="cron-thumb placeholder">${FORMAT[cronFormat(cron)]?.icon || '📄'}</div>`;
 
