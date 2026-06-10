@@ -113,6 +113,41 @@ async function publishFBFeed(pageId, url, caption) {
   return r.post_id || r.id;
 }
 
+// ── CARROSSEL (kind:'carousel') — múltiplas imagens ──
+async function publishIGCarousel(igId, urls, caption) {
+  const children = [];
+  for (const u of urls) {
+    const r = await post(`${igId}/media`, { image_url: u, is_carousel_item: 'true', access_token: token });
+    if (r.error) throw new Error('IG carousel child: ' + r.error.message);
+    children.push(r.id);
+  }
+  const c = await post(`${igId}/media`, { media_type: 'CAROUSEL', children: children.join(','), caption: caption || '', access_token: token });
+  if (c.error) throw new Error('IG carousel container: ' + c.error.message);
+  let st = 'IN_PROGRESS';
+  for (let i = 0; i < 25; i++) {
+    const s = await get(c.id, { fields: 'status_code', access_token: token });
+    st = s.status_code; if (st === 'FINISHED') break; if (st === 'ERROR') throw new Error('IG carousel status ERROR'); await sleep(2500);
+  }
+  if (st !== 'FINISHED') throw new Error('IG carousel status=' + st);
+  const pub = await post(`${igId}/media_publish`, { creation_id: c.id, access_token: token });
+  if (pub.error) throw new Error('IG carousel publish: ' + pub.error.message);
+  return pub.id;
+}
+async function publishFBCarousel(pageId, urls, caption) {
+  const pt = await pageToken(pageId);
+  const fbids = [];
+  for (const u of urls) {
+    const p = await post(`${pageId}/photos`, { url: u, published: 'false', access_token: pt });
+    if (p.error || !p.id) throw new Error('FB carousel photo: ' + (p.error?.message || 'sem id'));
+    fbids.push(p.id);
+  }
+  const body = { message: caption || '', access_token: pt };
+  fbids.forEach((id, i) => { body[`attached_media[${i}]`] = JSON.stringify({ media_fbid: id }); });
+  const r = await post(`${pageId}/feed`, body);
+  if (r.error) throw new Error('FB carousel feed: ' + r.error.message);
+  return r.id;
+}
+
 async function register(cron, ig, fb) {
   try {
     let data = { stories: [] };
@@ -166,6 +201,18 @@ async function main() {
     }
     const igId = c.ig_business_id;
     const pageId = pageBySlug[c.client_slug] || null;
+    // CARROSSEL (kind:'carousel') — IG carousel + FB multi-foto
+    if (c.kind === 'carousel') {
+      const imgs = c.images || [];
+      if (!igId || !imgs.length) { c.status = 'error'; c.error = 'carousel sem ig/images'; changed = true; continue; }
+      log(`publicando ${c.id} (${c.client_slug}) [CARROSSEL ${imgs.length} imgs]`);
+      let ig = null, fb = null;
+      try { ig = await publishIGCarousel(igId, imgs, c.caption); log('   IG carrossel ✓ ' + ig); } catch (e) { log('   IG ERRO: ' + e.message); }
+      if (pageId) { try { fb = await publishFBCarousel(pageId, imgs, c.caption); log('   FB carrossel ✓ ' + fb); } catch (e) { log('   FB ERRO: ' + e.message); } }
+      if (ig || fb) { c.status = 'completed'; c.published_iso = new Date().toISOString(); c.channels = [ig && 'ig', fb && 'fb'].filter(Boolean); changed = true; published++; await register(c, ig, fb); }
+      else { c.error = 'nada publicado'; }
+      continue;
+    }
     const url = c.image_url;
     if (!igId || !url) { c.status = 'error'; c.error = 'sem ig_business_id/image_url'; changed = true; continue; }
     const isFeed = c.kind === 'feed';
