@@ -109,8 +109,16 @@ async function publishIGFeed(igId, url, caption) {
 async function publishFBFeed(pageId, url, caption) {
   const pt = await pageToken(pageId);
   const r = await post(`${pageId}/photos`, { url, message: caption || '', published: 'true', access_token: pt });
-  if (r.error) throw new Error('FB feed: ' + r.error.message);
-  return r.post_id || r.id;
+  if (!r.error) return r.post_id || r.id;
+  // Falso-negativo conhecido: o FB pode responder "Please reduce the amount of data…"
+  // mas TER criado o post. Antes de falhar (e induzir retry/duplicata), confere se já publicou.
+  log(`   FB feed erro ("${r.error.message}") — verificando se publicou mesmo…`);
+  await sleep(6000);
+  const probe = (caption || '').replace(/\s+/g, ' ').trim().slice(0, 24);
+  const recent = await get(`${pageId}/published_posts`, { fields: 'id,created_time,message', limit: 5, access_token: pt });
+  const hit = (recent.data || []).find(p => probe && (p.message || '').replace(/\s+/g, ' ').includes(probe) && (Date.now() - new Date(p.created_time).getTime()) < 300000);
+  if (hit) { log('   FB feed na verdade publicou: ' + hit.id); return hit.id; }
+  throw new Error('FB feed: ' + r.error.message);
 }
 
 // ── CARROSSEL (kind:'carousel') — múltiplas imagens ──

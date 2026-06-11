@@ -70,16 +70,27 @@ ssh hostinger-vps "cd /var/www/central-clientes && git pull && pm2 restart centr
 
 **Mecanismo atual (à prova de reboot):** `data/crons.json` + **`scripts/cron-dispatcher.mjs`** rodando pelo
 **crontab do sistema a cada 10 min** na VPS. O dispatcher lê as crons pendentes vencidas (janela 90min),
-publica genérico por cliente — `image_url` como **STORY** (`kind` ausente/`story`) ou **POST DE FEED**
-(`kind:'feed'`, com `caption`) no IG (`ig_business_id`) + FB (page do `client_slug`) — e marca completed/skipped.
+publica genérico por cliente no IG (`ig_business_id`) + FB (page do `client_slug`) e marca completed/skipped.
+**4 formatos por `kind`:**
+- **story** (`kind` ausente/`story`): `image_url` → stories IG+FB.
+- **feed** (`kind:'feed'` + `caption`): post de feed IG+FB. O FB feed tem **recuperação anti-duplicata** —
+  se o Graph responder *"Please reduce the amount of data…"* (erro, mas às vezes publica), confere os posts
+  recentes antes de falhar, evitando republicação dupla.
+- **carrossel** (`kind:'carousel'` + `images[]` + `caption`): múltiplas imagens IG+FB.
+- **reel** (`kind:'reel'` + `video` + `caption`): vídeo via `scripts/publish-reel-feio.mjs` (transcode H.264 —
+  HEVC não decodifica na VPS; exportar em H.264). `video` resolve em `/{client_slug}/assets/videos/`.
+
+O `register()` grava `kind`, `caption` e `images` no `stories-publicados.json` → materiais nascem auto-tipados.
 ```bash
 # crontab (instalar exige OK do usuário — bloqueado p/ agente):
 */10 * * * * cd /var/www/central-clientes && /usr/bin/node --env-file=.env scripts/cron-dispatcher.mjs >> logs/cron-dispatcher.log 2>&1
 ```
 **Pra agendar:** adicionar entrada `pending` em `data/crons.json` (campos: `id`, `next_fire_iso` UTC,
-`ig_business_id`, `client_slug`, `image_url`, opcional `kind:'feed'`+`caption`). Sem recriar timers.
+`ig_business_id`, `client_slug` + o payload do formato acima). Sem recriar timers.
 **Publicação avulsa/manual:** `scripts/publish-story-{feio,academia}.mjs --image=<arq> [--title=…]`.
-⚠️ **`systemd-run` (timers transientes) foi ABANDONADO** — sumiam no reboot. Não usar.
+**Dashboard `/agendamentos.html`:** 2 views — **Agendados** (por formato, com filtros clicáveis, preview de
+reel em loop + lightbox e galeria de carrossel) e **Publicados** (reconhece o formato real via join id→kind,
+separa Posts × Stories). ⚠️ **`systemd-run` (timers transientes) foi ABANDONADO** — sumiam no reboot. Não usar.
 Doc-mestre: `docs/Automacao-Stories-e-Agendamentos.md`.
 
 ## 8. Credenciais (NUNCA committar — `.gitignore` cobre `.env`, `*token*`, `*.key`)

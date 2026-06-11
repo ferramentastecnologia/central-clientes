@@ -494,7 +494,9 @@
   .view-tab.active { background:var(--accent-dim); border-color:var(--accent); color:var(--accent); }
   .view-tab .vt-count { font-size:11px; font-weight:700; background:rgba(255,255,255,.08); padding:2px 8px; border-radius:999px; }
   .fmt-summary { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:18px; }
-  .fmt-chip { display:inline-flex; align-items:center; gap:7px; padding:9px 15px; border-radius:12px; background:var(--bg-1); border:1px solid var(--border); font-size:13px; font-weight:600; color:var(--text-1); }
+  .fmt-chip { display:inline-flex; align-items:center; gap:7px; padding:9px 15px; border-radius:12px; background:var(--bg-1); border:1px solid var(--border); font-size:13px; font-weight:600; color:var(--text-1); cursor:pointer; transition:all .15s; }
+  .fmt-chip:hover { border-color:var(--accent); transform:translateY(-1px); }
+  .fmt-chip.active { background:var(--accent-dim); border-color:var(--accent); color:var(--accent); box-shadow:0 0 0 1px var(--accent) inset; }
   .fmt-chip b { font-size:15px; }
   .fmt-badge { padding:3px 9px; border-radius:7px; font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.4px; white-space:nowrap; }
   .fmt-story { background:rgba(96,165,250,.15); color:#60a5fa; }
@@ -503,16 +505,21 @@
   .fmt-carousel { background:rgba(245,158,11,.18); color:#f59e0b; }
   .cron-thumb.placeholder { display:flex; align-items:center; justify-content:center; font-size:30px; color:var(--text-3); }
   button.cron-thumb { padding:0; font:inherit; color:inherit; cursor:pointer; }
-  .cron-thumb.cron-video, .cron-thumb.cron-gallery { background:#000; }
+  .cron-thumb.cron-video, .cron-thumb.cron-gallery { width:124px; background:#000; }
   .cron-thumb.cron-video::after, .cron-thumb.cron-gallery::after { content:none; }
   .cron-thumb.cron-video video { width:100%; height:100%; object-fit:cover; display:block; }
   .cron-thumb .play-badge {
-    position:absolute; inset:0; margin:auto; width:36px; height:36px; z-index:3;
-    display:flex; align-items:center; justify-content:center; padding-left:2px;
-    background:rgba(0,0,0,.6); color:#fff; border-radius:999px; font-size:15px;
-    pointer-events:none; box-shadow:0 2px 8px rgba(0,0,0,.4);
+    position:absolute; top:7px; right:7px; width:28px; height:28px; z-index:3;
+    display:flex; align-items:center; justify-content:center;
+    background:rgba(0,0,0,.55); color:#fff; border-radius:9px; font-size:14px;
+    pointer-events:none; opacity:.85; transition:all .15s; backdrop-filter:blur(2px);
   }
-  .cron-thumb:hover .play-badge { background:var(--accent); color:#06210f; }
+  .cron-thumb:hover .play-badge { background:var(--accent); color:#06210f; opacity:1; transform:scale(1.08); }
+  .cron-thumb.cron-video::before {
+    content:'REEL'; position:absolute; bottom:7px; left:7px; z-index:3;
+    font-size:9px; font-weight:800; letter-spacing:.5px; color:#fff;
+    background:rgba(124,58,237,.85); padding:2px 7px; border-radius:6px; pointer-events:none;
+  }
   .cron-thumb .cc-count {
     position:absolute; bottom:5px; right:5px; z-index:3; background:rgba(0,0,0,.62);
     color:#fff; font-size:10px; font-weight:800; padding:2px 6px; border-radius:6px;
@@ -672,7 +679,7 @@ const FORMAT = {
 const cronFormat = c => (c.kind && FORMAT[c.kind]) ? c.kind : 'story';
 const formatBadge = kind => { const f = FORMAT[kind] || FORMAT.story; return `<span class="fmt-badge ${f.cls}">${f.icon} ${f.label}</span>`; };
 const inFormat = c => currentFormat === 'all' || cronFormat(c) === currentFormat;
-const fmtChip = (kind, n) => { const f = FORMAT[kind]; return `<span class="fmt-chip"><b>${f.icon}</b> ${n} ${f.label}${n !== 1 ? 's' : ''}</span>`; };
+const fmtChip = (kind, n) => { const f = FORMAT[kind]; const on = currentFormat === kind ? ' active' : ''; return `<button class="fmt-chip${on}" data-format="${kind}"><b>${f.icon}</b> ${n} ${f.label}${n !== 1 ? 's' : ''}</button>`; };
 
 // Canais de cada item (fallback p/ entradas antigas sem o campo).
 const cronChannels  = c => c.channels || (c.type === 'ig_publish' ? ['ig'] : c.type === 'campaign_monitor' ? ['monitor'] : []);
@@ -935,9 +942,9 @@ function renderCron(cron) {
   const cronImgs = (fmt0 === 'carousel' && Array.isArray(cron.images) && cron.images.length > 1) ? cron.images : null;
   let thumb;
   if (videoUrl) {
-    thumb = `<button class="cron-thumb cron-video" data-video="${escape(videoUrl)}" title="▶ Reproduzir o reel">
-      <video src="${escape(videoUrl)}#t=0.5" muted playsinline preload="metadata"></video>
-      <span class="play-badge">▶</span>
+    thumb = `<button class="cron-thumb cron-video" data-video="${escape(videoUrl)}" title="Ampliar / ouvir">
+      <video src="${escape(videoUrl)}" muted loop autoplay playsinline preload="metadata"></video>
+      <span class="play-badge">⛶</span>
     </button>`;
   } else if (cronImgs) {
     thumb = `<button class="cron-thumb cron-gallery" data-gallery="${JSON.stringify(cronImgs).replace(/"/g, '&quot;')}" title="Ver ${cronImgs.length} imagens">
@@ -1177,9 +1184,8 @@ document.addEventListener('click', (e) => {
   }
   const ff = e.target.closest('[data-format]');
   if (ff) {
-    document.querySelectorAll('[data-format]').forEach(x => x.classList.remove('active'));
-    ff.classList.add('active');
     currentFormat = ff.dataset.format;
+    document.querySelectorAll('[data-format]').forEach(x => x.classList.toggle('active', x.dataset.format === currentFormat));
     render();
     return;
   }
