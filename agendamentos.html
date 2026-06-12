@@ -439,6 +439,7 @@
     gap: 10px;
   }
   .cron-card.completed { border-left-color: var(--ok); opacity: 0.6; }
+  .cron-card.skipped { border-left-color: var(--warn); opacity: 0.6; }
   .cron-card.imminent { border-left-color: var(--err); }
   .cron-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
   .cron-client { font-size: 14px; font-weight: 700; }
@@ -455,6 +456,7 @@
   }
   .cron-countdown.imminent { color: var(--err); animation: pulse 1s ease-in-out infinite; }
   .cron-countdown.completed { color: var(--ok); background: rgba(74, 222, 128, 0.1); }
+  .cron-countdown.skipped { color: var(--warn); background: rgba(245, 158, 11, 0.1); }
   .cron-meta {
     display: flex;
     justify-content: space-between;
@@ -486,6 +488,7 @@
   .cron-status.pending { background: var(--accent-dim); color: var(--accent); }
   .cron-status.soon { background: rgba(248,113,113,.15); color: var(--err); }
   .cron-status.done { background: rgba(74,222,128,.12); color: var(--ok); }
+  .cron-status.skipped { background: rgba(245, 158, 11, 0.15); color: var(--warn); }
 
   /* VIEW TABS (Agendados / Publicados) + FORMATO */
   .view-tabs { display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
@@ -907,6 +910,7 @@ function renderStoryCard(s, fmt) {
 }
 
 function renderCron(cron) {
+  const isSkipped = cron.status === 'skipped';
   const isCompleted = cronDone(cron);
   let countdownHtml = '';
   let imminent = false;
@@ -922,12 +926,17 @@ function renderCron(cron) {
   }
 
   if (isCompleted) {
-    countdownHtml = `<div class="cron-countdown completed">✓ Publicado</div>`;
+    if (isSkipped) {
+      countdownHtml = `<div class="cron-countdown skipped">⚠️ Não publicado (Pulado)</div>`;
+    } else {
+      countdownHtml = `<div class="cron-countdown completed">✓ Publicado</div>`;
+    }
   }
 
   const channelTag = channelBadges(cronChannels(cron)) || '<span class="channel-tag postmortem-tag">📋 Postmortem</span>';
 
-  const statusChip = isCompleted ? '<span class="cron-status done">✓ Publicado</span>'
+  const statusChip = isSkipped ? '<span class="cron-status skipped">⚠️ Pulado</span>'
+    : isCompleted ? '<span class="cron-status done">✓ Publicado</span>'
     : imminent ? '<span class="cron-status soon">🔴 Em instantes</span>'
     : '<span class="cron-status pending">⏰ Agendado</span>';
 
@@ -957,8 +966,9 @@ function renderCron(cron) {
     thumb = `<div class="cron-thumb placeholder">${FORMAT[fmt0]?.icon || '📄'}</div>`;
   }
 
+  const cardClass = isSkipped ? 'skipped' : isCompleted ? 'completed' : imminent ? 'imminent' : '';
   return `
-    <div class="cron-card ${isCompleted?'completed':''} ${imminent?'imminent':''}">
+    <div class="cron-card ${cardClass}">
       <div class="cron-inner">
         ${thumb}
         <div class="cron-content">
