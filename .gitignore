@@ -57,3 +57,5 @@ playground/
 data/financeiro.json
 *.mp4
 *.mov
+.ssh/hostinger_nova
+.ssh/hostinger_nova.pub
