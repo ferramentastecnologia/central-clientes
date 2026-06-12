@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contatos — Acessor Digital</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../tokens/acessor-tokens.css">
+  
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 14px; }
+    body {
+      background: var(--bg-pure);
+      color: var(--text-main);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      display: flex;
+      overflow: hidden;
+    }
+
+    .app-layout { display: flex; width: 100%; height: 100vh; }
+
+    /* Sidebar */
+    .sidebar {
+      width: 220px; background: rgba(255,255,255,0.02);
+      border-right: 1px solid rgba(255,255,255,0.05);
+      display: flex; flex-direction: column;
+      backdrop-filter: blur(10px); z-index: 10; flex-shrink: 0;
+    }
+    .sidebar-brand { padding: 1.5rem 1.2rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    .brand-link {
+      display: flex; align-items: baseline; text-decoration: none;
+      font-family: var(--font-display); font-size: 1.6rem; font-weight: 800;
+      letter-spacing: -0.05em; color: #FFF;
+    }
+    .brand-dot { color: var(--accent-coral); margin-left: 2px; text-shadow: 0 0 10px rgba(255,94,58,0.5); }
+    .nav-section { padding: 0.8rem 0.8rem 0; }
+    .nav-label {
+      font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.08em;
+      color: rgba(255,255,255,0.25); font-weight: 700;
+      padding: 0 0.4rem; margin-bottom: 0.3rem; margin-top: 0.8rem;
+    }
+    .nav-item {
+      display: flex; align-items: center; gap: 0.65rem;
+      padding: 0.6rem 0.8rem; color: rgba(255,255,255,0.45);
+      text-decoration: none; border-radius: 7px; font-weight: 500;
+      font-size: 0.9rem; transition: all 0.15s;
+    }
+    .nav-item:hover { background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.8); }
+    .nav-item.active {
+      background: rgba(124,58,237,0.12); color: var(--accent-primary);
+      border-left: 2px solid var(--accent-primary); padding-left: calc(0.8rem - 2px);
+    }
+    .nav-item svg { width: 16px; height: 16px; flex-shrink: 0; }
+    .sidebar-footer {
+      margin-top: auto; padding: 1rem 0.8rem;
+      border-top: 1px solid rgba(255,255,255,0.05);
+    }
+    .user-profile { display: flex; align-items: center; gap: 0.6rem; padding: 0.4rem; border-radius: 8px; cursor: pointer; transition: 0.2s; }
+    .user-profile:hover { background: rgba(255,255,255,0.04); }
+    .avatar {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent-primary), #8B5CF6);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; color: #FFF; font-size: 0.8rem; flex-shrink: 0;
+    }
+    .user-info span { display: block; font-weight: 600; color: #FFF; font-size: 0.85rem; }
+    .user-info small { color: var(--text-muted); font-size: 0.72rem; }
+
+    /* Main Wrapper */
+    .main-wrapper {
+      flex-grow: 1; display: flex; flex-direction: column;
+      background: radial-gradient(ellipse at top right, rgba(124,58,237,0.03) 0%, transparent 60%);
+      overflow: hidden;
+    }
+
+    /* Topbar */
+    .topbar {
+      height: 56px; display: flex; align-items: center; justify-content: space-between;
+      padding: 0 1.8rem;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      background: rgba(8,8,10,0.7); backdrop-filter: blur(16px);
+      flex-shrink: 0; position: sticky; top: 0; z-index: 50;
+    }
+    .topbar-left { display: flex; align-items: center; gap: 1rem; }
+    .page-title { font-family: var(--font-display); font-size: 1rem; font-weight: 700; color: #FFF; letter-spacing: -0.02em; }
+    .page-subtitle { font-size: 0.75rem; color: rgba(255,255,255,0.3); margin-top: 1px; }
+    .topbar-divider { width: 1px; height: 20px; background: rgba(255,255,255,0.08); }
+    .topbar-right { display: flex; align-items: center; gap: 0.6rem; }
+    .tb-btn {
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 8px; width: 34px; height: 34px;
+      display: flex; align-items: center; justify-content: center;
+      color: rgba(255,255,255,0.4); cursor: pointer; transition: all 0.15s; position: relative;
+    }
+    .tb-btn:hover { background: rgba(255,255,255,0.08); color: #FFF; border-color: rgba(255,255,255,0.12); }
+    .tb-btn .notif-dot { position: absolute; top: 6px; right: 6px; width: 6px; height: 6px; background: #EF4444; border-radius: 50%; border: 1px solid rgba(8,8,10,0.9); }
+    .tb-avatar {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent-primary), #8B5CF6);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; color: #FFF; font-size: 0.75rem; cursor: pointer;
+      border: 2px solid rgba(124,58,237,0.3); transition: 0.2s;
+    }
+    .tb-avatar:hover { border-color: var(--accent-primary); }
+
+    /* Content */
+    .content-wrapper { flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+    /* CRM Controls Bar */
+    .crm-controls {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1rem 1.8rem; border-bottom: 1px solid rgba(255,255,255,0.04);
+      background: rgba(0,0,0,0.2); flex-shrink: 0;
+    }
+    .crm-controls-left { display: flex; align-items: center; gap: 0.8rem; }
+
+    /* View Tabs */
+    .view-tabs { display: flex; background: rgba(255,255,255,0.04); border-radius: 8px; padding: 3px; gap: 2px; }
+    .view-tab {
+      padding: 0.35rem 0.9rem; border-radius: 6px; font-size: 0.82rem; font-weight: 600;
+      color: rgba(255,255,255,0.4); cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 0.4rem;
+    }
+    .view-tab.active { background: rgba(124,58,237,0.2); color: var(--accent-primary); }
+    .view-tab:not(.active):hover { color: rgba(255,255,255,0.7); }
+
+    /* Search Box */
+    .crm-search {
+      display: flex; align-items: center; gap: 0.5rem;
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 8px; padding: 0.4rem 0.9rem; min-width: 240px;
+    }
+    .crm-search input {
+      background: none; border: none; color: #FFF; outline: none;
+      font-size: 0.85rem; font-family: var(--font-body); width: 100%;
+    }
+    .crm-search input::placeholder { color: rgba(255,255,255,0.25); }
+    .crm-search svg { color: rgba(255,255,255,0.3); flex-shrink: 0; }
+
+    /* Filter Chips */
+    .filter-chips { display: flex; gap: 0.4rem; }
+    .chip {
+      padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.78rem; font-weight: 600;
+      cursor: pointer; border: 1px solid transparent; transition: all 0.15s; white-space: nowrap;
+    }
+    .chip-default { background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.4); border-color: rgba(255,255,255,0.07); }
+    .chip-default:hover { color: rgba(255,255,255,0.7); }
+    .chip-active { background: rgba(124,58,237,0.15); color: var(--accent-primary); border-color: rgba(124,58,237,0.3); }
+
+    /* New Contact Button */
+    .btn-new-contact {
+      background: linear-gradient(135deg, var(--accent-primary), #8B5CF6);
+      border: none; color: #FFF; padding: 0.5rem 1.1rem; border-radius: 8px;
+      font-weight: 700; font-size: 0.85rem; cursor: pointer;
+      display: flex; align-items: center; gap: 0.4rem; transition: opacity 0.2s;
+      box-shadow: 0 2px 12px rgba(124,58,237,0.3); white-space: nowrap;
+    }
+    .btn-new-contact:hover { opacity: 0.9; }
+
+    /* Contacts Table */
+    .contacts-container { flex-grow: 1; overflow-y: auto; padding: 1.2rem 1.8rem; }
+    .contacts-container::-webkit-scrollbar { width: 6px; }
+    .contacts-container::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.07); border-radius: 3px; }
+
+    .contacts-table { width: 100%; border-collapse: separate; border-spacing: 0; }
+    .contacts-table thead th {
+      text-align: left; font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.06em; color: rgba(255,255,255,0.25); padding: 0.6rem 0.8rem;
+      border-bottom: 1px solid rgba(255,255,255,0.05); background: transparent;
+      cursor: pointer; user-select: none; transition: color 0.15s; white-space: nowrap;
+    }
+    .contacts-table thead th:hover { color: rgba(255,255,255,0.55); }
+    .contacts-table thead th.sorted { color: var(--accent-primary); }
+
+    .contacts-table tbody tr {
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+      cursor: pointer; transition: background 0.15s;
+    }
+    .contacts-table tbody tr:hover { background: rgba(255,255,255,0.03); }
+    .contacts-table tbody tr.selected { background: rgba(124,58,237,0.07); }
+    .contacts-table tbody td {
+      padding: 0.9rem 0.8rem; font-size: 0.88rem; color: rgba(255,255,255,0.7);
+      vertical-align: middle;
+    }
+
+    .contact-info { display: flex; align-items: center; gap: 0.75rem; }
+    .contact-avatar {
+      width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 0.8rem; color: #FFF;
+    }
+    .contact-name { font-weight: 600; color: #FFF; font-size: 0.9rem; }
+    .contact-phone { font-size: 0.78rem; color: rgba(255,255,255,0.3); margin-top: 2px; }
+
+    .status-badge {
+      padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.72rem; font-weight: 600;
+      display: inline-flex; align-items: center; gap: 0.3rem;
+    }
+    .status-active { background: rgba(16,185,129,0.12); color: #10b981; }
+    .status-lead { background: rgba(124,58,237,0.12); color: var(--accent-primary); }
+    .status-cold { background: rgba(100,116,139,0.15); color: #94A3B8; }
+    .status-hot { background: rgba(239,68,68,0.12); color: #EF4444; }
+
+    .channel-badge { display: flex; align-items: center; gap: 0.35rem; font-size: 0.82rem; color: rgba(255,255,255,0.45); }
+    .channel-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+    .score-bar { display: flex; align-items: center; gap: 0.5rem; }
+    .score-track { width: 60px; height: 4px; background: rgba(255,255,255,0.06); border-radius: 2px; overflow: hidden; }
+    .score-fill { height: 100%; border-radius: 2px; }
+    .score-label { font-size: 0.78rem; font-weight: 700; }
+
+    .action-btns { display: flex; gap: 0.4rem; opacity: 0; transition: opacity 0.15s; }
+    tr:hover .action-btns { opacity: 1; }
+    .action-btn {
+      background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 6px; width: 28px; height: 28px;
+      display: flex; align-items: center; justify-content: center;
+      color: rgba(255,255,255,0.5); cursor: pointer; transition: all 0.15s;
+    }
+    .action-btn:hover { background: rgba(124,58,237,0.15); border-color: rgba(124,58,237,0.3); color: var(--accent-primary); }
+
+    /* Empty State */
+    .empty-state {
+      text-align: center; padding: 4rem 2rem; color: rgba(255,255,255,0.2);
+    }
+    .empty-state svg { margin-bottom: 1rem; opacity: 0.2; }
+    .empty-state p { font-size: 0.9rem; }
+
+    /* Stats Row */
+    .stats-row {
+      display: flex; gap: 1px; background: rgba(255,255,255,0.04);
+      border-bottom: 1px solid rgba(255,255,255,0.04); flex-shrink: 0;
+    }
+    .stat-item { flex: 1; padding: 0.8rem 1.5rem; background: rgba(8,8,10,0.6); }
+    .stat-item-label { font-size: 0.7rem; color: rgba(255,255,255,0.3); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.2rem; }
+    .stat-item-value { font-family: var(--font-display); font-size: 1.2rem; font-weight: 700; color: #FFF; }
+
+    /* Modal */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.7); z-index: 1000;
+      align-items: center; justify-content: center; backdrop-filter: blur(6px);
+    }
+    .modal-overlay.show { display: flex; }
+    .modal {
+      background: #111114; border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 14px; width: 500px; max-width: 95vw;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+    }
+    .modal-header {
+      padding: 1.2rem 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.06);
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .modal-header h3 { font-family: var(--font-display); font-size: 1.1rem; color: #FFF; }
+    .modal-close { background: none; border: none; color: rgba(255,255,255,0.4); cursor: pointer; font-size: 1.3rem; transition: 0.2s; }
+    .modal-close:hover { color: #FFF; }
+    .modal-body { padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; }
+    .form-group { display: flex; flex-direction: column; gap: 0.4rem; }
+    .form-label { font-size: 0.78rem; color: rgba(255,255,255,0.45); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+    .form-input, .form-select {
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px; padding: 0.65rem 0.9rem; color: #FFF;
+      font-family: var(--font-body); font-size: 0.9rem; outline: none; width: 100%;
+      transition: border-color 0.2s;
+    }
+    .form-input:focus, .form-select:focus { border-color: rgba(124,58,237,0.5); }
+    .form-input::placeholder { color: rgba(255,255,255,0.2); }
+    .form-select { appearance: none; cursor: pointer; }
+    .form-select option { background: #111114; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; }
+    .modal-footer {
+      padding: 1rem 1.5rem; border-top: 1px solid rgba(255,255,255,0.06);
+      display: flex; justify-content: flex-end; gap: 0.6rem;
+    }
+    .btn-cancel {
+      background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+      color: rgba(255,255,255,0.6); padding: 0.5rem 1rem; border-radius: 7px;
+      cursor: pointer; font-size: 0.85rem; font-family: var(--font-body); transition: 0.2s;
+    }
+    .btn-cancel:hover { background: rgba(255,255,255,0.08); color: #FFF; }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent-primary), #8B5CF6);
+      border: none; color: #FFF; padding: 0.5rem 1.1rem; border-radius: 8px;
+      font-weight: 700; font-size: 0.85rem; cursor: pointer;
+      display: flex; align-items: center; gap: 0.4rem;
+    }
+
+    /* Contact Detail Drawer */
+    .drawer {
+      position: fixed; right: 0; top: 0; height: 100vh; width: 360px;
+      background: #0e0e11; border-left: 1px solid rgba(255,255,255,0.07);
+      z-index: 200; transform: translateX(100%); transition: transform 0.3s ease;
+      display: flex; flex-direction: column; overflow-y: auto;
+    }
+    .drawer.open { transform: translateX(0); }
+    .drawer-header {
+      padding: 1.2rem 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.06);
+      display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;
+    }
+    .drawer-title { font-family: var(--font-display); font-size: 1rem; font-weight: 600; color: #FFF; }
+    .drawer-close { background: none; border: none; color: rgba(255,255,255,0.4); cursor: pointer; font-size: 1.1rem; }
+    .drawer-body { padding: 1.5rem; flex-grow: 1; }
+    .drawer-avatar {
+      width: 64px; height: 64px; border-radius: 50%; margin: 0 auto 1rem;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 1.4rem; color: #FFF;
+    }
+    .drawer-name { text-align: center; font-size: 1.2rem; font-weight: 700; color: #FFF; margin-bottom: 0.3rem; }
+    .drawer-phone { text-align: center; color: rgba(255,255,255,0.4); font-size: 0.85rem; margin-bottom: 1.5rem; }
+    .drawer-section { margin-bottom: 1.5rem; }
+    .drawer-section-title { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: rgba(255,255,255,0.25); margin-bottom: 0.8rem; }
+    .drawer-row { display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 0.5rem; }
+    .drawer-row span:first-child { color: rgba(255,255,255,0.4); }
+    .drawer-row span:last-child { color: #FFF; font-weight: 500; }
+  </style>
+</head>
+<body>
+
+  <div class="app-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <a href="dashboard.html" class="brand-link">acessor<span class="brand-dot">.</span></a>
+      </div>
+
+      <div class="nav-section" style="flex-grow:1; overflow-y:auto;">
+        <div class="nav-label">Visão Geral</div>
+        <a href="dashboard.html" class="nav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"></rect><rect x="14" y="3" width="7" height="5"></rect><rect x="14" y="12" width="7" height="9"></rect><rect x="3" y="16" width="7" height="5"></rect></svg>
+          Dashboard
+        </a>
+        <a href="inbox.html" class="nav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+          Inbox
+        </a>
+
+        <div class="nav-label">Operação</div>
+        <a href="crm.html" class="nav-item active">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+          Contatos
+        </a>
+        <a href="pipeline.html" class="nav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0H5a2 2 0 0 1-2-2v-4m6 6h10a2 2 0 0 0 2-2v-4m0 0V9m-16 0v6"></path></svg>
+          Pipeline
+        </a>
+        <a href="automacoes.html" class="nav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+          Automações
+        </a>
+        <a href="agenda.html" class="nav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+          Agenda
+        </a>
+        <a href="catalogo.html" class="nav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
+          Catálogo
+        </a>
+
+        <div class="nav-label">Inteligência</div>
+        <a href="analytics.html" class="nav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+          Analytics
+        </a>
+        <a href="conhecimento.html" class="nav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+          IA / Conhecimento
+        </a>
+
+        <div class="nav-label">Sistema</div>
+        <a href="faturamento.html" class="nav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+          Faturamento
+        </a>
+        <a href="configuracoes.html" class="nav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+          Configurações
+        </a>
+        <a href="notificacoes.html" class="nav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+          Notificações
+        </a>
+      </div>
+
+      <div class="sidebar-footer">
+        <div class="user-profile">
+          <div class="avatar">EB</div>
+          <div class="user-info">
+            <span>Empresa BR</span>
+            <small>Plano Pro</small>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-wrapper">
+      <!-- Topbar -->
+      <header class="topbar">
+        <div class="topbar-left">
+          <div>
+            <div class="page-title">Contatos</div>
+            <div class="page-subtitle">CRM & Gestão de leads</div>
+          </div>
+          <div class="topbar-divider"></div>
+          <span style="font-size:0.75rem; color:rgba(255,255,255,0.25);" id="topbar-count">0 contatos</span>
+        </div>
+        <div class="topbar-right">
+          <button class="tb-btn" title="Pesquisar" onclick="document.querySelector('.crm-search input').focus()">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          </button>
+          <button class="tb-btn" title="Notificações">
+            <div class="notif-dot"></div>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+          </button>
+          <div class="tb-avatar">EB</div>
+        </div>
+      </header>
+
+      <div class="content-wrapper">
+        <!-- Stats Row -->
+        <div class="stats-row">
+          <div class="stat-item">
+            <div class="stat-item-label">Total</div>
+            <div class="stat-item-value" id="stat-total">0</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-item-label">Leads Ativos</div>
+            <div class="stat-item-value" id="stat-active">0</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-item-label">Clientes</div>
+            <div class="stat-item-value" id="stat-clients">0</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-item-label">Score Médio IA</div>
+            <div class="stat-item-value" id="stat-score">0%</div>
+          </div>
+        </div>
+
+        <!-- Controls Bar -->
+        <div class="crm-controls">
+          <div class="crm-controls-left">
+            <!-- View Tabs -->
+            <div class="view-tabs">
+              <div class="view-tab active" id="tab-list" onclick="setView('list')">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+                Lista
+              </div>
+              <div class="view-tab" id="tab-pipeline" onclick="window.location='pipeline.html'">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0H5a2 2 0 0 1-2-2v-4m6 6h10a2 2 0 0 0 2-2v-4m0 0V9m-16 0v6"></path></svg>
+                Pipeline
+              </div>
+            </div>
+
+            <!-- Search -->
+            <div class="crm-search">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+              <input type="text" id="crm-search-input" placeholder="Buscar contato, tel, canal..." oninput="applyFilters()">
+            </div>
+
+            <!-- Filter Chips -->
+            <div class="filter-chips" id="filter-chips">
+              <span class="chip chip-active" data-filter="all" onclick="setFilter('all', this)">Todos</span>
+              <span class="chip chip-default" data-filter="lead" onclick="setFilter('lead', this)">Leads</span>
+              <span class="chip chip-default" data-filter="active" onclick="setFilter('active', this)">Ativos</span>
+              <span class="chip chip-default" data-filter="hot" onclick="setFilter('hot', this)">🔥 Quentes</span>
+              <span class="chip chip-default" data-filter="cold" onclick="setFilter('cold', this)">Frios</span>
+            </div>
+          </div>
+
+          <!-- New Contact Button -->
+          <button class="btn-new-contact" onclick="openNewContact()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            Novo Contato
+          </button>
+        </div>
+
+        <!-- Contact List -->
+        <div class="contacts-container">
+          <table class="contacts-table">
+            <thead>
+              <tr>
+                <th onclick="sortBy('name')">Contato <span id="sort-name"></span></th>
+                <th onclick="sortBy('status')">Status</th>
+                <th onclick="sortBy('channel')">Canal</th>
+                <th onclick="sortBy('score')">Score IA</th>
+                <th onclick="sortBy('lastMsg')">Último Contato</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="contacts-tbody">
+              <!-- Rendered by JS -->
+            </tbody>
+          </table>
+          <div class="empty-state" id="empty-state" style="display:none;">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path></svg>
+            <p>Nenhum contato encontrado</p>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- New Contact Modal -->
+  <div class="modal-overlay" id="new-contact-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>✦ Novo Contato</h3>
+        <button class="modal-close" onclick="closeNewContact()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Nome Completo *</label>
+            <input type="text" class="form-input" id="nc-name" placeholder="Nome do contato">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Telefone</label>
+            <input type="text" class="form-input" id="nc-phone" placeholder="+55 11 99999-9999">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Canal de Origem</label>
+            <select class="form-select" id="nc-channel">
+              <option value="WhatsApp">WhatsApp</option>
+              <option value="Instagram">Instagram</option>
+              <option value="Messenger">Messenger</option>
+              <option value="Telegram">Telegram</option>
+              <option value="Indicação">Indicação</option>
+              <option value="Orgânico">Orgânico</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Status</label>
+            <select class="form-select" id="nc-status">
+              <option value="lead">Lead</option>
+              <option value="active">Ativo</option>
+              <option value="hot">🔥 Quente</option>
+              <option value="cold">Frio</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email (opcional)</label>
+          <input type="email" class="form-input" id="nc-email" placeholder="email@exemplo.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Observações</label>
+          <input type="text" class="form-input" id="nc-notes" placeholder="Tags, origem do lead, contexto...">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" onclick="closeNewContact()">Cancelar</button>
+        <button class="btn-primary" onclick="saveNewContact()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+          Salvar Contato
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Detail Drawer -->
+  <div class="drawer" id="contact-drawer">
+    <div class="drawer-header">
+      <div class="drawer-title">Detalhes do Contato</div>
+      <button class="drawer-close" onclick="closeDrawer()">&times;</button>
+    </div>
+    <div class="drawer-body" id="drawer-body">
+      <!-- Rendered by JS -->
+    </div>
+  </div>
+
+  <script>
+    const avatarColors = ['#7C3AED','#8B5CF6','#6366F1','#3B82F6','#10b981','#F59E0B','#EF4444','#EC4899'];
+
+    let contacts = [
+      { id: 1, name: 'João Silva', phone: '+55 11 99999-9999', channel: 'WhatsApp', status: 'hot', score: 92, lastMsg: 'Há 10 min', email: 'joao@empresa.com', notes: 'Lead via Instagram Ads. Agendou para amanhã 14h.' },
+      { id: 2, name: 'Maria Oliveira', phone: '+55 21 98888-8888', channel: 'Telegram', status: 'active', score: 45, lastMsg: 'Há 2h', email: '', notes: 'Dúvida sobre prazo de entrega.' },
+      { id: 3, name: 'Carlos Oliveira', phone: '+55 31 97777-7777', channel: 'Instagram', status: 'lead', score: 65, lastMsg: 'Há 3h', email: '', notes: 'Novo lead, aguardando qualificação.' },
+      { id: 4, name: 'Ana Rodrigues', phone: '+55 31 96666-6666', channel: 'Instagram', status: 'active', score: 78, lastMsg: 'Ontem', email: 'ana@startup.com', notes: 'Interesse no plano anual.' },
+      { id: 5, name: 'Carlos Ferreira', phone: '+55 85 95555-5555', channel: 'Messenger', status: 'cold', score: 60, lastMsg: 'Há 2 dias', email: '', notes: 'Resolvido, pode virar indicação.' },
+      { id: 6, name: 'Empresa Beta LTDA', phone: '+55 11 3333-4444', channel: 'WhatsApp', status: 'hot', score: 88, lastMsg: 'Há 1h', email: 'contato@beta.com', notes: '🔥 Alta probabilidade de fechamento.' },
+    ];
+
+    let nextId = 7;
+    let currentFilter = 'all';
+    let currentSearch = '';
+    let sortField = 'name';
+    let sortDir = 1;
+
+    const statusConfig = {
+      active:  { label: 'Ativo', cls: 'status-active', dot: '#10b981' },
+      lead:    { label: 'Lead', cls: 'status-lead', dot: '#7C3AED' },
+      cold:    { label: 'Frio', cls: 'status-cold', dot: '#94A3B8' },
+      hot:     { label: '🔥 Quente', cls: 'status-hot', dot: '#EF4444' },
+    };
+
+    const channelColors = {
+      WhatsApp: '#25D366', Instagram: '#E1306C', Messenger: '#0084FF', Telegram: '#0088cc', Indicação: '#F59E0B', Orgânico: '#10b981'
+    };
+
+    function getAvatarColor(name) {
+      let hash = 0;
+      for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+      return avatarColors[Math.abs(hash) % avatarColors.length];
+    }
+
+    function getInitials(name) {
+      return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+    }
+
+    function scoreColor(s) {
+      if (s >= 80) return '#10b981';
+      if (s >= 60) return '#F59E0B';
+      return '#EF4444';
+    }
+
+    function updateStats() {
+      document.getElementById('stat-total').textContent = contacts.length;
+      document.getElementById('stat-active').textContent = contacts.filter(c => c.status === 'lead' || c.status === 'hot').length;
+      document.getElementById('stat-clients').textContent = contacts.filter(c => c.status === 'active').length;
+      const avgScore = contacts.length ? Math.round(contacts.reduce((s, c) => s + c.score, 0) / contacts.length) : 0;
+      document.getElementById('stat-score').textContent = avgScore + '%';
+    }
+
+    function getFiltered() {
+      let list = [...contacts];
+      if (currentFilter !== 'all') list = list.filter(c => c.status === currentFilter);
+      if (currentSearch) {
+        const q = currentSearch.toLowerCase();
+        list = list.filter(c => c.name.toLowerCase().includes(q) || c.phone.includes(q) || c.channel.toLowerCase().includes(q));
+      }
+      list.sort((a, b) => {
+        let av = a[sortField], bv = b[sortField];
+        if (typeof av === 'string') av = av.toLowerCase(), bv = bv.toLowerCase();
+        return av > bv ? sortDir : av < bv ? -sortDir : 0;
+      });
+      return list;
+    }
+
+    function renderContacts() {
+      const list = getFiltered();
+      const tbody = document.getElementById('contacts-tbody');
+      const empty = document.getElementById('empty-state');
+      document.getElementById('topbar-count').textContent = `${list.length} contato${list.length !== 1 ? 's' : ''}`;
+
+      if (list.length === 0) {
+        tbody.innerHTML = '';
+        empty.style.display = 'block';
+        return;
+      }
+      empty.style.display = 'none';
+
+      tbody.innerHTML = list.map(c => {
+        const sc = statusConfig[c.status] || statusConfig.lead;
+        const col = channelColors[c.channel] || '#888';
+        const color = getAvatarColor(c.name);
+        const initials = getInitials(c.name);
+        const scolor = scoreColor(c.score);
+
+        return `
+          <tr onclick="openDrawer(${c.id})">
+            <td>
+              <div class="contact-info">
+                <div class="contact-avatar" style="background:${color}">${initials}</div>
+                <div>
+                  <div class="contact-name">${c.name}</div>
+                  <div class="contact-phone">${c.phone}</div>
+                </div>
+              </div>
+            </td>
+            <td><span class="status-badge ${sc.cls}">${sc.label}</span></td>
+            <td>
+              <div class="channel-badge">
+                <div class="channel-dot" style="background:${col}"></div>
+                ${c.channel}
+              </div>
+            </td>
+            <td>
+              <div class="score-bar">
+                <div class="score-track"><div class="score-fill" style="width:${c.score}%;background:${scolor}"></div></div>
+                <span class="score-label" style="color:${scolor}">${c.score}%</span>
+              </div>
+            </td>
+            <td style="color:rgba(255,255,255,0.4); font-size:0.82rem;">${c.lastMsg}</td>
+            <td>
+              <div class="action-btns" onclick="event.stopPropagation()">
+                <button class="action-btn" title="Abrir chat" onclick="window.location='inbox.html'">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                </button>
+                <button class="action-btn" title="Ver pipeline" onclick="window.location='pipeline.html'">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0H5a2 2 0 0 1-2-2v-4m6 6h10a2 2 0 0 0 2-2v-4m0 0V9m-16 0v6"></path></svg>
+                </button>
+                <button class="action-btn" title="Remover" style="color:rgba(239,68,68,0.5);" onclick="removeContact(${c.id}, event)">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path></svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function openDrawer(id) {
+      const c = contacts.find(x => x.id === id);
+      if (!c) return;
+      const color = getAvatarColor(c.name);
+      const sc = statusConfig[c.status] || statusConfig.lead;
+      const scolor = scoreColor(c.score);
+      document.getElementById('drawer-body').innerHTML = `
+        <div class="drawer-avatar" style="background:${color}">${getInitials(c.name)}</div>
+        <div class="drawer-name">${c.name}</div>
+        <div class="drawer-phone">${c.phone}</div>
+        <div class="drawer-section">
+          <div class="drawer-section-title">Informações</div>
+          <div class="drawer-row"><span>Status</span><span class="status-badge ${sc.cls}">${sc.label}</span></div>
+          <div class="drawer-row"><span>Canal</span><span>${c.channel}</span></div>
+          ${c.email ? `<div class="drawer-row"><span>Email</span><span>${c.email}</span></div>` : ''}
+          <div class="drawer-row"><span>Último contato</span><span>${c.lastMsg}</span></div>
+        </div>
+        <div class="drawer-section">
+          <div class="drawer-section-title">Score IA</div>
+          <div style="display:flex;align-items:center;gap:0.8rem;margin-bottom:0.8rem;">
+            <div class="score-track" style="flex:1;height:6px"><div class="score-fill" style="width:${c.score}%;background:${scolor}"></div></div>
+            <span style="color:${scolor};font-weight:700;font-size:1rem">${c.score}%</span>
+          </div>
+        </div>
+        ${c.notes ? `<div class="drawer-section"><div class="drawer-section-title">Observações</div><p style="font-size:0.85rem;color:rgba(255,255,255,0.5);line-height:1.6;background:rgba(255,255,255,0.02);padding:0.8rem;border-radius:8px;">${c.notes}</p></div>` : ''}
+        <div style="display:flex;gap:0.6rem;margin-top:1rem;">
+          <button onclick="window.location='inbox.html'" style="flex:1;background:rgba(124,58,237,0.15);border:1px solid rgba(124,58,237,0.3);color:var(--accent-primary);padding:0.6rem;border-radius:8px;cursor:pointer;font-size:0.85rem;font-weight:600;">💬 Abrir Chat</button>
+          <button onclick="window.location='pipeline.html'" style="flex:1;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:rgba(255,255,255,0.6);padding:0.6rem;border-radius:8px;cursor:pointer;font-size:0.85rem;font-weight:600;">📊 Pipeline</button>
+        </div>
+      `;
+      document.getElementById('contact-drawer').classList.add('open');
+    }
+
+    function closeDrawer() {
+      document.getElementById('contact-drawer').classList.remove('open');
+    }
+
+    function removeContact(id, e) {
+      e.stopPropagation();
+      contacts = contacts.filter(c => c.id !== id);
+      renderContacts();
+      updateStats();
+      closeDrawer();
+    }
+
+    function setFilter(filter, el) {
+      currentFilter = filter;
+      document.querySelectorAll('.chip').forEach(c => {
+        c.className = 'chip chip-default';
+      });
+      el.className = 'chip chip-active';
+      applyFilters();
+    }
+
+    function applyFilters() {
+      currentSearch = document.getElementById('crm-search-input').value;
+      renderContacts();
+    }
+
+    function sortBy(field) {
+      if (sortField === field) sortDir *= -1;
+      else { sortField = field; sortDir = 1; }
+      renderContacts();
+    }
+
+    function openNewContact() {
+      document.getElementById('new-contact-modal').classList.add('show');
+      document.getElementById('nc-name').focus();
+    }
+
+    function closeNewContact() {
+      document.getElementById('new-contact-modal').classList.remove('show');
+      ['nc-name','nc-phone','nc-email','nc-notes'].forEach(id => document.getElementById(id).value = '');
+    }
+
+    function saveNewContact() {
+      const name = document.getElementById('nc-name').value.trim();
+      if (!name) {
+        document.getElementById('nc-name').style.borderColor = '#EF4444';
+        document.getElementById('nc-name').focus();
+        setTimeout(() => document.getElementById('nc-name').style.borderColor = '', 1500);
+        return;
+      }
+      contacts.unshift({
+        id: nextId++,
+        name,
+        phone: document.getElementById('nc-phone').value.trim() || 'Não informado',
+        channel: document.getElementById('nc-channel').value,
+        status: document.getElementById('nc-status').value,
+        score: Math.floor(Math.random() * 40 + 40),
+        lastMsg: 'Agora',
+        email: document.getElementById('nc-email').value.trim(),
+        notes: document.getElementById('nc-notes').value.trim(),
+      });
+      closeNewContact();
+      renderContacts();
+      updateStats();
+    }
+
+    function setView(v) {
+      document.querySelectorAll('.view-tab').forEach(t => t.classList.remove('active'));
+      document.getElementById('tab-' + v).classList.add('active');
+    }
+
+    // Close modal on overlay click
+    document.getElementById('new-contact-modal').addEventListener('click', function(e) {
+      if (e.target === this) closeNewContact();
+    });
+
+    // Init
+    renderContacts();
+    updateStats();
+  </script>
+
+</body>
+</html>

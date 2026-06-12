@@ -1,0 +1,1275 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inbox — Acessor Digital</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../tokens/acessor-tokens.css">
+  
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 14px; }
+    body {
+      background: var(--bg-pure);
+      color: var(--text-main);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      display: flex;
+      overflow: hidden;
+    }
+
+    /* Layout Wrapper (Shared) */
+    .app-layout { display: flex; width: 100%; height: 100vh; }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: 220px; background: rgba(255,255,255,0.018);
+      border-right: 1px solid rgba(255,255,255,0.05);
+      display: flex; flex-direction: column;
+      backdrop-filter: blur(12px); z-index: 10; flex-shrink: 0;
+    }
+    .sidebar-brand { padding: 1.5rem 1.2rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    .brand-link {
+      display: flex; align-items: baseline; text-decoration: none;
+      font-family: var(--font-display); font-size: 1.6rem; font-weight: 800;
+      letter-spacing: -0.05em; color: #FFF;
+    }
+    .brand-dot { color: var(--accent-coral); margin-left: 2px; text-shadow: 0 0 10px rgba(255,94,58,0.5); }
+    .nav-section { padding: 0.8rem 0.8rem 0; flex-grow: 1; overflow-y: auto; }
+    .nav-section::-webkit-scrollbar { width: 0; }
+    .nav-label {
+      font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.08em;
+      color: rgba(255,255,255,0.25); font-weight: 700;
+      padding: 0 0.4rem; margin-bottom: 0.3rem; margin-top: 0.8rem;
+    }
+    .nav-item {
+      display: flex; align-items: center; gap: 0.65rem;
+      padding: 0.6rem 0.8rem; color: rgba(255,255,255,0.45);
+      text-decoration: none; border-radius: 7px; font-weight: 500;
+      font-size: 0.9rem; transition: all 0.15s;
+    }
+    .nav-item:hover { background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.8); }
+    .nav-item.active {
+      background: rgba(124,58,237,0.13); color: var(--accent-primary);
+      border-left: 2px solid var(--accent-primary); padding-left: calc(0.8rem - 2px);
+    }
+    .nav-item.active svg { stroke: var(--accent-primary); }
+    .nav-item svg { width: 16px; height: 16px; flex-shrink: 0; }
+
+    /* Main Content Wrapper */
+    .main-wrapper { flex-grow: 1; display: flex; flex-direction: column; background: radial-gradient(ellipse at top left, rgba(124,58,237,0.04) 0%, transparent 55%); overflow: hidden; }
+
+    /* ── Topbar ── */
+    .topbar {
+      height: 56px; display: flex; align-items: center; justify-content: space-between;
+      padding: 0 1.8rem;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      background: rgba(8,8,10,0.7); backdrop-filter: blur(16px);
+      flex-shrink: 0; z-index: 50;
+    }
+    .topbar-left { display: flex; align-items: center; gap: 0.9rem; }
+    .topbar-page-info { display: flex; flex-direction: column; }
+    .topbar-title { font-family: var(--font-display); font-size: 0.95rem; font-weight: 700; color: #FFF; letter-spacing: -0.02em; line-height: 1.2; }
+    .topbar-sub { font-size: 0.7rem; color: rgba(255,255,255,0.28); line-height: 1.2; }
+    .topbar-sep { width: 1px; height: 18px; background: rgba(255,255,255,0.07); }
+    .topbar-right { display: flex; align-items: center; gap: 0.5rem; }
+    .tb-btn {
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 8px; width: 34px; height: 34px;
+      display: flex; align-items: center; justify-content: center;
+      color: rgba(255,255,255,0.38); cursor: pointer; transition: all 0.15s; position: relative;
+    }
+    .tb-btn:hover { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.85); border-color: rgba(255,255,255,0.12); }
+    .tb-btn .n-dot { position: absolute; top: 6px; right: 6px; width: 5px; height: 5px; background: #EF4444; border-radius: 50%; border: 1px solid rgba(6,6,9,1); }
+    .tb-avatar {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent-primary), #8B5CF6);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; color: #FFF; font-size: 0.75rem; cursor: pointer;
+      border: 2px solid rgba(124,58,237,0.3); transition: 0.2s;
+    }
+    .tb-avatar:hover { border-color: var(--accent-primary); }
+
+    /* Inbox Specific (3 Column Layout) */
+    .inbox-container {
+      display: flex;
+      flex-grow: 1;
+      height: calc(100vh - 70px);
+    }
+
+    /* Col 1: Chat List */
+    .chat-list-panel {
+      width: 320px;
+      border-right: 1px solid rgba(255, 255, 255, 0.05);
+      display: flex;
+      flex-direction: column;
+      background: rgba(255, 255, 255, 0.01);
+    }
+    .chat-list-header {
+      padding: 1.5rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .search-box {
+      width: 100%;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 0.6rem 1rem;
+      color: #FFF;
+      outline: none;
+      font-size: 0.9rem;
+    }
+    .chat-filters {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 1rem;
+      overflow-x: auto;
+      padding-bottom: 0.5rem;
+    }
+    .chat-filters::-webkit-scrollbar { height: 0; }
+    .filter-chip {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 0.3rem 0.8rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+    .filter-chip.active {
+      background: var(--accent-primary);
+      color: #000;
+      font-weight: 600;
+    }
+
+    .chats {
+      overflow-y: auto;
+      flex-grow: 1;
+    }
+    .chat-item {
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+      cursor: pointer;
+      display: flex;
+      gap: 1rem;
+      transition: background 0.2s;
+    }
+    .chat-item:hover { background: rgba(255, 255, 255, 0.03); }
+    .chat-item.active { background: rgba(124, 58, 237, 0.05); border-left: 3px solid var(--accent-primary); }
+    
+    .chat-avatar {
+      width: 40px; height: 40px; border-radius: 50%;
+      background: rgba(255, 255, 255, 0.1);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 600; color: #FFF; flex-shrink: 0;
+      position: relative;
+    }
+    .chat-channel-icon {
+      position: absolute;
+      bottom: -2px; right: -2px;
+      width: 16px; height: 16px;
+      background: #25D366; /* WhatsApp Green */
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      border: 2px solid var(--bg-pure);
+    }
+    .chat-channel-icon svg { width: 10px; height: 10px; fill: #FFF; }
+    
+    .chat-preview { flex-grow: 1; min-width: 0; }
+    .chat-preview-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.2rem; }
+    .chat-name { font-weight: 600; color: #FFF; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .chat-time { font-size: 0.75rem; color: var(--text-muted); }
+    .chat-msg { font-size: 0.85rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    /* Col 2: Active Chat */
+    .active-chat-panel {
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+      background: rgba(255, 255, 255, 0.005);
+    }
+    .active-chat-header {
+      padding: 1rem 2rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .chat-title-info h3 { color: #FFF; font-size: 1.1rem; }
+    .chat-title-info span { font-size: 0.8rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.4rem;}
+    .status-dot { width: 8px; height: 8px; background: var(--accent-primary); border-radius: 50%; }
+    
+    .chat-actions button {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #FFF;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      margin-left: 0.5rem;
+    }
+    .chat-actions button.btn-ai {
+      background: rgba(124, 58, 237, 0.15);
+      border-color: var(--accent-primary);
+      color: var(--accent-primary);
+    }
+
+    .chat-messages {
+      flex-grow: 1;
+      padding: 2rem;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    
+    .message {
+      max-width: 70%;
+      padding: 1rem;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      position: relative;
+    }
+    .message.received {
+      background: rgba(255, 255, 255, 0.05);
+      align-self: flex-start;
+      border-bottom-left-radius: 2px;
+    }
+    .message.sent {
+      background: rgba(124, 58, 237, 0.1);
+      border: 1px solid rgba(124, 58, 237, 0.2);
+      align-self: flex-end;
+      border-bottom-right-radius: 2px;
+    }
+    .message.sent.ai-generated {
+      border-left: 2px solid var(--accent-primary);
+    }
+    .msg-time {
+      display: block;
+      font-size: 0.7rem;
+      color: rgba(255,255,255,0.3);
+      margin-top: 0.4rem;
+      text-align: right;
+    }
+    .ai-badge {
+      position: absolute;
+      top: -8px; left: 10px;
+      background: var(--accent-primary);
+      color: #000;
+      font-size: 0.6rem;
+      font-weight: 700;
+      padding: 0.1rem 0.4rem;
+      border-radius: 4px;
+    }
+
+    .chat-input-area {
+      padding: 1.5rem 2rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      background: rgba(0, 0, 0, 0.2);
+    }
+    .input-wrapper {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 0.5rem 1rem;
+    }
+    .input-wrapper input {
+      flex-grow: 1;
+      background: transparent;
+      border: none;
+      color: #FFF;
+      padding: 0.8rem 0;
+      outline: none;
+    }
+    .input-wrapper input::placeholder { color: rgba(255,255,255,0.2); }
+    .send-btn {
+      background: var(--accent-primary);
+      border: none;
+      width: 40px; height: 40px;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+    }
+    .send-btn svg { width: 18px; height: 18px; stroke: #000; }
+
+    /* Col 3: Contact Details */
+    .contact-details-panel {
+      width: 300px;
+      border-left: 1px solid rgba(255, 255, 255, 0.05);
+      background: rgba(255, 255, 255, 0.01);
+      padding: 2rem 1.5rem;
+      overflow-y: auto;
+    }
+    .detail-avatar {
+      width: 80px; height: 80px; border-radius: 50%;
+      background: rgba(255, 255, 255, 0.1);
+      margin: 0 auto 1rem;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2rem; font-weight: 700; color: #FFF;
+    }
+    .detail-name { text-align: center; color: #FFF; font-size: 1.2rem; font-weight: 600; margin-bottom: 0.2rem; }
+    .detail-phone { text-align: center; color: var(--text-muted); font-size: 0.9rem; margin-bottom: 2rem; }
+
+    .detail-section { margin-bottom: 1.5rem; }
+    .detail-section h4 { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; color: rgba(255,255,255,0.4); margin-bottom: 0.8rem; }
+    
+    .tag-list { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+    .tag { background: rgba(255,255,255,0.05); padding: 0.3rem 0.6rem; border-radius: 4px; font-size: 0.8rem; color: #FFF; }
+    .tag.hot { background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #EF4444; }
+
+    .score-card {
+      background: rgba(124, 58, 237, 0.05);
+      border: 1px solid rgba(124, 58, 237, 0.2);
+      border-radius: 8px;
+      padding: 1rem;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .score-info span { display: block; font-size: 0.8rem; color: var(--accent-primary); }
+    .score-info strong { color: #FFF; font-size: 1.5rem; font-family: var(--font-display); }
+
+    .notes-box {
+      width: 100%; height: 100px;
+      background: rgba(0,0,0,0.2);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 8px; padding: 0.8rem;
+      color: var(--text-muted); font-size: 0.85rem;
+      resize: none; outline: none;
+    }
+
+  
+    .sidebar-footer {
+      margin-top: auto; padding: 1rem 0.8rem;
+      border-top: 1px solid rgba(255,255,255,0.05);
+    }
+    .user-profile { display: flex; align-items: center; gap: 0.65rem; padding: 0.4rem 0.3rem; border-radius: 8px; cursor: pointer; transition: 0.18s; }
+    .user-profile:hover { background: rgba(255,255,255,0.04); }
+    .avatar {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent-primary), #8B5CF6);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; color: #FFF; font-size: 0.8rem; flex-shrink: 0;
+    }
+    .user-info { display: flex; flex-direction: column; }
+    .user-info span { display: block; font-weight: 600; color: #FFF; font-size: 0.85rem; }
+    .user-info small { color: var(--text-muted); font-size: 0.72rem; }
+
+  </style>
+</head>
+<body>
+
+  <div class="app-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <a href="dashboard.html" class="brand-link">acessor<span class="brand-dot">.</span></a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-label">Visão Geral</div>
+        <a href="dashboard.html" class="nav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"></rect><rect x="14" y="3" width="7" height="5"></rect><rect x="14" y="12" width="7" height="9"></rect><rect x="3" y="16" width="7" height="5"></rect></svg>
+          Dashboard
+        </a>
+        <a href="inbox.html" class="nav-item active">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+          Inbox
+        </a>
+        <div class="nav-label">Operação</div>
+        <a href="crm.html" class="nav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+          Contatos
+        </a>
+        <a href="pipeline.html" class="nav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0H5a2 2 0 0 1-2-2v-4m6 6h10a2 2 0 0 0 2-2v-4m0 0V9m-16 0v6"></path></svg>
+          Pipeline
+        </a>
+        <a href="automacoes.html" class="nav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+          Automações
+        </a>
+        <a href="agenda.html" class="nav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+          Agenda
+        </a>
+        <a href="catalogo.html" class="nav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
+          Catálogo
+        </a>
+        <div class="nav-label">Inteligência</div>
+        <a href="analytics.html" class="nav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+          Analytics
+        </a>
+        <a href="conhecimento.html" class="nav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+          IA / Conhecimento
+        </a>
+        <div class="nav-label">Sistema</div>
+        <a href="faturamento.html" class="nav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+          Faturamento
+        </a>
+        <a href="configuracoes.html" class="nav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+          Configurações
+        </a>
+        <a href="notificacoes.html" class="nav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+          Notificações
+        </a>
+      </div>
+      <div class="sidebar-footer">
+        <div class="user-profile">
+          <div class="avatar">EB</div>
+          <div class="user-info">
+            <span>Empresa BR</span>
+            <small>Plano Pro</small>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-wrapper">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div class="topbar-page-info">
+            <div class="topbar-title">Inbox</div>
+            <div class="topbar-sub">Caixa de entrada unificada</div>
+          </div>
+          <div class="topbar-sep"></div>
+        </div>
+        <div class="topbar-right">
+          <button class="tb-btn" title="Buscar conversa (⌘K)" onclick="document.querySelector('.search-box').focus()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          </button>
+          <button class="tb-btn" title="Notificações">
+            <div class="n-dot"></div>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+          </button>
+          <div class="tb-avatar">EB</div>
+        </div>
+      </header>
+
+      <div class="inbox-container">
+        <!-- 1. Chat List -->
+        <div class="chat-list-panel">
+          
+          <div class="chat-list-header">
+            <input type="text" class="search-box" placeholder="Buscar conversa...">
+            
+            
+            <div class="chat-tabs" style="display: flex; flex-direction: column; gap: 0.6rem; margin-top: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.8rem;">
+              <div style="display: flex; gap: 0.8rem; justify-content: space-between; align-items: center;">
+                <span style="color: var(--accent-primary); font-weight: 600; font-size: 0.85rem; padding-bottom: 0.2rem; border-bottom: 2px solid var(--accent-primary); cursor: pointer; display: flex; align-items: center; gap: 0.3rem;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg> Todas</span>
+                
+                <span style="color: #25D366; font-size: 0.85rem; padding-bottom: 0.2rem; cursor: pointer; display: flex; align-items: center; gap: 0.3rem;"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.888-.788-1.487-1.761-1.663-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51h-.57c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg> WhatsApp</span>
+                
+                <span style="color: #E1306C; font-size: 0.85rem; padding-bottom: 0.2rem; cursor: pointer; display: flex; align-items: center; gap: 0.3rem;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg> Instagram</span>
+              </div>
+              <div style="display: flex; gap: 0.8rem; align-items: center;">
+                <span style="color: #0088cc; font-size: 0.85rem; padding-bottom: 0.2rem; cursor: pointer; display: flex; align-items: center; gap: 0.3rem;"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.123-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.892-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg> Telegram</span>
+                
+                <span style="color: #0084FF; font-size: 0.85rem; padding-bottom: 0.2rem; cursor: pointer; display: flex; align-items: center; gap: 0.3rem;"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 4.974 0 11.111c0 3.498 1.744 6.614 4.469 8.654V24l4.088-2.242c1.092.3 2.246.464 3.443.464 6.627 0 12-4.975 12-11.111C24 4.974 18.627 0 12 0zm1.29 14.889l-3.076-3.273-6 3.273 6.6-7 3.076 3.273 6-3.273-6.6 7z"/></svg> Messenger</span>
+              </div>
+            </div>
+    
+
+            <div class="chat-filters" style="margin-top: 1rem; padding-bottom: 0.5rem;">
+              <span class="filter-chip active">Todas</span>
+              <span class="filter-chip">Abertas</span>
+              <span class="filter-chip">Humano</span>
+              <span class="filter-chip">Resolvidas</span>
+            </div>
+          </div>
+
+          <div class="chats">
+            <div class="chat-item active">
+              <div class="chat-avatar">
+                JS
+                <div class="chat-channel-icon">
+                  <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.888-.788-1.487-1.761-1.663-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51h-.57c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                </div>
+              </div>
+              <div class="chat-preview">
+                <div class="chat-preview-header">
+                  <span class="chat-name">João Silva</span>
+                  <span class="chat-time">10:42</span>
+                </div>
+                <div class="chat-msg">IA: Certo, agendado para amanhã...</div>
+              </div>
+            </div>
+
+            <div class="chat-item">
+              <div class="chat-avatar">MO</div>
+              <div class="chat-preview">
+                <div class="chat-preview-header">
+                  <span class="chat-name">Maria Oliveira</span>
+                  <span class="chat-time">09:15</span>
+                </div>
+                <div class="chat-msg">Qual é o prazo de entrega?</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Active Chat -->
+        <div class="active-chat-panel">
+          <div class="active-chat-header">
+            <div class="chat-title-info">
+              <h3>João Silva</h3>
+              <span><div class="status-dot"></div> Respondendo via IA (Automático)</span>
+            </div>
+            <div class="chat-actions">
+              <button>Pausar IA</button>
+              <button class="btn-ai">Sugerir Resposta IA ✨</button>
+            </div>
+          </div>
+
+          <div class="chat-messages">
+            <div class="message received">
+              Olá! Vi o anúncio no Instagram e queria saber se vocês tem horário para amanhã à tarde.
+              <span class="msg-time">10:35</span>
+            </div>
+            <div class="message sent ai-generated">
+              <span class="ai-badge">IA</span>
+              Olá João! Temos disponibilidade sim. Prefere às 14h ou às 16h?
+              <span class="msg-time">10:36</span>
+            </div>
+            <div class="message received">
+              Pode ser às 14h.
+              <span class="msg-time">10:41</span>
+            </div>
+            <div class="message sent ai-generated">
+              <span class="ai-badge">IA</span>
+              Certo, agendado para amanhã às 14h! 🎉 Mais alguma dúvida?
+              <span class="msg-time">10:42</span>
+            </div>
+          </div>
+
+          
+          <div class="fast-replies" style="display: flex; gap: 0.5rem; padding: 0.8rem 1.5rem; overflow-x: auto; border-top: 1px solid rgba(255,255,255,0.05); background: var(--bg-pure);">
+            <span class="fast-reply" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 0.4rem 0.8rem; border-radius: 6px; font-size: 0.8rem; cursor: pointer; white-space: nowrap; color: var(--text-main); transition: 0.2s;">👋 Olá</span>
+            <span class="fast-reply" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 0.4rem 0.8rem; border-radius: 6px; font-size: 0.8rem; cursor: pointer; white-space: nowrap; color: var(--text-main); transition: 0.2s;">⏳ Aguarde</span>
+            <span class="fast-reply" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 0.4rem 0.8rem; border-radius: 6px; font-size: 0.8rem; cursor: pointer; white-space: nowrap; color: var(--text-main); transition: 0.2s;">✅ Resolvido</span>
+            <span class="fast-reply" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 0.4rem 0.8rem; border-radius: 6px; font-size: 0.8rem; cursor: pointer; white-space: nowrap; color: var(--text-main); transition: 0.2s;">🗓️ Agendar</span>
+            <span class="fast-reply" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 0.4rem 0.8rem; border-radius: 6px; font-size: 0.8rem; cursor: pointer; white-space: nowrap; color: var(--text-main); transition: 0.2s;">💰 Valores</span>
+            <span class="fast-reply" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 0.4rem 0.8rem; border-radius: 6px; font-size: 0.8rem; cursor: pointer; white-space: nowrap; color: var(--text-main); transition: 0.2s;">🔁 Retorno</span>
+            <span class="fast-reply" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 0.4rem 0.8rem; border-radius: 6px; font-size: 0.8rem; cursor: pointer; white-space: nowrap; color: var(--text-main); transition: 0.2s;">🙏 Obrigado</span>
+          </div>
+          <div class="chat-input-area" style="padding-top: 0.8rem; border-top: none;">
+
+            <div class="input-wrapper" style="padding-right: 0.5rem;">
+              <input type="text" placeholder="Escreva uma mensagem...">
+              
+              <div class="input-actions" style="display: flex; gap: 0.8rem; align-items: center; color: rgba(255,255,255,0.4); margin-right: 0.5rem;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="cursor: pointer; transition: 0.2s;" onmouseover="this.style.color='#FFF'" onmouseout="this.style.color='rgba(255,255,255,0.4)'"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="cursor: pointer; transition: 0.2s;" onmouseover="this.style.color='#FFF'" onmouseout="this.style.color='rgba(255,255,255,0.4)'"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="cursor: pointer; transition: 0.2s;" onmouseover="this.style.color='#FFF'" onmouseout="this.style.color='rgba(255,255,255,0.4)'"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="22"></line></svg>
+              </div>
+
+              <button class="send-btn" style="background: var(--accent-primary); border: none; width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. Contact Details -->
+        <div class="contact-details-panel">
+          <div class="detail-avatar">JS</div>
+          <h2 class="detail-name">João Silva</h2>
+          <p class="detail-phone">+55 11 99999-9999</p>
+          <div class="detail-section" style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.05);">
+            <h4 style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem;">Informações</h4>
+            <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 0.6rem;">
+              <span style="color: var(--text-muted);">Canal</span>
+              <span style="color: var(--text-main);">WhatsApp</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 0.6rem;">
+              <span style="color: var(--text-muted);">Status</span>
+              <span style="color: var(--text-main);">Aberta</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 0.6rem;">
+              <span style="color: var(--text-muted);">Iniciada</span>
+              <span style="color: var(--text-main);">12/05/2026</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 0.6rem;">
+              <span style="color: var(--text-muted);">Mensagens</span>
+              <span style="color: var(--text-main);">25</span>
+            </div>
+          </div>
+
+
+          <div class="detail-section">
+            <div class="score-card">
+              <div class="score-info">
+                <span>Score da IA (Qualificação)</span>
+                <strong>92/100</strong>
+              </div>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent-primary)" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg>
+            </div>
+          </div>
+
+          <div class="detail-section">
+            <h4>Tags do Lead</h4>
+            <div class="tag-list">
+              <span class="tag hot">🔥 Quente</span>
+              <span class="tag">Agendado</span>
+              <span class="tag">Instagram Ads</span>
+            </div>
+          </div>
+
+          <div class="detail-section">
+            <h4>Resumo da IA</h4>
+            <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5; background: rgba(255,255,255,0.02); padding: 0.8rem; border-radius: 8px;">
+              Lead chegou através do anúncio do Instagram. Demonstrou interesse imediato em agendamento. Foi qualificado e marcou horário para amanhã às 14h.
+            </p>
+          </div>
+
+          <div class="detail-section">
+            <h4>Anotações Internas</h4>
+            <textarea class="notes-box" placeholder="Adicione notas visíveis apenas para sua equipe..."></textarea>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- IA Response Suggestion Dialog/Modal -->
+  <div id="ai-suggestion-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
+    <div style="background: #18181B; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; width: 450px; padding: 1.5rem; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.75rem;">
+        <h3 style="margin: 0; font-family: var(--font-display); font-size: 1.1rem; color: #FFF; display: flex; align-items: center; gap: 0.5rem;">
+          <span style="color: var(--accent-primary);">✨</span> Sugestão da IA Acessor
+        </h3>
+        <button onclick="closeAiModal()" style="background: none; border: none; color: rgba(255,255,255,0.4); cursor: pointer; font-size: 1.2rem;">&times;</button>
+      </div>
+      <p style="font-size: 0.9rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 1.5rem;" id="ai-modal-suggestion-text">
+        Proposta de Resposta:
+      </p>
+      <div style="display: flex; gap: 0.75rem; justify-content: flex-end;">
+        <button onclick="closeAiModal()" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: var(--text-main); padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-weight: 500;">Cancelar</button>
+        <button id="apply-ai-btn" style="background: var(--accent-primary); border: none; color: #000; padding: 0.5rem 1.2rem; border-radius: 6px; cursor: pointer; font-weight: 700;">Usar Resposta</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // State management for mock inbox
+    const state = {
+      activeChat: 'js',
+      currentFilter: 'Todas',
+      currentStatus: 'Todas',
+      searchQuery: '',
+      recording: false,
+      recordingTimer: null,
+      recordingSeconds: 0,
+      chats: {
+        'js': {
+          id: 'js',
+          name: 'João Silva',
+          phone: '+55 11 99999-9999',
+          avatar: 'JS',
+          channel: 'WhatsApp',
+          status: 'Abertas',
+          date: '12/05/2026',
+          messagesCount: 25,
+          score: 92,
+          tags: ['🔥 Quente', 'Agendado', 'Instagram Ads'],
+          summary: 'Lead chegou através do anúncio do Instagram. Demonstrou interesse imediato em agendamento. Foi qualificado e marcou horário para amanhã às 14h.',
+          aiActive: true,
+          notes: 'Cliente demonstrou muito interesse no produto de automação corporativa.',
+          messages: [
+            { sender: 'received', text: 'Olá! Vi o anúncio no Instagram e queria saber se vocês tem horário para amanhã à tarde.', time: '10:35' },
+            { sender: 'sent', text: 'Olá João! Temos disponibilidade sim. Prefere às 14h ou às 16h?', time: '10:36', ai: true },
+            { sender: 'received', text: 'Pode ser às 14h.', time: '10:41' },
+            { sender: 'sent', text: 'Certo, agendado para amanhã às 14h! 🎉 Mais alguma dúvida?', time: '10:42', ai: true }
+          ]
+        },
+        'mo': {
+          id: 'mo',
+          name: 'Maria Oliveira',
+          phone: '+55 21 98888-8888',
+          avatar: 'MO',
+          channel: 'Telegram',
+          status: 'Humano',
+          date: '12/05/2026',
+          messagesCount: 12,
+          score: 45,
+          tags: ['Dúvida', 'Suporte'],
+          summary: 'Maria quer saber o prazo de entrega dos produtos e as formas de envio disponíveis para o Rio de Janeiro.',
+          aiActive: false,
+          notes: 'Enviar tabela de prazos do frete expresso assim que possível.',
+          messages: [
+            { sender: 'received', text: 'Olá, gostaria de saber se vocês entregam em todo o Brasil?', time: '09:10' },
+            { sender: 'sent', text: 'Olá Maria! Sim, enviamos para todo o país via Correios ou transportadora.', time: '09:12' },
+            { sender: 'received', text: 'Qual é o prazo de entrega?', time: '09:15' }
+          ]
+        },
+        'ar': {
+          id: 'ar',
+          name: 'Ana Rodrigues',
+          phone: '+55 31 97777-7777',
+          avatar: 'AR',
+          channel: 'Instagram',
+          status: 'Abertas',
+          date: '12/05/2026',
+          messagesCount: 8,
+          score: 78,
+          tags: ['Instagram Ads', 'Quente'],
+          summary: 'Ana viu o anúncio no Instagram e tem interesse em fechar o plano anual com desconto.',
+          aiActive: true,
+          notes: '',
+          messages: [
+            { sender: 'received', text: 'Oi! Vi o anúncio de vocês e fiquei interessada. Como funciona o plano anual?', time: '08:55' },
+            { sender: 'sent', text: 'Olá Ana! No plano anual você tem 20% de desconto e acesso a todos os recursos premium.', time: '08:57', ai: true },
+            { sender: 'received', text: 'Tem suporte por WhatsApp incluso?', time: '09:00' }
+          ]
+        },
+        'cf': {
+          id: 'cf',
+          name: 'Carlos Ferreira',
+          phone: '+55 85 96666-6666',
+          avatar: 'CF',
+          channel: 'Messenger',
+          status: 'Resolvidas',
+          date: '11/05/2026',
+          messagesCount: 5,
+          score: 60,
+          tags: ['Messenger', 'Resolvido'],
+          summary: 'Carlos tinha dúvida sobre integração com e-commerce. Foi resolvido com sucesso.',
+          aiActive: false,
+          notes: 'Cliente satisfeito, pode virar indicação.',
+          messages: [
+            { sender: 'received', text: 'Vocês integram com Shopify?', time: '14:10' },
+            { sender: 'sent', text: 'Olá Carlos! Sim, temos integração nativa com Shopify e WooCommerce.', time: '14:12' },
+            { sender: 'received', text: 'Show! Obrigado pela informação.', time: '14:15' }
+          ]
+        }
+      }
+    };
+
+    // DOM Elements Cache
+    const elements = {
+      chatsContainer: document.querySelector('.chats'),
+      messagesContainer: document.querySelector('.chat-messages'),
+      chatTitleInfo: document.querySelector('.chat-title-info'),
+      toggleAiBtn: document.querySelector('.chat-actions button:first-child'),
+      aiSuggestionBtn: document.querySelector('.btn-ai'),
+      chatInput: document.querySelector('.input-wrapper input'),
+      sendBtn: document.querySelector('.send-btn'),
+      detailAvatar: document.querySelector('.detail-avatar'),
+      detailName: document.querySelector('.detail-name'),
+      detailPhone: document.querySelector('.detail-phone'),
+      detailSection: document.querySelector('.contact-details-panel'),
+      searchBox: document.querySelector('.search-box'),
+      fastReplies: document.querySelectorAll('.fast-reply'),
+      notesBox: document.querySelector('.notes-box'),
+      aiSuggestionModal: document.getElementById('ai-suggestion-modal'),
+      aiModalText: document.getElementById('ai-modal-suggestion-text'),
+      applyAiBtn: document.getElementById('apply-ai-btn'),
+      audioIcon: document.querySelector('.input-actions svg:nth-child(3)'),
+      attachmentIcon: document.querySelector('.input-actions svg:nth-child(1)'),
+      emojiIcon: document.querySelector('.input-actions svg:nth-child(2)'),
+      chatTabs: document.querySelectorAll('.chat-tabs span'),
+      filterChips: document.querySelectorAll('.chat-filters .filter-chip')
+    };
+
+    // Render Chat List
+    function renderChatList() {
+      elements.chatsContainer.innerHTML = '';
+      
+      const filtered = Object.values(state.chats).filter(chat => {
+        // Search query filter
+        const matchesSearch = chat.name.toLowerCase().includes(state.searchQuery.toLowerCase()) || 
+                              chat.messages.some(m => m.text.toLowerCase().includes(state.searchQuery.toLowerCase()));
+        
+        // Channel filter
+        const matchesChannel = state.currentFilter === 'Todas' || chat.channel === state.currentFilter;
+        
+        // Status filter
+        const matchesStatus = state.currentStatus === 'Todas' || chat.status === state.currentStatus;
+
+        return matchesSearch && matchesChannel && matchesStatus;
+      });
+
+      if (filtered.length === 0) {
+        elements.chatsContainer.innerHTML = `
+          <div style="text-align: center; padding: 3rem 1.5rem; color: var(--text-muted); font-size: 0.9rem;">
+            Nenhuma conversa encontrada
+          </div>
+        `;
+        return;
+      }
+
+      filtered.forEach(chat => {
+        const lastMsg = chat.messages[chat.messages.length - 1];
+        const lastMsgText = lastMsg ? (lastMsg.ai ? `IA: ${lastMsg.text}` : lastMsg.text) : 'Sem mensagens';
+        const lastMsgTime = lastMsg ? lastMsg.time : '';
+        const isActive = state.activeChat === chat.id;
+
+        // Custom icon mapping for channel icon badge
+        let channelIconHtml = '';
+        if (chat.channel === 'WhatsApp') {
+          channelIconHtml = `<div class="chat-channel-icon" style="background:#25D366; color:#FFF; display:flex; align-items:center; justify-content:center; border-radius:50%; width:16px; height:16px; position:absolute; bottom:-2px; right:-2px; border: 2px solid var(--bg-pure);"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.888-.788-1.487-1.761-1.663-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51h-.57c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg></div>`;
+        } else if (chat.channel === 'Instagram') {
+          channelIconHtml = `<div class="chat-channel-icon" style="background:linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888); color:#FFF; display:flex; align-items:center; justify-content:center; border-radius:50%; width:16px; height:16px; position:absolute; bottom:-2px; right:-2px; border: 2px solid var(--bg-pure);"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#FFF" stroke-width="2.5" stroke-linecap="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="0.5" fill="#FFF"/></svg></div>`;
+        } else if (chat.channel === 'Messenger') {
+          channelIconHtml = `<div class="chat-channel-icon" style="background:#0084FF; color:#FFF; display:flex; align-items:center; justify-content:center; border-radius:50%; width:16px; height:16px; position:absolute; bottom:-2px; right:-2px; border: 2px solid var(--bg-pure);"><svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 4.974 0 11.111c0 3.498 1.744 6.614 4.469 8.654V24l4.088-2.242c1.092.3 2.246.464 3.443.464 6.627 0 12-4.975 12-11.111C24 4.974 18.627 0 12 0zm1.29 14.889l-3.076-3.273-6 3.273 6.6-7 3.076 3.273 6-3.273-6.6 7z"/></svg></div>`;
+        } else if (chat.channel === 'Telegram') {
+          channelIconHtml = `<div class="chat-channel-icon" style="background:#0088cc; color:#FFF; display:flex; align-items:center; justify-content:center; border-radius:50%; width:16px; height:16px; position:absolute; bottom:-2px; right:-2px; border: 2px solid var(--bg-pure);"><svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.123-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.892-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg></div>`;
+        }
+
+        const chatItem = document.createElement('div');
+        chatItem.className = `chat-item ${isActive ? 'active' : ''}`;
+        chatItem.innerHTML = `
+          <div class="chat-avatar" style="position:relative;">
+            ${chat.avatar}
+            ${channelIconHtml}
+          </div>
+          <div class="chat-preview">
+            <div class="chat-preview-header">
+              <span class="chat-name">${chat.name}</span>
+              <span class="chat-time">${lastMsgTime}</span>
+            </div>
+            <div class="chat-msg" style="max-width: 170px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${lastMsgText}</div>
+          </div>
+        `;
+
+        chatItem.addEventListener('click', () => selectChat(chat.id));
+        elements.chatsContainer.appendChild(chatItem);
+      });
+    }
+
+    // Select and Load Active Chat
+    function selectChat(id) {
+      state.activeChat = id;
+      const chat = state.chats[id];
+
+      // Update UI title and header actions
+      elements.chatTitleInfo.querySelector('h3').textContent = chat.name;
+      const statusSpan = elements.chatTitleInfo.querySelector('span');
+      if (chat.aiActive) {
+        statusSpan.innerHTML = '<div class="status-dot"></div> Respondendo via IA (Automático)';
+        elements.toggleAiBtn.textContent = 'Pausar IA';
+        elements.toggleAiBtn.style.background = 'rgba(239, 68, 68, 0.1)';
+        elements.toggleAiBtn.style.color = '#EF4444';
+        elements.toggleAiBtn.style.border = '1px solid rgba(239,68,68,0.2)';
+      } else {
+        statusSpan.innerHTML = '<div class="status-dot" style="background:#FFA500;"></div> Atendimento Humano';
+        elements.toggleAiBtn.textContent = 'Ativar IA';
+        elements.toggleAiBtn.style.background = 'rgba(16, 185, 129, 0.1)';
+        elements.toggleAiBtn.style.color = '#10b981';
+        elements.toggleAiBtn.style.border = '1px solid rgba(16,185,129,0.2)';
+      }
+
+      // Render Messages
+      elements.messagesContainer.innerHTML = '';
+      chat.messages.forEach(msg => {
+        const msgDiv = document.createElement('div');
+        msgDiv.className = `message ${msg.sender} ${msg.ai ? 'ai-generated' : ''}`;
+        
+        let aiBadge = msg.ai ? '<span class="ai-badge">IA</span>' : '';
+        msgDiv.innerHTML = `
+          ${aiBadge}
+          ${msg.text}
+          <span class="msg-time">${msg.time}</span>
+        `;
+        elements.messagesContainer.appendChild(msgDiv);
+      });
+
+      // Scroll to bottom
+      elements.messagesContainer.scrollTop = elements.messagesContainer.scrollHeight;
+
+      // Update Right Sidebar Information
+      elements.detailAvatar.textContent = chat.avatar;
+      elements.detailName.textContent = chat.name;
+      elements.detailPhone.textContent = chat.phone;
+
+      // Update Info sections
+      const infoSection = elements.detailSection.querySelector('.detail-section:first-of-type');
+      infoSection.innerHTML = `
+        <h4 style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem;">Informações</h4>
+        <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 0.6rem;">
+          <span style="color: var(--text-muted);">Canal</span>
+          <span style="color: var(--text-main); font-weight: 600;">${chat.channel}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 0.6rem;">
+          <span style="color: var(--text-muted);">Status</span>
+          <span style="color: var(--text-main); font-weight: 600;">${chat.status}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 0.6rem;">
+          <span style="color: var(--text-muted);">Iniciada</span>
+          <span style="color: var(--text-main); font-weight: 600;">${chat.date}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 0.6rem;">
+          <span style="color: var(--text-muted);">Mensagens</span>
+          <span style="color: var(--text-main); font-weight: 600;">${chat.messages.length}</span>
+        </div>
+      `;
+
+      // Update Score & Starred State
+      const scoreCard = elements.detailSection.querySelector('.score-card');
+      scoreCard.querySelector('strong').textContent = `${chat.score}/100`;
+      
+      const starSvg = scoreCard.querySelector('svg');
+      starSvg.style.cursor = 'pointer';
+      if (chat.starred) {
+        starSvg.setAttribute('fill', 'var(--accent-primary)');
+      } else {
+        starSvg.setAttribute('fill', 'none');
+      }
+      
+      // Make Star clickable
+      starSvg.onclick = () => {
+        chat.starred = !chat.starred;
+        selectChat(id);
+      };
+
+      // Update Tags (clickable to remove, plus a "+" button to add)
+      const tagsContainer = elements.detailSection.querySelector('.tag-list');
+      tagsContainer.innerHTML = '';
+      chat.tags.forEach((tag, idx) => {
+        const span = document.createElement('span');
+        span.className = `tag ${tag.includes('🔥') ? 'hot' : ''}`;
+        span.innerHTML = `${tag} <span class="remove-tag" style="margin-left:5px; opacity:0.6; cursor:pointer; font-weight:bold;">&times;</span>`;
+        span.querySelector('.remove-tag').addEventListener('click', (e) => {
+          e.stopPropagation();
+          chat.tags.splice(idx, 1);
+          selectChat(id);
+        });
+        tagsContainer.appendChild(span);
+      });
+
+      // Add tag button
+      const addTagBtn = document.createElement('span');
+      addTagBtn.className = 'tag';
+      addTagBtn.style.background = 'rgba(255,255,255,0.05)';
+      addTagBtn.style.border = '1px dashed rgba(255,255,255,0.2)';
+      addTagBtn.style.cursor = 'pointer';
+      addTagBtn.style.color = 'var(--accent-primary)';
+      addTagBtn.innerHTML = '+ Nova Tag';
+      addTagBtn.onclick = () => {
+        const newTagName = prompt('Digite o nome da nova tag:');
+        if (newTagName && newTagName.trim()) {
+          chat.tags.push(newTagName.trim());
+          selectChat(id);
+        }
+      };
+      tagsContainer.appendChild(addTagBtn);
+
+      // Update Summary (Double click to edit)
+      const summaryPara = elements.detailSection.querySelector('.detail-section:nth-of-type(4) p');
+      summaryPara.textContent = chat.summary;
+      summaryPara.style.cursor = 'pointer';
+      summaryPara.title = 'Clique duas vezes para editar';
+      summaryPara.ondblclick = () => {
+        const newSummary = prompt('Editar Resumo da IA:', chat.summary);
+        if (newSummary !== null) {
+          chat.summary = newSummary.trim() || 'Sem resumo disponível.';
+          selectChat(id);
+        }
+      };
+
+      // Notes Box
+      elements.notesBox.value = chat.notes || '';
+
+      // Make Name and Phone editable on double click
+      elements.detailName.style.cursor = 'pointer';
+      elements.detailName.title = 'Clique duas vezes para editar';
+      elements.detailName.ondblclick = () => {
+        const newName = prompt('Editar Nome do Lead:', chat.name);
+        if (newName && newName.trim()) {
+          chat.name = newName.trim();
+          chat.avatar = chat.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+          selectChat(id);
+        }
+      };
+
+      elements.detailPhone.style.cursor = 'pointer';
+      elements.detailPhone.title = 'Clique duas vezes para editar';
+      elements.detailPhone.ondblclick = () => {
+        const newPhone = prompt('Editar Telefone:', chat.phone);
+        if (newPhone && newPhone.trim()) {
+          chat.phone = newPhone.trim();
+          selectChat(id);
+        }
+      };
+
+      // Make Score editable on double click
+      const scoreStrong = scoreCard.querySelector('strong');
+      scoreStrong.style.cursor = 'pointer';
+      scoreStrong.title = 'Clique duas vezes para editar';
+      scoreStrong.ondblclick = () => {
+        const newScore = prompt('Editar Score (0 a 100):', chat.score);
+        const parsed = parseInt(newScore);
+        if (!isNaN(parsed) && parsed >= 0 && parsed <= 100) {
+          chat.score = parsed;
+          selectChat(id);
+        }
+      };
+
+      // Re-render chat list to update active highlight
+      renderChatList();
+    } // end selectChat
+
+    // Toggle AI button
+    elements.toggleAiBtn.addEventListener('click', () => {
+      const chat = state.chats[state.activeChat];
+      chat.aiActive = !chat.aiActive;
+      selectChat(state.activeChat);
+    });
+
+    // Suggest response via IA
+    elements.aiSuggestionBtn.addEventListener('click', () => {
+      const chat = state.chats[state.activeChat];
+      let suggestion = '';
+      
+      if (state.activeChat === 'js') {
+        suggestion = 'Olá João! Tudo confirmado para amanhã às 14h. Enviarei o endereço completo e o link de acesso em instantes.';
+      } else {
+        suggestion = 'Olá Maria! Nosso prazo de entrega para o Rio de Janeiro é de 2 a 5 dias úteis via frete expresso. Gostaria de cotar o frete para o seu CEP?';
+      }
+
+      elements.aiModalText.innerHTML = `<strong>Sugestão da IA Acessor:</strong><br><br><span style="color:var(--text-main); font-style:italic;">"${suggestion}"</span>`;
+      elements.aiSuggestionModal.style.display = 'flex';
+
+      elements.applyAiBtn.onclick = () => {
+        elements.chatInput.value = suggestion;
+        closeAiModal();
+        elements.chatInput.focus();
+      };
+    });
+
+    function closeAiModal() {
+      elements.aiSuggestionModal.style.display = 'none';
+    }
+
+    // Send message functionality
+    function sendMessage() {
+      const text = elements.chatInput.value.trim();
+      if (!text) return;
+
+      const chat = state.chats[state.activeChat];
+      const now = new Date();
+      const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+      chat.messages.push({
+        sender: 'sent',
+        text: text,
+        time: timeStr,
+        ai: false // Sent manually by the operator
+      });
+
+      elements.chatInput.value = '';
+      selectChat(state.activeChat);
+
+      // Simulate a mock lead answer if AI is active
+      if (chat.aiActive) {
+        setTimeout(() => {
+          const receivedTime = new Date();
+          const recTimeStr = `${String(receivedTime.getHours()).padStart(2, '0')}:${String(receivedTime.getMinutes()).padStart(2, '0')}`;
+          
+          let responseText = "Perfeito, obrigado! Entendido.";
+          if (text.toLowerCase().includes('frete') || text.toLowerCase().includes('cep')) {
+            responseText = "Meu CEP é 22040-010. Quanto fica o frete expresso?";
+          } else if (text.toLowerCase().includes('horário') || text.toLowerCase().includes('confirmado')) {
+            responseText = "Excelente, nos vemos amanhã às 14h!";
+          }
+
+          chat.messages.push({
+            sender: 'received',
+            text: responseText,
+            time: recTimeStr
+          });
+
+          selectChat(state.activeChat);
+        }, 1500);
+      }
+    }
+
+    elements.sendBtn.addEventListener('click', sendMessage);
+    elements.chatInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') sendMessage();
+    });
+
+    // Notes auto-save
+    elements.notesBox.addEventListener('input', (e) => {
+      const chat = state.chats[state.activeChat];
+      chat.notes = e.target.value;
+    });
+
+    // Search Box query input event
+    elements.searchBox.addEventListener('input', (e) => {
+      state.searchQuery = e.target.value;
+      renderChatList();
+    });
+
+    // Fast Replies insertion
+    elements.fastReplies.forEach(reply => {
+      reply.addEventListener('click', () => {
+        const text = reply.textContent;
+        let finalMsg = '';
+        if (text.includes('Olá')) finalMsg = 'Olá! Como posso te ajudar hoje?';
+        else if (text.includes('Aguarde')) finalMsg = 'Um momento por favor, vou verificar as informações.';
+        else if (text.includes('Resolvido')) finalMsg = 'Perfeito! Caso precise de mais alguma coisa, estamos à disposição.';
+        else if (text.includes('Agendar')) finalMsg = 'Gostaria de agendar para qual dia e horário?';
+        else if (text.includes('Valores')) finalMsg = 'Nosso plano Acessor Pro custa R$ 129/mês sem taxa de adesão.';
+        else if (text.includes('Retorno')) finalMsg = 'Ainda ficou com alguma dúvida sobre o nosso serviço?';
+        else if (text.includes('Obrigado')) finalMsg = 'Obrigado pelo contato! Tenha um excelente dia.';
+
+        elements.chatInput.value = finalMsg;
+        elements.chatInput.focus();
+      });
+    });
+
+    // Channel Tabs Interaction
+    elements.chatTabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        // Clear active status on tabs
+        elements.chatTabs.forEach(t => {
+          t.style.borderBottom = 'none';
+          t.style.fontWeight = '500';
+          // Restore native muted styling or color
+          if (t.textContent.includes('Todas')) t.style.color = 'var(--text-muted)';
+          else if (t.textContent.includes('WhatsApp')) t.style.color = '#25D366';
+          else if (t.textContent.includes('Instagram')) t.style.color = '#E1306C';
+          else if (t.textContent.includes('Telegram')) t.style.color = '#0088cc';
+          else if (t.textContent.includes('Messenger')) t.style.color = '#0084FF';
+        });
+
+        // Set active highlight on clicked tab
+        tab.style.borderBottom = '2px solid';
+        tab.style.fontWeight = '700';
+        
+        let filterType = 'Todas';
+        if (tab.textContent.includes('WhatsApp')) filterType = 'WhatsApp';
+        else if (tab.textContent.includes('Instagram')) filterType = 'Instagram';
+        else if (tab.textContent.includes('Telegram')) filterType = 'Telegram';
+        else if (tab.textContent.includes('Messenger')) filterType = 'Messenger';
+
+        state.currentFilter = filterType;
+        
+        // Match color border dynamically
+        if (filterType === 'WhatsApp') tab.style.borderBottomColor = '#25D366';
+        else if (filterType === 'Instagram') tab.style.borderBottomColor = '#E1306C';
+        else if (filterType === 'Telegram') tab.style.borderBottomColor = '#0088cc';
+        else if (filterType === 'Messenger') tab.style.borderBottomColor = '#0084FF';
+        else tab.style.borderBottomColor = 'var(--accent-primary)';
+
+        renderChatList();
+      });
+    });
+
+    // Filter Chips (Todas, Abertas, Humano, Resolvidas) Interaction
+    elements.filterChips.forEach(chip => {
+      chip.addEventListener('click', () => {
+        elements.filterChips.forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        
+        let status = 'Todas';
+        if (chip.textContent.includes('Abertas')) status = 'Abertas';
+        else if (chip.textContent.includes('Humano')) status = 'Humano';
+        else if (chip.textContent.includes('Resolvidas')) status = 'Resolvidas';
+
+        state.currentStatus = status;
+        renderChatList();
+      });
+    });
+
+    // Microphone (Audio) button interaction
+    elements.audioIcon.addEventListener('click', () => {
+      if (!state.recording) {
+        state.recording = true;
+        state.recordingSeconds = 0;
+        elements.audioIcon.style.color = '#EF4444';
+        elements.audioIcon.style.animation = 'pulse 1s infinite alternate';
+        elements.chatInput.value = 'Gravando áudio (0:00)...';
+        elements.chatInput.disabled = true;
+
+        state.recordingTimer = setInterval(() => {
+          state.recordingSeconds++;
+          const mins = Math.floor(state.recordingSeconds / 60);
+          const secs = state.recordingSeconds % 60;
+          elements.chatInput.value = `Gravando áudio (${mins}:${String(secs).padStart(2, '0')})...`;
+        }, 1000);
+      } else {
+        clearInterval(state.recordingTimer);
+        state.recording = false;
+        elements.audioIcon.style.color = 'rgba(255,255,255,0.4)';
+        elements.audioIcon.style.animation = 'none';
+        elements.chatInput.disabled = false;
+        
+        const durationMins = Math.floor(state.recordingSeconds / 60);
+        const durationSecs = state.recordingSeconds % 60;
+        const durationStr = `${durationMins}:${String(durationSecs).padStart(2, '0')}`;
+
+        elements.chatInput.value = `🎤 Áudio enviado (${durationStr})`;
+        sendMessage();
+      }
+    });
+
+    // Simple Pulsing Animation CSS for Recording
+    const style = document.createElement('style');
+    style.innerHTML = `
+      @keyframes pulse {
+        from { transform: scale(1); opacity: 0.7; }
+        to { transform: scale(1.15); opacity: 1; }
+      }
+    `;
+    document.head.appendChild(style);
+
+    // Attachment and Emoji simulation alerts
+    elements.attachmentIcon.addEventListener('click', () => {
+      alert('Simulação: Seletor de arquivo de anexo aberto. (Imagem, Vídeo, Documento)');
+    });
+
+    elements.emojiIcon.addEventListener('click', () => {
+      alert('Simulação: Seletor de emojis aberto. Selecione uma reação.');
+    });
+
+    // G-HOF Topbar Integrations
+    const topbarSearch = document.querySelector('.topbar-search');
+    const themeBtn = document.querySelector('.topbar-btn:nth-of-type(1)');
+    const bellBtn = document.querySelector('.topbar-btn:nth-of-type(2)');
+
+    // Click topbar search to focus conversation search input
+    topbarSearch.addEventListener('click', () => {
+      elements.searchBox.focus();
+      elements.searchBox.select();
+    });
+
+    // Ctrl+K or Cmd+K keyboard shortcut
+    window.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        elements.searchBox.focus();
+        elements.searchBox.select();
+      }
+    });
+
+    // Theme toggle mock simulation
+    themeBtn.addEventListener('click', () => {
+      alert('Simulação G-HOF: Alternando entre Tema Escuro (Tech Dark) e Tema Claro (Light Mode).');
+    });
+
+    // Bell notification mock alert
+    bellBtn.addEventListener('click', () => {
+      alert('Nenhuma notificação nova no momento.');
+    });
+
+    // Initialize Page
+    renderChatList();
+    selectChat('js');
+  </script>
+
+</body>
+</html>
+

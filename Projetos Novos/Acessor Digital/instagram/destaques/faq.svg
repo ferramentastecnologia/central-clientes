@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1A1A1F"/>
+      <stop offset="100%" stop-color="#0F0F12"/>
+    </linearGradient>
+    <linearGradient id="purple" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#A78BFA"/>
+      <stop offset="100%" stop-color="#8B5CF6"/>
+    </linearGradient>
+    <linearGradient id="green" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4ADE80"/>
+      <stop offset="100%" stop-color="#22C55E"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background circle -->
+  <circle cx="100" cy="100" r="100" fill="url(#bg)"/>
+
+  <!-- Purple ring -->
+  <circle cx="100" cy="100" r="96" stroke="url(#purple)" stroke-width="1.5" fill="none" opacity="0.4"/>
+
+  <!-- Question mark bubble body -->
+  <rect x="54" y="48" width="92" height="76" rx="18" fill="url(#purple)" opacity="0.15"/>
+  <rect x="54" y="48" width="92" height="76" rx="18" stroke="url(#purple)" stroke-width="2" fill="none" filter="url(#glow)"/>
+
+  <!-- Bubble tail -->
+  <path d="M70 124 L62 142 L86 124" fill="url(#purple)" opacity="0.15"/>
+  <path d="M70 124 L62 142 L86 124" stroke="url(#purple)" stroke-width="2" stroke-linejoin="round" fill="none"/>
+
+  <!-- Question mark -->
+  <!-- Arc top -->
+  <path d="M88 72 Q88 60 100 60 Q112 60 112 72 Q112 82 100 87 L100 95"
+        stroke="url(#purple)" stroke-width="5" stroke-linecap="round" fill="none" filter="url(#glow)"/>
+  <!-- Dot -->
+  <circle cx="100" cy="105" r="3.5" fill="url(#green)" filter="url(#glow)"/>
+</svg>

@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Acessor Digital — Dashboard de Tarefas & Prioridades</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #0B0B0F;
+      --bg-card: #12121A;
+      --bg-input: #181824;
+      --primary: #8B5CF6;
+      --primary-hover: #7C3AED;
+      --secondary: #22C55E;
+      --secondary-hover: #16A34A;
+      --text-main: #F4F4F5;
+      --text-muted: #A1A1AA;
+      --border: #27273F;
+      --font-title: 'Plus Jakarta Sans', sans-serif;
+      --font-body: 'Inter', sans-serif;
+      
+      /* Priority colors */
+      --priority-high: #EF4444;
+      --priority-medium: #F59E0B;
+      --priority-low: #3B82F6;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      padding: 2rem;
+      line-height: 1.5;
+    }
+
+    /* Header styling */
+    header {
+      max-width: 1400px;
+      margin: 0 auto 2.5rem auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 2rem;
+    }
+
+    .brand-section {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .logo-container {
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-family: var(--font-title);
+      font-size: 1.5rem;
+      color: #FFF;
+      box-shadow: 0 4px 20px rgba(139, 92, 246, 0.3);
+    }
+
+    .brand-title h1 {
+      font-family: var(--font-title);
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      background: linear-gradient(to right, #FFF, #D8B4FE);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .brand-title p {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+    }
+
+    /* Progress Widget */
+    .progress-widget {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      padding: 1rem 1.5rem;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      min-width: 300px;
+    }
+
+    .progress-text {
+      flex-shrink: 0;
+    }
+
+    .progress-text h4 {
+      font-family: var(--font-title);
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+
+    .progress-text span {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .progress-bar-container {
+      flex-grow: 1;
+      height: 8px;
+      background: var(--bg-input);
+      border-radius: 4px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .progress-bar {
+      height: 100%;
+      background: linear-gradient(to right, var(--primary), var(--secondary));
+      width: 0%;
+      transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Main Grid Layout */
+    .main-grid {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 2rem;
+    }
+
+    @media (max-width: 1024px) {
+      .main-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.75rem;
+      height: fit-content;
+    }
+
+    .card-title {
+      font-family: var(--font-title);
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* Checklist & Add Task */
+    .add-task-form {
+      display: flex;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .add-task-form input[type="text"] {
+      flex-grow: 1;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      color: var(--text-main);
+      font-family: var(--font-body);
+      font-size: 0.9rem;
+    }
+
+    .add-task-form input[type="text"]:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    .add-task-form select {
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      padding: 0.75rem;
+      border-radius: 8px;
+      color: var(--text-main);
+      font-family: var(--font-body);
+      cursor: pointer;
+    }
+
+    .add-task-form button {
+      background: var(--primary);
+      border: none;
+      color: #FFF;
+      padding: 0.75rem 1.25rem;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .add-task-form button:hover {
+      background: var(--primary-hover);
+    }
+
+    .task-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .task-item {
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      padding: 1rem;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+
+    .task-item:hover {
+      transform: translateY(-2px);
+      border-color: rgba(139, 92, 246, 0.4);
+    }
+
+    .task-left {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .task-checkbox {
+      width: 20px;
+      height: 20px;
+      border-radius: 6px;
+      border: 2px solid var(--border);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .task-checkbox.checked {
+      background: var(--secondary);
+      border-color: var(--secondary);
+    }
+
+    .task-checkbox.checked::after {
+      content: '✓';
+      color: white;
+      font-size: 0.8rem;
+      font-weight: bold;
+    }
+
+    .task-text {
+      font-size: 0.95rem;
+      transition: color 0.2s, text-decoration 0.2s;
+    }
+
+    .task-item.completed .task-text {
+      color: var(--text-muted);
+      text-decoration: line-through;
+    }
+
+    .task-badges {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .badge {
+      font-size: 0.75rem;
+      padding: 0.25rem 0.6rem;
+      border-radius: 100px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .badge.priority-high {
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--priority-high);
+    }
+
+    .badge.priority-medium {
+      background: rgba(245, 158, 11, 0.15);
+      color: var(--priority-medium);
+    }
+
+    .badge.priority-low {
+      background: rgba(59, 130, 246, 0.15);
+      color: var(--priority-low);
+    }
+
+    .delete-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1.1rem;
+      cursor: pointer;
+      padding: 0.25rem;
+      border-radius: 4px;
+      transition: color 0.2s, background 0.2s;
+    }
+
+    .delete-btn:hover {
+      color: var(--priority-high);
+      background: rgba(239, 68, 68, 0.1);
+    }
+
+    /* Priorities Matrix (Sidebar) */
+    .priority-matrix {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .matrix-item {
+      border-left: 4px solid var(--border);
+      padding-left: 1rem;
+    }
+
+    .matrix-item.high { border-color: var(--priority-high); }
+    .matrix-item.medium { border-color: var(--priority-medium); }
+    .matrix-item.low { border-color: var(--priority-low); }
+
+    .matrix-title {
+      font-family: var(--font-title);
+      font-weight: 600;
+      font-size: 0.95rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .matrix-desc {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    /* Roadmap Timeline */
+    .roadmap-timeline {
+      grid-column: span 2;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+      margin-top: 1rem;
+    }
+
+    @media (max-width: 1024px) {
+      .roadmap-timeline {
+        grid-column: span 1;
+      }
+    }
+
+    .roadmap-step {
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem;
+      position: relative;
+    }
+
+    .roadmap-step.active {
+      border-color: var(--primary);
+      box-shadow: 0 0 15px rgba(139, 92, 246, 0.1);
+    }
+
+    .step-number {
+      position: absolute;
+      top: 1.25rem;
+      right: 1.25rem;
+      font-family: var(--font-title);
+      font-size: 1.5rem;
+      font-weight: 800;
+      opacity: 0.15;
+    }
+
+    .step-badge {
+      display: inline-block;
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 0.15rem 0.4rem;
+      border-radius: 4px;
+      margin-bottom: 0.75rem;
+      text-transform: uppercase;
+    }
+
+    .step-badge.pending { background: rgba(161, 161, 170, 0.15); color: var(--text-muted); }
+    .step-badge.current { background: rgba(139, 92, 246, 0.15); color: var(--primary); }
+    .step-badge.done { background: rgba(34, 197, 94, 0.15); color: var(--secondary); }
+
+    .step-title {
+      font-family: var(--font-title);
+      font-weight: 600;
+      font-size: 1.05rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .step-desc {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand-section">
+      <div class="logo-container">AD</div>
+      <div class="brand-title">
+        <h1>Acessor Digital</h1>
+        <p>Dashboard de Planejamento & Prioridades</p>
+      </div>
+    </div>
+
+    <div class="progress-widget">
+      <div class="progress-text">
+        <h4 id="progress-percent">0%</h4>
+        <span>Tarefas Concluídas</span>
+      </div>
+      <div class="progress-bar-container">
+        <div class="progress-bar" id="progress-bar"></div>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-grid">
+    <!-- Left: Checklist / Roadmap -->
+    <div style="display: flex; flex-direction: column; gap: 2rem;">
+      
+      <!-- Checklist -->
+      <section class="card">
+        <div class="card-title">
+          <span>Checklist de Atividades</span>
+          <span style="font-size: 0.85rem; color: var(--text-muted);" id="task-counter">0 / 0</span>
+        </div>
+
+        <form class="add-task-form" id="add-task-form">
+          <input type="text" id="task-input" placeholder="Nova atividade..." required>
+          <select id="task-priority">
+            <option value="low">Baixa</option>
+            <option value="medium" selected>Média</option>
+            <option value="high">Alta</option>
+          </select>
+          <button type="submit">Adicionar</button>
+        </form>
+
+        <div class="task-list" id="task-list">
+          <!-- Tasks loaded via JS -->
+        </div>
+      </section>
+
+      <!-- Roadmap -->
+      <section class="card">
+        <div class="card-title">Roadmap de Implementação</div>
+        
+        <div class="roadmap-timeline">
+          <div class="roadmap-step active">
+            <span class="step-number">01</span>
+            <span class="step-badge current">Em Andamento</span>
+            <div class="step-title">Posicionamento & Branding</div>
+            <div class="step-desc">Construção da identidade visual, logos, paleta de cores e destaques das redes sociais.</div>
+          </div>
+
+          <div class="roadmap-step">
+            <span class="step-number">02</span>
+            <span class="step-badge pending">Aguardando</span>
+            <div class="step-title">Estruturação de Canais</div>
+            <div class="step-desc">Criação das contas no Instagram/Facebook e Landing Page institucional.</div>
+          </div>
+
+          <div class="roadmap-step">
+            <span class="step-number">03</span>
+            <span class="step-badge pending">Aguardando</span>
+            <div class="step-title">Integração da IA</div>
+            <div class="step-desc">Conectar o motor de atendimento (RespondeAI) com WhatsApp API e CRM.</div>
+          </div>
+        </div>
+      </section>
+      
+    </div>
+
+    <!-- Right: Priority Matrix -->
+    <div style="display: flex; flex-direction: column; gap: 2rem;">
+      
+      <section class="card">
+        <div class="card-title">Mapa de Prioridades</div>
+        <div class="priority-matrix">
+          <div class="matrix-item high">
+            <div class="matrix-title">Prioridade Alta</div>
+            <div class="matrix-desc">Foco na definição do MVP de atendimento por IA e fechamento do roteiro da Landing Page institucional.</div>
+          </div>
+
+          <div class="matrix-item medium">
+            <div class="matrix-title">Prioridade Média</div>
+            <div class="matrix-desc">Criação dos criativos e posts de lançamento para aquecer as redes sociais recém-criadas.</div>
+          </div>
+
+          <div class="matrix-item low">
+            <div class="matrix-title">Prioridade Baixa</div>
+            <div class="matrix-desc">Ajustes estéticos secundários de tokens CSS e customização de relatórios do portal do cliente.</div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <script>
+    // Initial tasks if localStorage is empty
+    const initialTasks = [
+      { id: 1, text: "Aprovar paleta de cores e logos SVG", priority: "high", completed: true },
+      { id: 2, text: "Criar contas oficiais no Instagram e Facebook", priority: "high", completed: false },
+      { id: 3, text: "Esboçar seções principais da Landing Page", priority: "high", completed: false },
+      { id: 4, text: "Configurar domínio acessordigital.com.br", priority: "medium", completed: false },
+      { id: 5, text: "Mapear fluxo de mensagens e prompts da IA", priority: "medium", completed: false },
+      { id: 6, text: "Gerar postagens de lançamento da marca", priority: "low", completed: false }
+    ];
+
+    let tasks = JSON.parse(localStorage.getItem('acessor_tasks')) || initialTasks;
+
+    const taskList = document.getElementById('task-list');
+    const addTaskForm = document.getElementById('add-task-form');
+    const taskInput = document.getElementById('task-input');
+    const taskPriority = document.getElementById('task-priority');
+    const progressPercent = document.getElementById('progress-percent');
+    const progressBar = document.getElementById('progress-bar');
+    const taskCounter = document.getElementById('task-counter');
+
+    function saveTasks() {
+      localStorage.setItem('acessor_tasks', JSON.stringify(tasks));
+      renderTasks();
+    }
+
+    function renderTasks() {
+      taskList.innerHTML = '';
+      
+      if (tasks.length === 0) {
+        taskList.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 2rem;">Nenhuma atividade cadastrada.</div>';
+        progressPercent.textContent = '0%';
+        progressBar.style.width = '0%';
+        taskCounter.textContent = '0 / 0';
+        return;
+      }
+
+      // Sort: incomplete first, then priority high -> medium -> low
+      const priorityOrder = { high: 1, medium: 2, low: 3 };
+      const sortedTasks = [...tasks].sort((a, b) => {
+        if (a.completed !== b.completed) return a.completed ? 1 : -1;
+        return priorityOrder[a.priority] - priorityOrder[b.priority];
+      });
+
+      let completedCount = 0;
+
+      sortedTasks.forEach(task => {
+        if (task.completed) completedCount++;
+
+        const taskItem = document.createElement('div');
+        taskItem.className = `task-item ${task.completed ? 'completed' : ''}`;
+        
+        taskItem.innerHTML = `
+          <div class="task-left">
+            <div class="task-checkbox ${task.completed ? 'checked' : ''}" onclick="toggleTask(${task.id})"></div>
+            <span class="task-text">${task.text}</span>
+          </div>
+          <div class="task-badges">
+            <span class="badge priority-${task.priority}">${task.priority === 'high' ? 'Alta' : task.priority === 'medium' ? 'Média' : 'Baixa'}</span>
+            <button class="delete-btn" onclick="deleteTask(${task.id})">✕</button>
+          </div>
+        `;
+        
+        taskList.appendChild(taskItem);
+      });
+
+      // Update progress
+      const percent = Math.round((completedCount / tasks.length) * 100);
+      progressPercent.textContent = `${percent}%`;
+      progressBar.style.width = `${percent}%`;
+      taskCounter.textContent = `${completedCount} / ${tasks.length}`;
+    }
+
+    window.toggleTask = function(id) {
+      tasks = tasks.map(t => t.id === id ? { ...t, completed: !t.completed } : t);
+      saveTasks();
+    };
+
+    window.deleteTask = function(id) {
+      tasks = tasks.filter(t => t.id !== id);
+      saveTasks();
+    };
+
+    addTaskForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const text = taskInput.value.trim();
+      const priority = taskPriority.value;
+      
+      if (!text) return;
+
+      const newTask = {
+        id: Date.now(),
+        text,
+        priority,
+        completed: false
+      };
+
+      tasks.push(newTask);
+      taskInput.value = '';
+      saveTasks();
+    });
+
+    // Initial render
+    renderTasks();
+  </script>
+</body>
+</html>

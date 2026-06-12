@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1A1A1F"/>
+      <stop offset="100%" stop-color="#0F0F12"/>
+    </linearGradient>
+    <linearGradient id="purple" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#A78BFA"/>
+      <stop offset="100%" stop-color="#8B5CF6"/>
+    </linearGradient>
+    <linearGradient id="green" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4ADE80"/>
+      <stop offset="100%" stop-color="#22C55E"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3.5" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <circle cx="100" cy="100" r="100" fill="url(#bg)"/>
+  <circle cx="100" cy="100" r="96" stroke="url(#purple)" stroke-width="1.5" fill="none" opacity="0.4"/>
+
+  <!-- Chat bubble (WhatsApp style, bigger) -->
+  <rect x="48" y="52" width="104" height="84" rx="20" fill="url(#purple)" opacity="0.12"/>
+  <rect x="48" y="52" width="104" height="84" rx="20" stroke="url(#purple)" stroke-width="2.5" fill="none" filter="url(#glow)"/>
+  <!-- Bubble tail bottom-left -->
+  <path d="M62 136 L52 154 L82 136" fill="url(#purple)" opacity="0.12"/>
+  <path d="M62 136 L52 154 L82 136" stroke="url(#purple)" stroke-width="2.5" stroke-linejoin="round" fill="none"/>
+
+  <!-- Lightning bolt (green) inside bubble -->
+  <path d="M112 68 L88 100 L100 100 L88 128 L116 92 L104 92 Z"
+        fill="url(#green)" filter="url(#glow)"/>
+</svg>
