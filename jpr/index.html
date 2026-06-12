@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#1E1510">
+<meta name="description" content="JPR Móveis Rústicos · Área de Validação de Projeto · Marketplaces">
+<title>JPR Móveis Rústicos · Validação Marketplace</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --jpr-bg: #1E1510;
+    --jpr-card: #2D201A;
+    --jpr-card-hover: #3C2B23;
+    --jpr-accent: #C8A27C;
+    --jpr-accent-hover: #E2C09E;
+    --jpr-white: #F7F4F2;
+    --jpr-beige: #D5C7BC;
+    --jpr-gray: #8F7D74;
+    --jpr-line: rgba(200, 162, 124, 0.12);
+    --jpr-ok: #4ADE80;
+    --jpr-warning: #FBBF24;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+  body {
+    background: var(--jpr-bg);
+    color: var(--jpr-white);
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-weight: 400;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+  }
+  
+  /* Ambient BG */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(circle at 85% 15%, rgba(200, 162, 124, 0.08), transparent 45%),
+      radial-gradient(circle at 10% 85%, rgba(143, 125, 116, 0.04), transparent 45%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container { position: relative; z-index: 1; width: 100%; max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+  @media (min-width: 768px) { .container { padding: 0 40px; } }
+
+  /* TOP BAR */
+  .topnav {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: rgba(30, 21, 16, 0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--jpr-line);
+  }
+  .topnav-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 0;
+  }
+  .nav-logo {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 900;
+    font-size: 22px;
+    letter-spacing: .08em;
+    color: var(--jpr-white);
+    text-decoration: none;
+    text-transform: uppercase;
+  }
+  .nav-logo span { color: var(--jpr-accent); }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 999px;
+    background: rgba(200, 162, 124, 0.08);
+    border: 1px solid var(--jpr-accent);
+    color: var(--jpr-accent);
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+  }
+  .badge::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--jpr-accent);
+    animation: pulse 2.5s infinite;
+  }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
+
+  /* HERO */
+  .hero-wrap {
+    position: relative;
+    margin: 24px 0 48px;
+    border-radius: 28px;
+    overflow: hidden;
+    background: var(--jpr-card);
+    border: 1px solid var(--jpr-line);
+  }
+  @media (min-width: 900px) {
+    .hero-wrap { display: grid; grid-template-columns: 1.1fr 0.9fr; min-height: 500px; }
+  }
+  .hero-content { padding: 40px 32px; display: flex; flex-direction: column; justify-content: center; }
+  @media (min-width: 768px) { .hero-content { padding: 56px 48px; } }
+  .hero-kicker {
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    color: var(--jpr-accent);
+    margin-bottom: 16px;
+  }
+  .hero-title {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 900;
+    font-size: 42px;
+    line-height: 1.05;
+    color: var(--jpr-white);
+    margin-bottom: 20px;
+  }
+  @media (min-width: 640px) { .hero-title { font-size: 54px; } }
+  @media (min-width: 1024px) { .hero-title { font-size: 64px; } }
+  .hero-title em { font-style: normal; color: var(--jpr-accent); }
+  .hero-sub {
+    font-size: 15px;
+    color: var(--jpr-beige);
+    line-height: 1.7;
+    margin-bottom: 28px;
+    max-width: 500px;
+  }
+  .hero-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 28px;
+    background: var(--jpr-accent);
+    color: var(--jpr-bg);
+    font-weight: 800;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: .14em;
+    border-radius: 10px;
+    text-decoration: none;
+    align-self: flex-start;
+    transition: all .2s ease-in-out;
+    box-shadow: 0 4px 14px rgba(200, 162, 124, 0.2);
+  }
+  .hero-cta:hover { background: var(--jpr-accent-hover); transform: translateY(-2px); }
+  .hero-image { position: relative; min-height: 300px; overflow: hidden; }
+  @media (min-width: 900px) { .hero-image { min-height: 100%; } }
+  .hero-image::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, var(--jpr-card) 0%, transparent 20%);
+    z-index: 1;
+  }
+  @media (max-width: 899px) {
+    .hero-image::before {
+      background: linear-gradient(180deg, transparent 40%, var(--jpr-card) 100%);
+    }
+  }
+  .hero-image img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+  /* SECTION */
+  .section { margin-bottom: 64px; }
+  .section-head {
+    margin-bottom: 32px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--jpr-line);
+    position: relative;
+  }
+  .section-head::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 80px;
+    height: 2px;
+    background: var(--jpr-accent);
+  }
+  .section-kicker {
+    font-weight: 700;
+    font-size: 10px;
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    color: var(--jpr-accent);
+    margin-bottom: 8px;
+  }
+  .section-title {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 800;
+    font-size: 32px;
+    letter-spacing: -.01em;
+    color: var(--jpr-white);
+  }
+  @media (min-width: 640px) { .section-title { font-size: 38px; } }
+  .section-desc {
+    color: var(--jpr-gray);
+    font-size: 14px;
+    margin-top: 8px;
+  }
+
+  /* PHOTO VARIATIONS GRID */
+  .photo-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  @media (min-width: 640px) { .photo-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (min-width: 1024px) { .photo-grid { grid-template-columns: repeat(4, 1fr); } }
+  
+  .photo-card {
+    background: var(--jpr-card);
+    border: 1px solid var(--jpr-line);
+    border-radius: 20px;
+    overflow: hidden;
+    transition: all .25s ease;
+    display: flex;
+    flex-direction: column;
+  }
+  .photo-card:hover {
+    border-color: var(--jpr-accent);
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+  }
+  .photo-img-container {
+    aspect-ratio: 1 / 1;
+    overflow: hidden;
+    position: relative;
+    background: #110B08;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .photo-img-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform .4s ease;
+  }
+  .photo-card:hover .photo-img-container img {
+    transform: scale(1.04);
+  }
+  .photo-label {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    background: rgba(30, 21, 16, 0.85);
+    border: 1px solid var(--jpr-line);
+    color: var(--jpr-accent);
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    padding: 4px 10px;
+    border-radius: 6px;
+    backdrop-filter: blur(4px);
+  }
+  .photo-info {
+    padding: 20px;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .photo-title {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 700;
+    font-size: 18px;
+    color: var(--jpr-white);
+    margin-bottom: 8px;
+  }
+  .photo-desc {
+    font-size: 13px;
+    color: var(--jpr-beige);
+    line-height: 1.5;
+  }
+
+  /* LOGISTICS & VIABILITY CARDS */
+  .logistics-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  @media (min-width: 768px) { .logistics-grid { grid-template-columns: repeat(2, 1fr); } }
+  
+  .logistics-card {
+    background: var(--jpr-card);
+    border: 1px solid var(--jpr-line);
+    border-radius: 20px;
+    padding: 32px;
+    position: relative;
+    overflow: hidden;
+  }
+  .logistics-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: var(--jpr-accent);
+  }
+  .logistics-title {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 700;
+    font-size: 22px;
+    color: var(--jpr-white);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .logistics-item {
+    margin-bottom: 12px;
+    font-size: 14px;
+    color: var(--jpr-beige);
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .logistics-item strong { color: var(--jpr-white); }
+  .logistics-icon-ok { color: var(--jpr-ok); font-weight: bold; }
+  .logistics-icon-warn { color: var(--jpr-warning); font-weight: bold; }
+
+  /* STRATEGY BLOCKS */
+  .strategy-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  @media (min-width: 768px) { .strategy-grid { grid-template-columns: repeat(2, 1fr); } }
+  
+  .strategy-card {
+    background: var(--jpr-card);
+    border: 1px solid var(--jpr-line);
+    border-radius: 20px;
+    padding: 32px;
+  }
+  .strategy-author {
+    font-size: 11px;
+    letter-spacing: .15em;
+    text-transform: uppercase;
+    color: var(--jpr-accent);
+    font-weight: 700;
+    margin-bottom: 12px;
+    display: inline-block;
+    border-bottom: 1px solid var(--jpr-accent);
+    padding-bottom: 4px;
+  }
+  .strategy-title {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 800;
+    font-size: 24px;
+    color: var(--jpr-white);
+    margin-bottom: 16px;
+  }
+  .strategy-text {
+    font-size: 14px;
+    color: var(--jpr-beige);
+    line-height: 1.65;
+  }
+  .strategy-text p {
+    margin-bottom: 14px;
+  }
+  .strategy-text strong {
+    color: var(--jpr-white);
+  }
+
+  /* ACCORDION / DETAILS */
+  .details-box {
+    background: var(--jpr-card);
+    border: 1px solid var(--jpr-line);
+    border-radius: 20px;
+    padding: 24px;
+    margin-top: 24px;
+  }
+  .details-box h3 {
+    font-family: 'Outfit', sans-serif;
+    font-size: 18px;
+    margin-bottom: 12px;
+    color: var(--jpr-white);
+  }
+  .details-box p {
+    font-size: 14px;
+    color: var(--jpr-gray);
+    line-height: 1.6;
+  }
+
+  /* FOOTER */
+  .footer {
+    margin-top: 64px;
+    padding: 40px 0;
+    border-top: 1px solid var(--jpr-line);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 20px;
+  }
+  .footer-text {
+    font-size: 13px;
+    color: var(--jpr-gray);
+  }
+  .footer-text strong { color: var(--jpr-accent); font-weight: 700; }
+  .footer-link {
+    color: var(--jpr-gray);
+    text-decoration: none;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    font-weight: 700;
+    transition: color .2s;
+  }
+  .footer-link:hover { color: var(--jpr-accent); }
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="container">
+    <div class="topnav-inner">
+      <a class="nav-logo" href="#">JPR <span>RÚSTICOS</span></a>
+      <span class="badge">Planejamento Ativo</span>
+    </div>
+  </div>
+</nav>
+
+<div class="container">
+
+  <!-- HERO BANNER -->
+  <div class="hero-wrap">
+    <div class="hero-content">
+      <div class="hero-kicker">Estudo de Viabilidade Comercial</div>
+      <h1 class="hero-title">MADEIRA MACIÇA nos <em>Marketplaces</em>.</h1>
+      <p class="hero-sub">
+        Direcionamento estratégico e modelagem criativa para introduzir a linha de banquetas e aparadores da JPR Móveis Rústicos no Mercado Livre e na Shopee.
+      </p>
+      <a class="hero-cta" href="#galeria">Ver Variações de Fotos ↓</a>
+    </div>
+    <div class="hero-image">
+      <img src="assets/original.png" alt="Móveis Rústicos JPR" loading="eager" />
+    </div>
+  </div>
+
+  <!-- GALERIA DE FOTOS PARA MARKETPLACE -->
+  <section class="section" id="galeria">
+    <div class="section-head">
+      <div class="section-kicker">Criativos e Apresentação de Produto</div>
+      <h2 class="section-title">Fotos Otimizadas para Vendas</h2>
+      <p class="section-desc">Variações extraídas e geradas por IA a partir das peças reais de fabricação para atender aos requisitos de conversão e catálogo.</p>
+    </div>
+
+    <!-- PRODUTO 1: BANQUETA PRETA -->
+    <h3 style="font-family:'Outfit',sans-serif;font-size:22px;margin:32px 0 16px;color:var(--jpr-accent);border-left:3px solid var(--jpr-accent);padding-left:10px;text-transform:uppercase;letter-spacing:1px;">1. Banqueta Rústica Preta (Premium)</h3>
+    <div class="photo-grid" style="margin-bottom: 40px;">
+      <div class="photo-card">
+        <div class="photo-img-container">
+          <span class="photo-label">Original</span>
+          <img src="assets/original.png" alt="Foto Original da Banqueta Preta" loading="lazy" />
+        </div>
+        <div class="photo-info">
+          <h4 class="photo-title">Foto de Oficina</h4>
+          <p class="photo-desc">Foto real capturada no ambiente de montagem com outras peças de mostruário ao fundo.</p>
+        </div>
+      </div>
+      <div class="photo-card">
+        <div class="photo-img-container">
+          <span class="photo-label">Catálogo (ML)</span>
+          <img src="assets/banqueta_studio.png" alt="Banqueta Preta Fundo Branco" loading="lazy" />
+        </div>
+        <div class="photo-info">
+          <h4 class="photo-title">Estúdio / Fundo Branco</h4>
+          <p class="photo-desc">Fundo branco puro e sombra suave de contato, essencial para indexação orgânica no Mercado Livre.</p>
+        </div>
+      </div>
+      <div class="photo-card">
+        <div class="photo-img-container">
+          <span class="photo-label">Lifestyle</span>
+          <img src="assets/banqueta_ambientada.png" alt="Banqueta Preta Ambientada" loading="lazy" />
+        </div>
+        <div class="photo-info">
+          <h4 class="photo-title">Ambientação Gourmet</h4>
+          <p class="photo-desc">Peças em uso prático em uma ilha de cozinha de alto padrão, inspirando o desejo de compra.</p>
+        </div>
+      </div>
+      <div class="photo-card">
+        <div class="photo-img-container">
+          <span class="photo-label">Zoom</span>
+          <img src="assets/banqueta_detalhe.png" alt="Detalhes Banqueta Preta" loading="lazy" />
+        </div>
+        <div class="photo-info">
+          <h4 class="photo-title">Foco no Verniz</h4>
+          <p class="photo-desc">Close-up macro nos acabamentos e brilho do verniz preto sobre a madeira maciça.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- PRODUTO 2: BANQUETA MARROM -->
+    <h3 style="font-family:'Outfit',sans-serif;font-size:22px;margin:32px 0 16px;color:var(--jpr-accent);border-left:3px solid var(--jpr-accent);padding-left:10px;text-transform:uppercase;letter-spacing:1px;">2. Banqueta Rústica Marrom (Mel Natural)</h3>
+    <div class="photo-grid" style="margin-bottom: 40px;">
+      <div class="photo-card">
+        <div class="photo-img-container">
+          <span class="photo-label">Original</span>
+          <img src="assets/banqueta_marrom_original.png" alt="Foto Original da Banqueta Marrom" loading="lazy" />
+        </div>
+        <div class="photo-info">
+          <h4 class="photo-title">Foto de Oficina</h4>
+          <p class="photo-desc">Registro físico da banqueta com encosto anatômico e acabamento em tom mel polido.</p>
+        </div>
+      </div>
+      <div class="photo-card">
+        <div class="photo-img-container">
+          <span class="photo-label">Catálogo (ML)</span>
+          <img src="assets/banqueta_marrom_studio.png" alt="Banqueta Marrom Fundo Branco" loading="lazy" />
+        </div>
+        <div class="photo-info">
+          <h4 class="photo-title">Estúdio / Fundo Branco</h4>
+          <p class="photo-desc">Isolamento completo do produto com realce das tonalidades naturais e reflexos do verniz.</p>
+        </div>
+      </div>
+      <div class="photo-card" style="opacity: 0.6; pointer-events: none; background: rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; min-height: 250px; border: 1px dashed var(--jpr-line);">
+        <div style="text-align: center; padding: 20px;">
+          <span style="font-size: 28px; color: var(--jpr-gray);">🛋️</span>
+          <h4 style="font-family:'Outfit',sans-serif; font-size:14px; margin-top:8px; color:var(--jpr-gray);">Ambientada (Mel)</h4>
+          <p style="font-size: 11px; color: var(--jpr-gray); margin-top: 4px;">Pendente de Geração</p>
+        </div>
+      </div>
+      <div class="photo-card" style="opacity: 0.6; pointer-events: none; background: rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; min-height: 250px; border: 1px dashed var(--jpr-line);">
+        <div style="text-align: center; padding: 20px;">
+          <span style="font-size: 28px; color: var(--jpr-gray);">🔎</span>
+          <h4 style="font-family:'Outfit',sans-serif; font-size:14px; margin-top:8px; color:var(--jpr-gray);">Detalhe de Encosto</h4>
+          <p style="font-size: 11px; color: var(--jpr-gray); margin-top: 4px;">Pendente de Geração</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- PRODUTO 3: APARADOR INDUSTRIAL -->
+    <h3 style="font-family:'Outfit',sans-serif;font-size:22px;margin:32px 0 16px;color:var(--jpr-accent);border-left:3px solid var(--jpr-accent);padding-left:10px;text-transform:uppercase;letter-spacing:1px;">3. Aparador Rústico Industrial</h3>
+    <div class="photo-grid">
+      <div class="photo-card">
+        <div class="photo-img-container">
+          <span class="photo-label">Original</span>
+          <img src="assets/aparador_original.png" alt="Foto Original do Aparador" loading="lazy" />
+        </div>
+        <div class="photo-info">
+          <h4 class="photo-title">Foto de Oficina</h4>
+          <p class="photo-desc">Aparador real com tampo de madeira maciça de alta espessura e base metálica preta.</p>
+        </div>
+      </div>
+      <div class="photo-card">
+        <div class="photo-img-container">
+          <span class="photo-label">Catálogo (ML)</span>
+          <img src="assets/aparador_studio.png" alt="Aparador Fundo Branco" loading="lazy" />
+        </div>
+        <div class="photo-info">
+          <h4 class="photo-title">Estúdio / Fundo Branco</h4>
+          <p class="photo-desc">Destaque para o tampo rústico e estrutura dos pés U-shape em fundo branco puro.</p>
+        </div>
+      </div>
+      <div class="photo-card" style="opacity: 0.6; pointer-events: none; background: rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; min-height: 250px; border: 1px dashed var(--jpr-line);">
+        <div style="text-align: center; padding: 20px;">
+          <span style="font-size: 28px; color: var(--jpr-gray);">🚪</span>
+          <h4 style="font-family:'Outfit',sans-serif; font-size:14px; margin-top:8px; color:var(--jpr-gray);">Hall de Entrada</h4>
+          <p style="font-size: 11px; color: var(--jpr-gray); margin-top: 4px;">Pendente de Geração</p>
+        </div>
+      </div>
+      <div class="photo-card" style="opacity: 0.6; pointer-events: none; background: rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; min-height: 250px; border: 1px dashed var(--jpr-line);">
+        <div style="text-align: center; padding: 20px;">
+          <span style="font-size: 28px; color: var(--jpr-gray);">📐</span>
+          <h4 style="font-family:'Outfit',sans-serif; font-size:14px; margin-top:8px; color:var(--jpr-gray);">Detalhe de Encaixes</h4>
+          <p style="font-size: 11px; color: var(--jpr-gray); margin-top: 4px;">Pendente de Geração</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- VIABILIDADE LOGÍSTICA -->
+  <section class="section">
+    <div class="section-head">
+      <div class="section-kicker">Operações & Distribuição</div>
+      <h2 class="section-title">Modelagem Logística de Envio</h2>
+    </div>
+    <div class="logistics-grid">
+      
+      <!-- CARD 1: BANQUETAS -->
+      <div class="logistics-card">
+        <h3 class="logistics-title">🪵 Banquetas Rústicas</h3>
+        <div class="logistics-item">
+          <span class="logistics-icon-ok">✓</span>
+          <span><strong>Peso Unitário:</strong> ~8kg (Madeira maciça). Perfeitamente dentro dos limites.</span>
+        </div>
+        <div class="logistics-item">
+          <span class="logistics-icon-ok">✓</span>
+          <span><strong>Formatos de Envio:</strong> Kits de 2 e 4 unidades são despachados em caixa única reforçada pelas coletas (Mercado Envios / Shopee Envios).</span>
+        </div>
+        <div class="logistics-item">
+          <span class="logistics-icon-ok">✓</span>
+          <span><strong>Aproveitamento de Frete:</strong> Menor custo logístico por peça ao agrupar em kits, aumentando a atratividade comercial.</span>
+        </div>
+      </div>
+
+      <!-- CARD 2: APARADORES -->
+      <div class="logistics-card">
+        <h3 class="logistics-title">🛋️ Aparador Rústico</h3>
+        <div class="logistics-item">
+          <span class="logistics-icon-warn">!</span>
+          <span><strong>Peso Unitário:</strong> 25kg a 40kg. Volume crítico que pode travar em coletas padrão se montado.</span>
+        </div>
+        <div class="logistics-item">
+          <span class="logistics-icon-ok">✓</span>
+          <span><strong>Estratégia Flat-Pack:</strong> Projetar tampo e pernas para montagem rápida no destino (parafusos inclusos), permitindo embalagem plana de baixo custo.</span>
+        </div>
+        <div class="logistics-item">
+          <span class="logistics-icon-warn">!</span>
+          <span><strong>Logística Auxiliar:</strong> Caso montado, exige frete a combinar com transportadora dedicada (Frenet/Melhor Envio integrados no ERP).</span>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- CONSULTORIA ADJACENTE (SOBRAL & HORMOZI) -->
+  <section class="section">
+    <div class="section-head">
+      <div class="section-kicker">Direcionamento Estratégico</div>
+      <h2 class="section-title">Táticas de Marketing e Oferta</h2>
+    </div>
+    <div class="strategy-grid">
+      
+      <!-- PEDRO SOBRAL -->
+      <div class="strategy-card">
+        <span class="strategy-author">Tática BR · Pedro Sobral</span>
+        <h3 class="strategy-title">Ativação do Termômetro</h3>
+        <div class="strategy-text">
+          <p>
+            "O maior erro no início de uma conta no Mercado Livre é tentar lucrar no dia um. Sem reputação (termômetro cinza), seu anúncio não tem exposição orgânica alguma.
+          </p>
+          <p>
+            <strong>Ação imediata:</strong> Vamos cadastrar os kits de banquetas a preço de custo e usar a base atual de clientes locais ou contatos para forçar as <strong>10 primeiras vendas</strong>. 
+          </p>
+          <p>
+            Com o termômetro verde ativo, o ML libera o Mercado Envios Coletas. Aí ligamos o <strong>Product Ads</strong> focado em termos específicos como <em>'banqueta alta madeira maciça'</em> para dominar o tráfego qualificado."
+          </p>
+        </div>
+      </div>
+
+      <!-- ALEX HORMOZI -->
+      <div class="strategy-card">
+        <span class="strategy-author">Math & Oferta · Alex Hormozi</span>
+        <h3 class="strategy-title">A Oferta Irresistível</h3>
+        <div class="strategy-text">
+          <p>
+            "Se você concorre apenas pelo preço da banqueta, o frete alto da madeira maciça vai matar a sua conversão. Precisamos mudar a equação de valor.
+          </p>
+          <p>
+            <strong>Estrutura da Oferta:</strong> Não venda 'Banqueta de Madeira'. Venda o <em>'Kit Cozinha Gourmet Stark'</em>. Adicione:
+          </p>
+          <p>
+            1. <strong>Garantia Estendida:</strong> Destaque os 20+ anos de durabilidade contra o MDF barato.<br>
+            2. <strong>Cera de Manutenção Grátis:</strong> Um brinde artesanal de R$ 5,00 que vale R$ 50,00 na percepção do cliente.<br>
+            3. <strong>Montagem Simplificada:</strong> Chave de montagem inclusa e garantia de montagem em 5 minutos.
+          </p>
+          <p>
+            Isso faz o cliente comparar valor, não preço. O frete se torna irrelevante."
+          </p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- DOCUMENT BOX -->
+    <div class="details-box">
+      <h3>Nota de Integração</h3>
+      <p>
+        Este projeto já está pré-cadastrado no ecossistema da Central de Clientes Starken. O mapeamento do cliente está ativo como pendente sob o slug <code>jpr</code>. A validação real das métricas de vendas começará assim que as contas oficiais de marketplace forem integradas via ERP (Bling/Tiny) e os anúncios começarem a rodar.
+      </p>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="footer-text">
+      Operação e Onboarding mantidos por <strong>Starken Tecnologia</strong> · 2026
+    </div>
+    <a class="footer-link" href="../">← Voltar para a Central</a>
+  </footer>
+
+</div>
+
+</body>
+</html>
