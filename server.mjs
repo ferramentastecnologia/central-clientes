@@ -384,22 +384,34 @@ async function fetchAgendamentos() {
     try {
       const headers = { 'apikey': supaKey, 'Authorization': `Bearer ${supaKey}` };
       
+      const getMappedClient = (key) => {
+        if (!key) return null;
+        const cleanKey = key.toLowerCase().replace(/[^a-z0-9]/g, '');
+        return (mapping.clients || []).find(c => {
+          const cleanSlug = c.slug.toLowerCase().replace(/[^a-z0-9]/g, '');
+          return cleanKey.includes(cleanSlug) || cleanSlug.includes(cleanKey);
+        });
+      };
+
       const qRes = await fetch(`${supaUrl}/rest/v1/publish_queue?status=in.(QUEUED,PROCESSING)`, { headers });
       const qData = await qRes.json();
       if (Array.isArray(qData)) {
-        qData.forEach(item => cronsData.crons.push({
-          id: item.id,
-          client_slug: item.client_key,
-          client: item.client_name,
-          kind: item.post_type || 'feed',
-          next_fire_iso: item.scheduled_for,
-          image_url: (item.image_urls && item.image_urls.length > 0) ? item.image_urls[0] : null,
-          images: item.image_urls || null,
-          caption: item.caption || '',
-          status: 'pending',
-          description: item.caption ? item.caption.substring(0, 60) + '...' : 'Post do Supabase',
-          channels: item.platform === 'both' ? ['ig', 'fb'] : [item.platform || 'ig']
-        }));
+        qData.forEach(item => {
+          const mapped = getMappedClient(item.client_key);
+          cronsData.crons.push({
+            id: item.id,
+            client_slug: mapped ? mapped.slug : item.client_key,
+            client: mapped ? mapped.name : item.client_name,
+            kind: item.post_type || 'feed',
+            next_fire_iso: item.scheduled_for,
+            image_url: (item.image_urls && item.image_urls.length > 0) ? item.image_urls[0] : null,
+            images: item.image_urls || null,
+            caption: item.caption || '',
+            status: 'pending',
+            description: item.caption ? item.caption.substring(0, 60) + '...' : 'Post do Supabase',
+            channels: item.platform === 'both' ? ['ig', 'fb'] : [item.platform || 'ig']
+          });
+        });
       }
 
       const hRes = await fetch(`${supaUrl}/rest/v1/publish_history?status=eq.PUBLISHED`, { headers });
@@ -412,10 +424,11 @@ async function fetchAgendamentos() {
           } else if (item.image_url) {
             imgs = [item.image_url];
           }
+          const mapped = getMappedClient(item.client_key);
           const rec = {
             id: item.post_id || item.id,
-            client_slug: item.client_key,
-            client: item.client_name,
+            client_slug: mapped ? mapped.slug : item.client_key,
+            client: mapped ? mapped.name : item.client_name,
             published_iso: item.created_at || item.scheduled_for || new Date().toISOString(),
             caption: item.caption,
             image_url: imgs ? imgs[0] : null,
