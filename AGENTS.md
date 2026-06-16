@@ -35,6 +35,7 @@ ssh hostinger-vps "cd /var/www/central-clientes && git pull && pm2 restart centr
 ```
 - VPS: alias SSH `hostinger-vps` · path `/var/www/central-clientes` · processo PM2 `central-clientes-starken`.
 - ⚠️ **O agente NÃO deve realizar commits, push ou deploy diretamente. O agente deve apenas aplicar as alterações necessárias nos arquivos locais (workspace) e deixar que o usuário faça o commit, push e deploy manualmente.**
+- ⚠️ **LEMBRETE OBRIGATÓRIO:** Sempre que realizarmos modificações no código da central (HTML, JS, server, etc), o agente **DEVE lembrar ativamente o usuário** de rodar o comando da VPS (`ssh hostinger-vps...`) para que as mudanças entrem em tempo real.
 - Commits terminam com `Co-Authored-By:` do modelo. Nunca pular hooks/assinatura sem pedido.
 
 ## 4. Superfícies principais (todas servidas por `server.mjs`)
