@@ -398,10 +398,11 @@ async function fetchAgendamentos() {
       if (Array.isArray(qData)) {
         qData.forEach(item => {
           const mapped = getMappedClient(item.client_key);
+          if (!mapped) return;
           cronsData.crons.push({
             id: item.id,
-            client_slug: mapped ? mapped.slug : item.client_key,
-            client: mapped ? mapped.name : item.client_name,
+            client_slug: mapped.slug,
+            client: mapped.name,
             kind: item.post_type || 'feed',
             next_fire_iso: item.scheduled_for,
             image_url: (item.image_urls && item.image_urls.length > 0) ? item.image_urls[0] : null,
@@ -425,10 +426,11 @@ async function fetchAgendamentos() {
             imgs = [item.image_url];
           }
           const mapped = getMappedClient(item.client_key);
+          if (!mapped) return;
           const rec = {
             id: item.post_id || item.id,
-            client_slug: mapped ? mapped.slug : item.client_key,
-            client: mapped ? mapped.name : item.client_name,
+            client_slug: mapped.slug,
+            client: mapped.name,
             published_iso: item.created_at || item.scheduled_for || new Date().toISOString(),
             caption: item.caption,
             image_url: imgs ? imgs[0] : null,
