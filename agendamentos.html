@@ -969,24 +969,24 @@ function renderCron(cron) {
   const cronImgs = (fmt0 === 'carousel' && Array.isArray(cron.images) && cron.images.length > 1) ? cron.images : null;
   let thumb;
   if (videoUrl) {
-    thumb = `<button class="cron-thumb cron-video" data-video="${escape(videoUrl)}" title="Ampliar / ouvir">
+    thumb = `<button class="cron-thumb cron-video" data-video="${escape(videoUrl)}" title="Ampliar / ouvir" onclick="event.stopPropagation()">
       <video src="${escape(videoUrl)}" muted loop autoplay playsinline preload="metadata"></video>
       <span class="play-badge">⛶</span>
     </button>`;
   } else if (cronImgs) {
-    thumb = `<button class="cron-thumb cron-gallery" data-gallery="${JSON.stringify(cronImgs).replace(/"/g, '&quot;')}" title="Ver ${cronImgs.length} imagens">
+    thumb = `<button class="cron-thumb cron-gallery" data-gallery="${JSON.stringify(cronImgs).replace(/"/g, '&quot;')}" title="Ver ${cronImgs.length} imagens" onclick="event.stopPropagation()">
       <img src="${escape(cronImgs[0])}" alt="preview" loading="lazy">
       <span class="cc-count">🎠 ${cronImgs.length}</span>
     </button>`;
   } else if (cron.image_url) {
-    thumb = `<a class="cron-thumb" href="${escape(cron.image_url)}" target="_blank" title="Abrir criativo"><img src="${escape(cron.image_url)}" alt="preview" loading="lazy"></a>`;
+    thumb = `<a class="cron-thumb" href="${escape(cron.image_url)}" target="_blank" title="Abrir criativo" onclick="event.stopPropagation()"><img src="${escape(cron.image_url)}" alt="preview" loading="lazy"></a>`;
   } else {
-    thumb = `<div class="cron-thumb placeholder">${FORMAT[fmt0]?.icon || '📄'}</div>`;
+    thumb = `<div class="cron-thumb placeholder" onclick="event.stopPropagation()">${FORMAT[fmt0]?.icon || '📄'}</div>`;
   }
 
   const cardClass = isSkipped ? 'skipped' : isCompleted ? 'completed' : imminent ? 'imminent' : '';
   return `
-    <div class="cron-card ${cardClass}">
+    <div class="cron-card ${cardClass}" onclick="openPostDetails('${cron.id}', 'cron')" style="cursor:pointer;">
       <div class="cron-inner">
         ${thumb}
         <div class="cron-content">
@@ -1221,6 +1221,13 @@ function openPostDetails(id, type) {
     post = cachedData.cron_stories.find(s => s.id === id);
     if (post) {
       clientName = post.client_name;
+      const c = cachedData.clients.find(x => x.slug === post.client_slug);
+      agency = c ? c.agencia : '';
+    }
+  } else if (type === 'cron') {
+    post = cachedData.crons.find(s => s.id === id);
+    if (post) {
+      clientName = post.client;
       const c = cachedData.clients.find(x => x.slug === post.client_slug);
       agency = c ? c.agencia : '';
     }
