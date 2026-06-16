@@ -34,7 +34,7 @@ Fluxo: **GitHub `main` → VPS → PM2 → `central.starkentecnologia.com.br`**.
 ssh hostinger-vps "cd /var/www/central-clientes && git pull && pm2 restart central-clientes-starken"
 ```
 - VPS: alias SSH `hostinger-vps` · path `/var/www/central-clientes` · processo PM2 `central-clientes-starken`.
-- ⚠️ **Neste repositório, o agente está autorizado a realizar commit, push direto na `main` e deploy na VPS sem a necessidade de confirmação prévia manual do usuário no chat (o fluxo completo de deploy e sincronização pode ser executado diretamente).**
+- ⚠️ **O agente NÃO deve realizar commits, push ou deploy diretamente. O agente deve apenas aplicar as alterações necessárias nos arquivos locais (workspace) e deixar que o usuário faça o commit, push e deploy manualmente.**
 - Commits terminam com `Co-Authored-By:` do modelo. Nunca pular hooks/assinatura sem pedido.
 
 ## 4. Superfícies principais (todas servidas por `server.mjs`)

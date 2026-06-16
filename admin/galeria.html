@@ -77,6 +77,24 @@
   .fb-note { font-size: 11px; color: var(--text-3); margin-top: 10px; display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; background: rgba(24,119,242,.08); border: 1px solid rgba(24,119,242,.2); border-radius: 8px; }
   .info-banner { background: rgba(96,165,250,.08); border: 1px solid rgba(96,165,250,.25); color: var(--text-1); padding: 11px 16px; border-radius: 10px; margin-bottom: 18px; font-size: 12.5px; }
   .empty { color: var(--text-3); font-size: 13px; padding: 20px; }
+
+  /* POST DETAILS MODAL */
+  .details-modal { position:fixed; inset:0; z-index:2000; background:rgba(5,8,16,.88); backdrop-filter:blur(6px); display:none; align-items:center; justify-content:center; padding:32px; }
+  .details-modal.open { display:flex; }
+  .details-modal-inner { position:relative; width:100%; max-width:680px; background:var(--bg-1); border:1px solid var(--border); border-radius:18px; max-height:90vh; overflow-y:auto; display:flex; flex-direction:column; box-shadow:0 24px 70px rgba(0,0,0,.7); }
+  .details-modal-inner::-webkit-scrollbar { width: 6px; }
+  .details-modal-inner::-webkit-scrollbar-track { background: transparent; }
+  .details-modal-inner::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  .details-modal-inner::-webkit-scrollbar-thumb:hover { background: var(--text-3); }
+  .details-modal-close { position:absolute; top:16px; right:16px; width:38px; height:38px; border-radius:50%; background:var(--bg-2); border:1px solid var(--border); color:#fff; font-size:17px; cursor:pointer; display:flex; align-items:center; justify-content:center; z-index:10; }
+  .details-modal-close:hover { background:var(--err); border-color:var(--err); }
+  .dm-header { padding:24px 30px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:14px; padding-right:60px; }
+  .dm-body { padding:24px 30px; display:flex; flex-direction:column; gap:20px; }
+  .dm-media { width:100%; max-height:400px; border-radius:12px; background:var(--bg-0); display:flex; align-items:center; justify-content:center; overflow:hidden; border:1px solid var(--border); }
+  .dm-media img, .dm-media video { max-width:100%; max-height:400px; object-fit:contain; }
+  .dm-meta { display:flex; gap:10px; flex-wrap:wrap; font-size:12px; color:var(--text-2); }
+  .dm-caption { background:rgba(0,0,0,0.2); border:1px solid var(--border); border-radius:12px; padding:16px; font-size:14px; line-height:1.6; color:var(--text-1); white-space:pre-wrap; }
+  .dm-actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:8px; border-top:1px dashed var(--border); padding-top:20px; }
 </style>
 <link rel="icon" href="/design-system/assets/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/design-system/tokens/starken-tokens.css">
@@ -124,13 +142,13 @@ const num = (n) => (n == null ? null : new Intl.NumberFormat('pt-BR').format(n))
 function typeIcon(t) { return t === 'VIDEO' ? '🎬' : t === 'CAROUSEL_ALBUM' ? '🖼️' : ''; }
 function agencyBadge(a) { return a === 'Starken' ? '<span class="badge badge-starken">⚡ Starken</span>' : `<span class="badge badge-other">${esc(a||'—')}</span>`; }
 
-function postCard(p) {
+function postCard(p, client, idx) {
   const stats = (p.likes != null || p.comments != null)
     ? `<div class="post-stats">${p.likes != null ? '❤️ ' + num(p.likes) : ''}${p.comments != null ? ' · 💬 ' + num(p.comments) : ''}</div>` : '';
   const media = p.thumb
     ? `<img src="${esc(p.thumb)}" alt="post" loading="lazy" onerror="this.parentNode.classList.add('broken');this.remove();">`
     : `<div class="post-noimg">sem prévia</div>`;
-  return `<a class="post" href="${esc(p.permalink || '#')}" target="_blank" title="${esc(p.caption || '')}">
+  return `<a class="post" onclick="openPostDetails('${client.slug}', ${idx})" title="${esc(p.caption || '')}" style="cursor:pointer;">
     ${media}
     <span class="post-src ${p.source === 'instagram' ? 'ig' : 'fb'}">${p.source === 'instagram' ? 'IG' : 'FB'}</span>
     ${typeIcon(p.type) ? `<span class="post-type">${typeIcon(p.type)}</span>` : ''}
@@ -153,7 +171,7 @@ function clientBlock(c) {
       ${agencyBadge(c.agencia)}
       <span class="client-count">${c.total} post${c.total !== 1 ? 's' : ''}</span>
     </div>
-    ${c.posts.length ? `<div class="grid">${c.posts.map(postCard).join('')}</div>` : '<div class="empty">Nenhum post retornado.</div>'}
+    ${c.posts.length ? `<div class="grid">${c.posts.map((p, i) => postCard(p, c, i)).join('')}</div>` : '<div class="empty">Nenhum post retornado.</div>'}
     ${c.error ? `<div class="client-err">⚠ ${esc(c.error)}</div>` : ''}
     ${c.fb_note ? `<div class="fb-note">📘 ${esc(c.fb_note)}</div>` : ''}
   </div>`;
@@ -201,6 +219,71 @@ async function reload(force = false) {
 }
 
 reload();
+
+function openPostDetails(slug, idx) {
+  const client = DATA.clients.find(c => c.slug === slug);
+  if (!client) return;
+  const post = client.posts[idx];
+  if (!post) return;
+
+  const m = document.getElementById('details-modal');
+  
+  let mediaHtml = '';
+  if (post.thumb) {
+    mediaHtml = `<div class="dm-media"><img src="${esc(post.thumb)}" alt="Post Media"></div>`;
+  }
+  
+  const msg = post.caption || 'Sem texto.';
+  const timeStr = 'Publicado: ' + new Date(post.timestamp).toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit'});
+  const likesStr = post.likes != null ? `❤️ ${num(post.likes)}` : '';
+  const commentsStr = post.comments != null ? `💬 ${num(post.comments)}` : '';
+  
+  const linksHtml = [];
+  if (post.permalink) linksHtml.push(`<a class="btn" href="${esc(post.permalink)}" target="_blank" style="text-decoration:none;padding:8px 16px;">Ver post original ↗</a>`);
+
+  m.querySelector('.details-modal-inner').innerHTML = `
+    <button class="details-modal-close" onclick="closeDetailsModal()">✕</button>
+    <div class="dm-header">
+      <div style="flex:1;">
+        <div style="font-size:18px;font-weight:800;color:var(--text-0);">${esc(client.name)}</div>
+        <div class="dm-meta" style="margin-top:4px;">
+          ${agencyBadge(client.agencia)}
+          <span class="pill info">${post.source === 'instagram' ? '📸 Instagram' : '📘 Facebook'}</span>
+        </div>
+      </div>
+    </div>
+    <div class="dm-body">
+      ${mediaHtml}
+      <div class="dm-meta">
+        <span class="pill">${esc(timeStr)}</span>
+        ${likesStr ? `<span class="pill">${likesStr}</span>` : ''}
+        ${commentsStr ? `<span class="pill">${commentsStr}</span>` : ''}
+      </div>
+      <div class="dm-caption">${esc(msg)}</div>
+      ${linksHtml.length > 0 ? `<div class="dm-actions">${linksHtml.join('')}</div>` : ''}
+    </div>
+  `;
+  
+  m.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeDetailsModal() {
+  const m = document.getElementById('details-modal');
+  m.classList.remove('open');
+  m.querySelector('.details-modal-inner').innerHTML = '';
+  document.body.style.overflow = '';
+}
+
+document.addEventListener('keydown', (e) => { 
+  if (e.key === 'Escape') closeDetailsModal(); 
+});
 </script>
+
+<div id="details-modal" class="details-modal" onclick="if(event.target===this) closeDetailsModal()">
+  <div class="details-modal-inner">
+  </div>
+</div>
+
 </body>
 </html>
