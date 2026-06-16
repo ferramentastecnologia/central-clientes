@@ -377,6 +377,60 @@ async function fetchAgendamentos() {
     storiesData = JSON.parse(stRaw);
   } catch {}
 
+  // SUPABASE INTEGRATION: Mesclar dados do Supabase
+  const supaUrl = process.env.SUPABASE_URL;
+  const supaKey = process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_SERVICE_KEY;
+  if (supaUrl && supaKey) {
+    try {
+      const headers = { 'apikey': supaKey, 'Authorization': `Bearer ${supaKey}` };
+      
+      const qRes = await fetch(`${supaUrl}/rest/v1/publish_queue?status=in.(QUEUED,PROCESSING)`, { headers });
+      const qData = await qRes.json();
+      if (Array.isArray(qData)) {
+        qData.forEach(item => cronsData.crons.push({
+          id: item.id,
+          client_slug: item.client_key,
+          client: item.client_name,
+          kind: item.post_type || 'feed',
+          next_fire_iso: item.scheduled_for,
+          image_url: (item.image_urls && item.image_urls.length > 0) ? item.image_urls[0] : null,
+          images: item.image_urls || null,
+          caption: item.caption || '',
+          status: 'pending',
+          description: item.caption ? item.caption.substring(0, 60) + '...' : 'Post do Supabase',
+          channels: item.platform === 'both' ? ['ig', 'fb'] : [item.platform || 'ig']
+        }));
+      }
+
+      const hRes = await fetch(`${supaUrl}/rest/v1/publish_history?status=eq.PUBLISHED`, { headers });
+      const hData = await hRes.json();
+      if (Array.isArray(hData)) {
+        hData.forEach(item => {
+          let imgs = null;
+          if (item.image_url && item.image_url.startsWith('[')) {
+            try { imgs = JSON.parse(item.image_url); } catch(e) {}
+          } else if (item.image_url) {
+            imgs = [item.image_url];
+          }
+          const rec = {
+            id: item.post_id || item.id,
+            client_slug: item.client_key,
+            client: item.client_name,
+            published_iso: item.created_at || item.scheduled_for || new Date().toISOString(),
+            caption: item.caption,
+            image_url: imgs ? imgs[0] : null,
+            images: imgs,
+            channels: item.platform === 'both' ? ['ig', 'fb'] : [item.platform || 'ig'],
+            ig_permalink: item.post_url,
+          };
+          publishedData.posts.push(rec);
+        });
+      }
+    } catch(err) {
+      console.error('Erro ao buscar Supabase:', err.message);
+    }
+  }
+
   const clientPromises = mapping.clients.map(async (client) => {
     try {
       const pageToken = await getPageToken(client.page_id, token);
