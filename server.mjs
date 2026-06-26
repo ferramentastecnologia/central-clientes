@@ -11,6 +11,7 @@
 
 import http from 'node:http';
 import fs from 'node:fs/promises';
+import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -1371,6 +1372,14 @@ function resolveFilePath(reqUrl) {
   // Qualquer URL terminando em / também aponta pro index.html da pasta
   if (urlPath.endsWith('/')) urlPath = urlPath + 'index.html';
 
+  // Suporte a caminhos do Madrugão compartilhado (/Madrugão/...) que foram movidos para Clientes/Madrugão/
+  if (urlPath.startsWith('/Madrugão/')) {
+    const target = path.join(CLIENTS_DIR, urlPath);
+    if (target.startsWith(CLIENTS_DIR)) {
+      return { filePath: target, scope: 'client' };
+    }
+  }
+
   const clientMatch = urlPath.match(/^\/clientes\/([^\/]+)\/(.+)$/);
   if (clientMatch) {
     const slug = clientMatch[1].toLowerCase();
@@ -1391,7 +1400,17 @@ function resolveFilePath(reqUrl) {
     const clientFolder = CLIENT_ALIASES[slug];
     if (clientFolder) {
       const target = path.join(CLIENTS_DIR, clientFolder, 'hub', fileName);
-      if (target.startsWith(CLIENTS_DIR)) return { filePath: target, scope: 'client' };
+      if (target.startsWith(CLIENTS_DIR)) {
+        // Fallback: se o arquivo não existe no novo caminho (ex: devido a assets gitignored não movidos no VPS),
+        // verifica se ele ainda existe no caminho antigo na raiz do projeto.
+        if (!existsSync(target)) {
+          const oldTarget = path.join(__dirname, urlPath);
+          if (existsSync(oldTarget)) {
+            return { filePath: oldTarget, scope: 'client' };
+          }
+        }
+        return { filePath: target, scope: 'client' };
+      }
     }
   }
 
