@@ -1383,6 +1383,18 @@ function resolveFilePath(reqUrl) {
     return null;
   }
 
+  // URLs bonitas dos hubs públicos de clientes, ex: /feio/index.html -> Clientes/Hamburgueria Feio/hub/index.html
+  const hubMatch = urlPath.match(/^\/([^\/]+)\/(.+)$/);
+  if (hubMatch) {
+    const slug = hubMatch[1].toLowerCase();
+    const fileName = hubMatch[2];
+    const clientFolder = CLIENT_ALIASES[slug];
+    if (clientFolder) {
+      const target = path.join(CLIENTS_DIR, clientFolder, 'hub', fileName);
+      if (target.startsWith(CLIENTS_DIR)) return { filePath: target, scope: 'client' };
+    }
+  }
+
   const filePath = path.join(__dirname, urlPath);
   if (filePath.startsWith(__dirname)) return { filePath, scope: 'dashboard' };
   return null;
