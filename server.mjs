@@ -20,11 +20,11 @@ const PORT = process.env.PORT || 3000;
 // Caminhos configuráveis via env (com defaults sensatos)
 const TOKEN_FILE = process.env.TOKEN_FILE
   ? path.resolve(process.env.TOKEN_FILE)
-  : path.resolve(__dirname, '..', 'Clientes', 'Tokens', 'Graph API Token.md');
+  : path.resolve(__dirname, 'Clientes', 'Tokens', 'Graph API Token.md');
 
 const CLIENTS_DIR = process.env.CLIENTS_DIR
   ? path.resolve(process.env.CLIENTS_DIR)
-  : path.resolve(__dirname, '..', 'Clientes');
+  : path.resolve(__dirname, 'Clientes');
 
 // Aliases de assets de clientes — lidos de data/client-aliases.json
 // (use .example como template e copie pra .json local)

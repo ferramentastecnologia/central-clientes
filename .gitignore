@@ -59,3 +59,7 @@ data/financeiro.json
 *.mov
 .ssh/hostinger_nova
 .ssh/hostinger_nova.pub
+
+# Dumps temporários
+agendamentos_dump.json
+all_queue.json

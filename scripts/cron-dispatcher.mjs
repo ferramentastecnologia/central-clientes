@@ -202,6 +202,7 @@ async function main() {
       const args = ['--env-file=.env', 'scripts/publish-reel-feio.mjs', `--video=${c.video}`, `--id=${c.id}`, `--title=${c.description || 'Reel'}`,
         `--ig=${c.ig_business_id || cl.ig_business_id || ''}`, `--page=${cl.page_id || ''}`, `--base=${base}`,
         `--client=${c.client || cl.name || ''}`, `--slug=${c.client_slug}`, `--ig-username=${cl.ig_username || ''}`];
+      if (c.thumb_offset) args.push(`--thumb-offset=${c.thumb_offset}`);
       try {
         const { stdout } = await execFileAsync('/usr/bin/node', args, { cwd: ROOT, maxBuffer: 1 << 27, env: { ...process.env, REEL_CAPTION: c.caption || '' } });
         if (/CONCLUÍDO/.test(stdout)) { c.status = 'completed'; c.published_iso = new Date().toISOString(); published++; log('   REEL ✓'); }
