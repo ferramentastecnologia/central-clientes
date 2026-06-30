@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Análise de Performance Junho/2026 · Madrugão Centro</title>
+<link rel="stylesheet" href="/design-system/tokens/starken-tokens.css">
+<style>
+  :root {
+    --bg-0: #020617;
+    --bg-1: #0f172a;
+    --bg-2: #1e293b;
+    --text-0: #f8fafc;
+    --text-1: #cbd5e1;
+    --text-2: #94a3b8;
+    --text-3: #64748b;
+    --accent: #f59e0b; /* Amber/orange para Madrugão */
+    --accent-dim: rgba(245, 158, 11, 0.15);
+    --border: rgba(255, 255, 255, 0.08);
+    --ok: #10b981;
+    --ok-dim: rgba(16, 185, 129, 0.15);
+    --err: #ef4444;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: radial-gradient(ellipse at top, var(--bg-1) 0%, var(--bg-0) 70%);
+    color: var(--text-0);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    min-height: 100vh;
+    padding: 32px 24px;
+    line-height: 1.6;
+  }
+  .container { max-width: 960px; margin: 0 auto; }
+  
+  /* HEADER */
+  header {
+    margin-bottom: 32px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--border);
+  }
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-2);
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    margin-bottom: 16px;
+    transition: color 0.15s;
+  }
+  .back-link:hover { color: var(--accent); }
+  h1 {
+    font-size: clamp(24px, 4vw, 36px);
+    font-weight: 900;
+    color: var(--text-0);
+    line-height: 1.2;
+    margin-bottom: 8px;
+  }
+  .subtitle { color: var(--text-2); font-size: 15px; }
+
+  /* SECTION */
+  .section-title {
+    font-size: 20px;
+    font-weight: 800;
+    margin: 32px 0 16px;
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  /* CAMPAIGN CARD */
+  .campaign-card {
+    background: var(--bg-1);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 24px;
+  }
+  .camp-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .camp-name { font-size: 17px; font-weight: 700; color: var(--text-0); }
+  .camp-id { font-size: 11px; color: var(--text-3); font-family: monospace; margin-top: 2px; }
+  .camp-meta {
+    font-size: 12px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 6px;
+    background: var(--accent-dim);
+    color: var(--accent);
+  }
+
+  /* TABLES */
+  .table-responsive {
+    overflow-x: auto;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    text-align: left;
+  }
+  th {
+    background: rgba(255,255,255,0.02);
+    color: var(--text-2);
+    font-weight: 700;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 0.05em;
+  }
+  td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-1);
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,0.01); }
+  
+  .mono { font-variant-numeric: tabular-nums; font-family: monospace; }
+  .bold { font-weight: 700; }
+  
+  /* BADGES */
+  .badge-eval {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 4px;
+    background: rgba(255,255,255,0.05);
+    color: var(--text-2);
+    display: inline-block;
+  }
+  .badge-eval.highlight-ok {
+    background: var(--ok-dim);
+    color: var(--ok);
+  }
+  .badge-eval.highlight-accent {
+    background: var(--accent-dim);
+    color: var(--accent);
+  }
+
+  /* STRATEGIC CARD */
+  .strategic-card {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.08), rgba(245, 158, 11, 0.02));
+    border: 1px solid rgba(245, 158, 11, 0.25);
+    border-radius: 16px;
+    padding: 24px;
+    margin-top: 32px;
+  }
+  .strat-title {
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--accent);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .strat-list {
+    list-style-type: none;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .strat-item {
+    position: relative;
+    padding-left: 20px;
+    font-size: 14px;
+    color: var(--text-1);
+  }
+  .strat-item::before {
+    content: '➔';
+    position: absolute;
+    left: 0;
+    color: var(--accent);
+  }
+  .strat-item b { color: var(--text-0); }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <a href="#" onclick="history.back(); return false;" class="back-link">← Voltar ao Hub do Cliente</a>
+    <h1>📊 Análise de Performance de Junho/2026</h1>
+    <div class="subtitle">Campanhas de Vendas (Meta Ads API) · Madrugão Centro</div>
+  </header>
+
+  <p style="color: var(--text-2); font-size: 14px; margin-bottom: 24px;">
+    Este relatório consolida os dados de gastos, compras e custo por aquisição (CPA) das 6 campanhas de Vendas (OUTCOME_SALES) ativas no Madrugão Centro durante junho de 2026.
+  </p>
+
+  <!-- SEÇÃO 1 -->
+  <h2 class="section-title">🍔 1. Campanhas de Combos Diários (Garuva)</h2>
+  
+  <!-- Combo Completo -->
+  <div class="campaign-card">
+    <div class="camp-header">
+      <div>
+        <div class="camp-name">Combo X-Frango + Fritas + Refrigerante</div>
+        <div class="camp-id">ID: 120241670534820227</div>
+      </div>
+      <span class="camp-meta">Quartas, Sextas e Sábados</span>
+    </div>
+
+    <h4 style="font-size:12px; font-weight:700; text-transform:uppercase; color:var(--text-3); margin-bottom:8px;">Desempenho por Dia da Semana</h4>
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr>
+            <th>Dia</th>
+            <th>Investido</th>
+            <th>Compras</th>
+            <th>CPA</th>
+            <th>Avaliação</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Domingo</td><td class="mono">R$ 0,00</td><td class="mono">2</td><td class="mono">R$ 0,00</td><td><span class="badge-eval">Conversão Residual</span></td></tr>
+          <tr><td>Segunda-feira</td><td class="mono">R$ 0,00</td><td class="mono">0</td><td class="mono">N/A</td><td><span class="badge-eval">Inativo</span></td></tr>
+          <tr><td>Terça-feira</td><td class="mono">R$ 0,00</td><td class="mono">2</td><td class="mono">R$ 0,00</td><td><span class="badge-eval">Conversão Residual</span></td></tr>
+          <tr><td>Quarta-feira</td><td class="mono">R$ 249,92</td><td class="mono">19</td><td class="mono bold">R$ 13,15</td><td><span class="badge-eval">Performance Regular</span></td></tr>
+          <tr><td>Quinta-feira</td><td class="mono">R$ 0,00</td><td class="mono">4</td><td class="mono">R$ 0,00</td><td><span class="badge-eval">Conversão Residual</span></td></tr>
+          <tr><td>Sexta-feira</td><td class="mono">R$ 171,88</td><td class="mono">24</td><td class="mono bold">R$ 7,16</td><td><span class="badge-eval highlight-ok">Excelente CPA! 🏆</span></td></tr>
+          <tr><td>Sábado</td><td class="mono">R$ 235,54</td><td class="mono">22</td><td class="mono bold">R$ 10,71</td><td><span class="badge-eval highlight-accent">Ótimo CPA! 🚀</span></td></tr>
+          <tr style="background: rgba(255,255,255,0.03); font-weight: bold;">
+            <td>Total Geral</td><td class="mono">R$ 657,34</td><td class="mono">73</td><td class="mono">R$ 9,00</td><td>ROAS excelente no geral</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h4 style="font-size:12px; font-weight:700; text-transform:uppercase; color:var(--text-3); margin-bottom:8px;">Desempenho por Faixa Horária</h4>
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr>
+            <th>Horário</th>
+            <th>Gasto (R$)</th>
+            <th>Compras</th>
+            <th>CPA</th>
+            <th>Avaliação</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>10h - 11h</td><td class="mono">R$ 5,27</td><td class="mono">0</td><td class="mono">N/A</td><td>Início de entrega</td></tr>
+          <tr><td>11h - 12h</td><td class="mono">R$ 13,99</td><td class="mono">7</td><td class="mono bold">R$ 2,00</td><td><span class="badge-eval highlight-ok">Excelente eficiência! 🏆</span></td></tr>
+          <tr><td>12h - 13h</td><td class="mono">R$ 19,00</td><td class="mono">3</td><td class="mono bold">R$ 6,33</td><td>Muito eficiente</td></tr>
+          <tr><td>13h - 14h</td><td class="mono">R$ 22,63</td><td class="mono">3</td><td class="mono bold">R$ 7,54</td><td>Saudável</td></tr>
+          <tr><td>14h - 15h</td><td class="mono">R$ 33,91</td><td class="mono">5</td><td class="mono bold">R$ 6,78</td><td>Saudável</td></tr>
+          <tr><td>15h - 16h</td><td class="mono">R$ 0,10</td><td class="mono">1</td><td class="mono">R$ 0,10</td><td>Conversão tardia</td></tr>
+          <tr><td>17h - 18h</td><td class="mono">R$ 135,01</td><td class="mono">0</td><td class="mono">N/A</td><td>Aquecimento de Bidding</td></tr>
+          <tr><td>18h - 19h</td><td class="mono">R$ 143,59</td><td class="mono">13</td><td class="mono bold">R$ 11,05</td><td>Bom volume de vendas</td></tr>
+          <tr><td>19h - 20h</td><td class="mono">R$ 109,62</td><td class="mono">14</td><td class="mono bold">R$ 7,83</td><td><span class="badge-eval highlight-accent">Excelente volume e CPA! 🚀</span></td></tr>
+          <tr><td>20h - 21h</td><td class="mono">R$ 85,14</td><td class="mono">12</td><td class="mono bold">R$ 7,09</td><td><span class="badge-eval highlight-accent">Excelente volume e CPA! 🚀</span></td></tr>
+          <tr><td>21h - 22h</td><td class="mono">R$ 61,45</td><td class="mono">5</td><td class="mono bold">R$ 12,29</td><td>Estável</td></tr>
+          <tr><td>22h - 23h</td><td class="mono">R$ 27,54</td><td class="mono">5</td><td class="mono bold">R$ 5,51</td><td><span class="badge-eval highlight-ok">Altíssima eficiência! 🎯</span></td></tr>
+          <tr><td>Residual (Outros)</td><td class="mono">R$ 0,07</td><td class="mono">5</td><td class="mono">R$ 0,00</td><td>Compras tardias / residuais</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Combo X-Frango Simples -->
+  <div class="campaign-card">
+    <div class="camp-header">
+      <div>
+        <div class="camp-name">Combo X-Frango Simples</div>
+        <div class="camp-id">ID: 120241665624080227</div>
+      </div>
+      <span class="camp-meta">Quartas-feiras</span>
+    </div>
+
+    <h4 style="font-size:12px; font-weight:700; text-transform:uppercase; color:var(--text-3); margin-bottom:8px;">Desempenho por Dia da Semana</h4>
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr>
+            <th>Dia</th>
+            <th>Investido</th>
+            <th>Compras</th>
+            <th>CPA</th>
+            <th>Avaliação</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Domingo</td><td class="mono">R$ 0,00</td><td class="mono">1</td><td class="mono">R$ 0,00</td><td>Conversão Residual</td></tr>
+          <tr><td>Segunda-feira</td><td class="mono">R$ 0,00</td><td class="mono">2</td><td class="mono">R$ 0,00</td><td>Conversão Residual</td></tr>
+          <tr><td>Quarta-feira</td><td class="mono">R$ 700,02</td><td class="mono">36</td><td class="mono bold">R$ 19,45</td><td>Alto volume, custo elevado</td></tr>
+          <tr><td>Quinta-feira</td><td class="mono">R$ 0,00</td><td class="mono">15</td><td class="mono">R$ 0,00</td><td>Forte conversão residual pós-promo</td></tr>
+          <tr><td>Sexta-feira</td><td class="mono">R$ 0,00</td><td class="mono">1</td><td class="mono">R$ 0,00</td><td>Conversão Residual</td></tr>
+          <tr style="background: rgba(255,255,255,0.03); font-weight: bold;">
+            <td>Total Geral</td><td class="mono">R$ 700,02</td><td class="mono">55</td><td class="mono">R$ 12,73</td><td>Desempenho Geral Saudável</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h4 style="font-size:12px; font-weight:700; text-transform:uppercase; color:var(--text-3); margin-bottom:8px;">Desempenho por Faixa Horária</h4>
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr>
+            <th>Horário</th>
+            <th>Gasto (R$)</th>
+            <th>Compras</th>
+            <th>CPA</th>
+            <th>Avaliação</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>10h - 11h</td><td class="mono">R$ 28,38</td><td class="mono">0</td><td class="mono">N/A</td><td>Inicialização cara</td></tr>
+          <tr><td>11h - 12h</td><td class="mono">R$ 44,54</td><td class="mono">4</td><td class="mono bold">R$ 11,13</td><td>Saudável</td></tr>
+          <tr><td>12h - 13h</td><td class="mono">R$ 45,26</td><td class="mono">6</td><td class="mono bold">R$ 7,54</td><td><span class="badge-eval highlight-accent">Ótimo CPA! 🚀</span></td></tr>
+          <tr><td>13h - 14h</td><td class="mono">R$ 35,06</td><td class="mono">3</td><td class="mono bold">R$ 11,69</td><td>Saudável</td></tr>
+          <tr><td>14h - 15h</td><td class="mono">R$ 46,54</td><td class="mono">3</td><td class="mono bold">R$ 15,51</td><td>Estável</td></tr>
+          <tr><td>17h - 18h</td><td class="mono">R$ 137,51</td><td class="mono">2</td><td class="mono">R$ 68,75</td><td>Leilão ineficiente na abertura</td></tr>
+          <tr><td>18h - 19h</td><td class="mono">R$ 134,79</td><td class="mono">13</td><td class="mono bold">R$ 10,37</td><td>Excelente volume de vendas</td></tr>
+          <tr><td>19h - 20h</td><td class="mono">R$ 94,01</td><td class="mono">10</td><td class="mono bold">R$ 9,40</td><td><span class="badge-eval highlight-accent">Ótimo volume e CPA! 🚀</span></td></tr>
+          <tr><td>20h - 21h</td><td class="mono">R$ 61,65</td><td class="mono">7</td><td class="mono bold">R$ 8,81</td><td><span class="badge-eval highlight-accent">Ótimo volume e CPA! 🚀</span></td></tr>
+          <tr><td>21h - 22h</td><td class="mono">R$ 47,91</td><td class="mono">2</td><td class="mono bold">R$ 23,95</td><td>Queda de eficiência</td></tr>
+          <tr><td>22h - 23h</td><td class="mono">R$ 23,05</td><td class="mono">2</td><td class="mono bold">R$ 11,53</td><td>Estável</td></tr>
+          <tr><td>Residual (Outros)</td><td class="mono">R$ 1,31</td><td class="mono">3</td><td class="mono">R$ 0,00</td><td>Compras tardias</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- SEÇÃO 2 -->
+  <h2 class="section-title">⚡ 2. Campanhas de Ações em Dobro (Starken Promos)</h2>
+  
+  <!-- Quarta do Dobro -->
+  <div class="campaign-card">
+    <div class="camp-header">
+      <div>
+        <div class="camp-name">Promoção em Dobro X-Frango</div>
+        <div class="camp-id">ID: 120236519627930227</div>
+      </div>
+      <span class="camp-meta">Exclusivo Quarta-feira</span>
+    </div>
+    
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:12px; background:rgba(255,255,255,0.02); padding:12px; border-radius:8px; border:1px solid var(--border);">
+      <div><span style="font-size:11px; color:var(--text-3); font-weight:700;">Gasto Total:</span> <span class="mono bold" style="font-size:14px; color:var(--text-0);">R$ 193,22</span></div>
+      <div><span style="font-size:11px; color:var(--text-3); font-weight:700;">Compras Totais:</span> <span class="mono bold" style="font-size:14px; color:var(--text-0);">38 compras (29 na Quarta, 9 residuais na Quinta)</span></div>
+      <div><span style="font-size:11px; color:var(--text-3); font-weight:700;">CPA Médio Real:</span> <span class="mono bold" style="font-size:14px; color:var(--ok);">R$ 5,08 🏆</span></div>
+      <div><span style="font-size:11px; color:var(--text-3); font-weight:700;">Status:</span> <span class="badge-eval highlight-ok" style="font-size:11px;">Sucesso Absoluto</span></div>
+    </div>
+
+    <h4 style="font-size:12px; font-weight:700; text-transform:uppercase; color:var(--text-3); margin-bottom:8px;">Desempenho por Faixa Horária</h4>
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr>
+            <th>Horário</th>
+            <th>Gasto (R$)</th>
+            <th>Compras</th>
+            <th>CPA</th>
+            <th>Avaliação</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>17h - 18h</td><td class="mono">R$ 28,98</td><td class="mono">2</td><td class="mono bold">R$ 14,49</td><td>Estável</td></tr>
+          <tr><td>18h - 19h</td><td class="mono">R$ 49,35</td><td class="mono">1</td><td class="mono bold">R$ 49,35</td><td>Aquecimento inicial</td></tr>
+          <tr><td>19h - 20h</td><td class="mono">R$ 36,73</td><td class="mono">4</td><td class="mono bold">R$ 9,18</td><td>Saudável</td></tr>
+          <tr><td>20h - 21h</td><td class="mono">R$ 28,13</td><td class="mono">11</td><td class="mono bold">R$ 2,56</td><td><span class="badge-eval highlight-ok">Absurdamente eficiente! 🏆</span></td></tr>
+          <tr><td>21h - 22h</td><td class="mono">R$ 23,36</td><td class="mono">5</td><td class="mono bold">R$ 4,67</td><td><span class="badge-eval highlight-ok">Altamente eficiente! 🚀</span></td></tr>
+          <tr><td>22h - 23h</td><td class="mono">R$ 14,10</td><td class="mono">2</td><td class="mono bold">R$ 7,05</td><td>Ótimo</td></tr>
+          <tr><td>23h - 00h</td><td class="mono">R$ 12,54</td><td class="mono">7</td><td class="mono bold">R$ 1,79</td><td><span class="badge-eval highlight-ok">Melhor conversão final 🎯</span></td></tr>
+          <tr><td>Residual (Outros)</td><td class="mono">R$ 0,03</td><td class="mono">6</td><td class="mono">R$ 0,00</td><td>Compras residuais</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Terça do Dobro -->
+  <div class="campaign-card">
+    <div class="camp-header">
+      <div>
+        <div class="camp-name">Promoção em Dobro X-Salada</div>
+        <div class="camp-id">ID: 120236483681290227</div>
+      </div>
+      <span class="camp-meta">Exclusivo Terça-feira</span>
+    </div>
+    
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:12px; background:rgba(255,255,255,0.02); padding:12px; border-radius:8px; border:1px solid var(--border);">
+      <div><span style="font-size:11px; color:var(--text-3); font-weight:700;">Gasto Total:</span> <span class="mono bold" style="font-size:14px; color:var(--text-0);">R$ 113,62</span></div>
+      <div><span style="font-size:11px; color:var(--text-3); font-weight:700;">Compras Totais:</span> <span class="mono bold" style="font-size:14px; color:var(--text-0);">19 compras (11 na Terça, 8 residuais)</span></div>
+      <div><span style="font-size:11px; color:var(--text-3); font-weight:700;">CPA Médio Real:</span> <span class="mono bold" style="font-size:14px; color:var(--ok);">R$ 5,98 🏆</span></div>
+      <div><span style="font-size:11px; color:var(--text-3); font-weight:700;">Status:</span> <span class="badge-eval highlight-ok" style="font-size:11px;">Sucesso</span></div>
+    </div>
+
+    <h4 style="font-size:12px; font-weight:700; text-transform:uppercase; color:var(--text-3); margin-bottom:8px;">Desempenho por Faixa Horária</h4>
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr>
+            <th>Horário</th>
+            <th>Gasto (R$)</th>
+            <th>Compras</th>
+            <th>CPA</th>
+            <th>Avaliação</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>17h - 18h</td><td class="mono">R$ 24,21</td><td class="mono">1</td><td class="mono bold">R$ 24,21</td><td>Aquecimento inicial</td></tr>
+          <tr><td>18h - 19h</td><td class="mono">R$ 18,94</td><td class="mono">3</td><td class="mono bold">R$ 6,31</td><td><span class="badge-eval highlight-accent">Excelente CPA! 🚀</span></td></tr>
+          <tr><td>19h - 20h</td><td class="mono">R$ 16,20</td><td class="mono">5</td><td class="mono bold">R$ 3,24</td><td><span class="badge-eval highlight-ok">Absurdamente eficiente! 🏆</span></td></tr>
+          <tr><td>20h - 21h</td><td class="mono">R$ 19,68</td><td class="mono">3</td><td class="mono bold">R$ 6,56</td><td><span class="badge-eval highlight-accent">Excelente CPA! 🚀</span></td></tr>
+          <tr><td>21h - 22h</td><td class="mono">R$ 15,94</td><td class="mono">1</td><td class="mono bold">R$ 15,94</td><td>Estável</td></tr>
+          <tr><td>22h - 23h</td><td class="mono">R$ 11,19</td><td class="mono">3</td><td class="mono bold">R$ 3,73</td><td><span class="badge-eval highlight-ok">Altamente eficiente! 🎯</span></td></tr>
+          <tr><td>Residual (Outros)</td><td class="mono">R$ 7,46</td><td class="mono">3</td><td class="mono">R$ 2,48</td><td>Compras tardias</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Segunda do Dobro -->
+  <div class="campaign-card">
+    <div class="camp-header">
+      <div>
+        <div class="camp-name">Promoção em Dobro X-Burger</div>
+        <div class="camp-id">ID: 120237274104730227</div>
+      </div>
+      <span class="camp-meta">Exclusivo Segunda-feira</span>
+    </div>
+    
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:12px; background:rgba(255,255,255,0.02); padding:12px; border-radius:8px; border:1px solid var(--border);">
+      <div><span style="font-size:11px; color:var(--text-3); font-weight:700;">Gasto Total:</span> <span class="mono bold" style="font-size:14px; color:var(--text-0);">R$ 98,37</span></div>
+      <div><span style="font-size:11px; color:var(--text-3); font-weight:700;">Compras Totais:</span> <span class="mono bold" style="font-size:14px; color:var(--text-0);">28 compras (13 na Segunda, 15 residuais)</span></div>
+      <div><span style="font-size:11px; color:var(--text-3); font-weight:700;">CPA Médio Real:</span> <span class="mono bold" style="font-size:14px; color:var(--ok);">R$ 3,51 🏆</span></div>
+      <div><span style="font-size:11px; color:var(--text-3); font-weight:700;">Status:</span> <span class="badge-eval highlight-ok" style="font-size:11px;">Sucesso Máximo</span></div>
+    </div>
+
+    <h4 style="font-size:12px; font-weight:700; text-transform:uppercase; color:var(--text-3); margin-bottom:8px;">Desempenho por Faixa Horária</h4>
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr>
+            <th>Horário</th>
+            <th>Gasto (R$)</th>
+            <th>Compras</th>
+            <th>CPA</th>
+            <th>Avaliação</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>16h - 17h</td><td class="mono">R$ 0,02</td><td class="mono">1</td><td class="mono">R$ 0,02</td><td>Abertura antecipada</td></tr>
+          <tr><td>17h - 18h</td><td class="mono">R$ 21,69</td><td class="mono">0</td><td class="mono">N/A</td><td>Aquecimento inicial</td></tr>
+          <tr><td>18h - 19h</td><td class="mono">R$ 9,75</td><td class="mono">2</td><td class="mono bold">R$ 4,88</td><td><span class="badge-eval highlight-ok">Muito eficiente! 🏆</span></td></tr>
+          <tr><td>19h - 20h</td><td class="mono">R$ 7,78</td><td class="mono">3</td><td class="mono bold">R$ 2,59</td><td><span class="badge-eval highlight-ok">Absurdamente eficiente! 🏆</span></td></tr>
+          <tr><td>21h - 22h</td><td class="mono">R$ 27,89</td><td class="mono">2</td><td class="mono bold">R$ 13,95</td><td>Média eficiência</td></tr>
+          <tr><td>22h - 23h</td><td class="mono">R$ 10,34</td><td class="mono">6</td><td class="mono bold">R$ 1,72</td><td><span class="badge-eval highlight-ok">Altíssima eficiência! 🎯</span></td></tr>
+          <tr><td>23h - 00h</td><td class="mono">R$ 5,65</td><td class="mono">2</td><td class="mono bold">R$ 2,83</td><td><span class="badge-eval highlight-accent">Muito eficiente! 🚀</span></td></tr>
+          <tr><td>Residual (Outros)</td><td class="mono">R$ 15,25</td><td class="mono">11</td><td class="mono">R$ 1,38</td><td>Compras tardias</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- SEÇÃO 3 -->
+  <h2 class="section-title">🍲 3. Campanha de Sábado (Almoço): Feijoada Delivery</h2>
+  
+  <div class="campaign-card">
+    <div class="camp-header">
+      <div>
+        <div class="camp-name">Feijoada Delivery Sábado</div>
+        <div class="camp-id">ID: 120243077554140227</div>
+      </div>
+      <span class="camp-meta" style="background-color: rgba(239, 68, 68, 0.15); color: var(--err);">Apenas Sábado</span>
+    </div>
+
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:12px; background:rgba(255,255,255,0.02); padding:12px; border-radius:8px; border:1px solid var(--border);">
+      <div><span style="font-size:11px; color:var(--text-3); font-weight:700;">Gasto Total:</span> <span class="mono bold" style="font-size:14px; color:var(--text-0);">R$ 293,60</span></div>
+      <div><span style="font-size:11px; color:var(--text-3); font-weight:700;">Compras Totais:</span> <span class="mono bold" style="font-size:14px; color:var(--text-0);">12 compras</span></div>
+      <div><span style="font-size:11px; color:var(--text-3); font-weight:700;">CPA Médio Real:</span> <span class="mono bold" style="font-size:14px; color: var(--err);">R$ 24,47</span></div>
+      <div><span style="font-size:11px; color:var(--text-3); font-weight:700;">Status:</span> <span class="badge-eval" style="font-size:11px; color:var(--err); background: rgba(239,68,68,0.1);">Abaixo do esperado</span></div>
+    </div>
+
+    <h4 style="font-size:12px; font-weight:700; text-transform:uppercase; color:var(--text-3); margin-bottom:8px;">Desempenho por Faixa Horária</h4>
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr>
+            <th>Horário</th>
+            <th>Gasto (R$)</th>
+            <th>Compras</th>
+            <th>CPA</th>
+            <th>Avaliação</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>09h - 10h</td><td class="mono">R$ 45,52</td><td class="mono">0</td><td class="mono">N/A</td><td>Gasto ineficiente antes de abrir</td></tr>
+          <tr><td>10h - 11h</td><td class="mono">R$ 58,93</td><td class="mono">0</td><td class="mono">N/A</td><td>Sem conversões</td></tr>
+          <tr><td>11h - 12h</td><td class="mono">R$ 52,62</td><td class="mono">6</td><td class="mono bold">R$ 8,77</td><td><span class="badge-eval highlight-ok">Excelente eficiência! 🏆</span></td></tr>
+          <tr><td>12h - 13h</td><td class="mono">R$ 53,05</td><td class="mono">3</td><td class="mono bold">R$ 17,68</td><td>Eficiência Regular</td></tr>
+          <tr><td>13h - 14h</td><td class="mono">R$ 48,08</td><td class="mono">2</td><td class="mono bold">R$ 24,04</td><td>CPA Elevado</td></tr>
+          <tr><td>14h - 15h</td><td class="mono">R$ 35,31</td><td class="mono">0</td><td class="mono">N/A</td><td>Fim do turno almoço</td></tr>
+          <tr><td>Residual (Outros)</td><td class="mono">R$ 0,09</td><td class="mono">1</td><td class="mono">R$ 0,09</td><td>Conversão residual</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- CONCLUSÕES -->
+  <div class="strategic-card">
+    <div class="strat-title">💡 Conclusões Estratégicas Consolidadas</div>
+    <ul class="strat-list">
+      <li class="strat-item">
+        <b>Eficiência Brutal das Campanhas em Dobro:</b>
+        As promoções em dobro (segunda, terça e quarta) trazem excelentes taxas de conversão e um CPA médio de <b>R$ 3,51 a R$ 5,98</b>. Aceleram logo após a abertura às 18h e fecham com custo incrivelmente baixo entre 22h e 23h.
+      </li>
+      <li class="strat-item">
+        <b>Gargalo no Leilão de Sábado (Feijoada):</b>
+        A campanha de Feijoada gastou <b>R$ 104,45</b> entre 9h e 11h com zero conversões, o que encareceu o CPA final para R$ 24,47. A partir das 11h, ela converteu com CPA médio de R$ 8,77. Recomenda-se programar a veiculação apenas a partir das <b>11h00</b>.
+      </li>
+      <li class="strat-item">
+        <b>Potencial de Escala no Almoço dos Combos:</b>
+        A faixa das 11h às 13h converte muito barato (CPA de R$ 2,00 a R$ 7,54). A nova distribuição de segunda a domingo para os combos capturará essa demanda constante de almoço de forma mais eficiente.
+      </li>
+    </ul>
+  </div>
+</div>
+
+</body>
+</html>

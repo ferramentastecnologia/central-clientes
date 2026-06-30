@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hub do Cliente · Starken</title>
+<link rel="stylesheet" href="/design-system/tokens/starken-tokens.css">
+<style>
+  :root {
+    --bg-0: #0a0e1a;
+    --bg-1: #131b2e;
+    --bg-2: #1a2440;
+    --text-0: #f8fafc;
+    --text-1: #cbd5e1;
+    --text-2: #94a3b8;
+    --text-3: #64748b;
+    --accent: #3b82f6;
+    --accent-glow: rgba(59, 130, 246, 0.15);
+    --border: rgba(255, 255, 255, 0.08);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: linear-gradient(180deg, var(--bg-0) 0%, var(--bg-1) 100%);
+    color: var(--text-0);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    min-height: 100vh;
+    padding: 24px 32px 60px;
+  }
+  a { text-decoration: none; color: inherit; }
+
+  /* TOPNAV */
+  .topnav {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding: 14px 22px;
+    background: rgba(19, 27, 46, 0.85);
+    backdrop-filter: blur(8px);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    margin-bottom: 32px;
+    flex-wrap: wrap;
+    position: sticky;
+    top: 12px;
+    z-index: 100;
+  }
+  .brand {
+    font-weight: 800;
+    font-size: 18px;
+    background: linear-gradient(90deg, #3b82f6, #60a5fa);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    white-space: nowrap;
+  }
+  .brand-sub { color: var(--text-3); font-size: 12px; font-weight: 500; margin-left: -8px; }
+  .nav-links { display: flex; gap: 6px; flex-wrap: wrap; margin-left: 6px; }
+  .nav-links a {
+    padding: 6px 12px;
+    border-radius: 8px;
+    color: var(--text-1);
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.15s;
+  }
+  .nav-links a:hover { background: rgba(255,255,255,0.05); color: var(--text-0); }
+  .nav-links a.active { background: var(--accent-glow); color: #60a5fa; }
+
+  .pill {
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-2);
+  }
+
+  /* TITLE */
+  .title-section {
+    text-align: center;
+    margin-bottom: 40px;
+  }
+  .title-section h2 {
+    font-size: 28px;
+    font-weight: 900;
+    margin-bottom: 8px;
+    background: linear-gradient(135deg, #fff, var(--text-2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .title-section p {
+    color: var(--text-2);
+    font-size: 14px;
+  }
+
+  /* GRID */
+  .clients-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+  .client-card {
+    background: var(--bg-1);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    transition: transform 0.18s, border-color 0.18s, box-shadow 0.18s;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .client-card:hover {
+    transform: translateY(-3px);
+    border-color: #3b82f6;
+    box-shadow: 0 12px 24px rgba(0,0,0,0.3);
+  }
+  .client-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; bottom: 0;
+    width: 4px;
+    background: var(--brand-color, #3b82f6);
+  }
+  .client-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: var(--bg-2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--text-2);
+    border: 1px solid var(--border);
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+  .client-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .client-info {
+    flex: 1;
+    min-width: 0;
+  }
+  .client-name {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-0);
+    margin-bottom: 4px;
+  }
+  .client-tag {
+    font-size: 11px;
+    color: var(--text-3);
+    text-transform: uppercase;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+  }
+  
+  .loading {
+    text-align: center;
+    padding: 60px;
+    color: var(--text-2);
+  }
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div>
+    <span class="brand">💼 Hubs de Clientes</span>
+    <span class="brand-sub"> · portais</span>
+  </div>
+  <div class="nav-links">
+    <a href="/admin/">🛡️ Admin</a>
+    <a href="/admin/operacoes.html">🎛️ Operações</a>
+    <a href="/admin/monitor.html">📡 Monitor</a>
+    <a href="/admin/galeria.html">🖼️ Galeria</a>
+    <a href="/agendamentos.html">📅 Agendamentos</a>
+    <a href="/admin/hubs.html" class="active">💼 Hub do Cliente</a>
+  </div>
+</nav>
+
+<div class="title-section">
+  <h2>Selecione o Cliente</h2>
+  <p>Acesse relatórios, análises de performance e o cockpit do cliente</p>
+</div>
+
+<main id="root">
+  <div class="loading">Carregando clientes…</div>
+</main>
+
+<script>
+const $ = (sel) => document.querySelector(sel);
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
+
+function render(data) {
+  const clients = data.clients || [];
+  if (!clients.length) {
+    $('#root').innerHTML = '<div class="loading">Nenhum cliente ativo cadastrado.</div>';
+    return;
+  }
+
+  // Filtramos os clientes válidos (ignorando os pendentes)
+  const html = clients.map(c => {
+    if (c.pending_status) return ''; // ignora os em setup
+    const initial = (c.name || '?').trim()[0].toUpperCase();
+    const avatar = c.instagram?.avatar 
+      ? `<img src="${c.instagram.avatar}" alt="">` 
+      : initial;
+    const cor = c.cor || '#3b82f6';
+    
+    return `
+      <a href="/admin/hub-cliente.html?c=${c.slug}" class="client-card" style="--brand-color: ${cor}">
+        <div class="client-avatar">${avatar}</div>
+        <div class="client-info">
+          <div class="client-name">${esc(c.name)}</div>
+          <div class="client-tag">${esc(c.seg || 'Performance')}</div>
+        </div>
+      </a>
+    `;
+  }).join('');
+
+  $('#root').innerHTML = `<div class="clients-grid">${html}</div>`;
+}
+
+async function load() {
+  try {
+    const r = await fetch('/api/clients');
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const data = await r.json();
+    render(data);
+  } catch (e) {
+    $('#root').innerHTML = `<div class="loading" style="color:var(--err)">Erro ao buscar clientes: ${esc(e.message)}</div>`;
+  }
+}
+load();
+</script>
+</body>
+</html>
